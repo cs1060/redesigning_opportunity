@@ -7,7 +7,7 @@ import { FilterSettings } from '../types';
 
 // Set your Mapbox access token here
 // Note: In a production app, this should be in an environment variable
-mapboxgl.accessToken = 'pk.eyJ1IjoiZXhhbXBsZXVzZXIiLCJhIjoiY2xnNXBtcXFsMDRtMDNkcGx2ZnlhYXltdCJ9.xmtzLPhiojLSUxfKYYgDTQ';
+mapboxgl.accessToken = 'pk.eyJ1IjoibWFoaWFyIiwiYSI6ImNtNDY1YnlwdDB2Z2IybHEwd2w3MHJvb3cifQ.wJqnzFFTwLFwYhiPG3SWJA';
 
 interface MapProps {
   data: FeatureCollection<Geometry, NeighborhoodProperties>;
