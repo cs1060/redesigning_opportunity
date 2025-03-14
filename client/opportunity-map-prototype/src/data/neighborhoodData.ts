@@ -22,7 +22,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'Brookline',
         opportunityScore: 8.5,
         schoolQuality: 9,
-        population: 59,180,
+        population: 59180,
         medianIncome: 113250,
         description: 'Brookline is known for its excellent schools and proximity to Boston.'
       },
@@ -44,7 +44,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'Jamaica Plain',
         opportunityScore: 7.2,
         schoolQuality: 6,
-        population: 42,935,
+        population: 42935,
         medianIncome: 92250,
         description: 'Jamaica Plain is a diverse neighborhood with good access to parks.'
       },
@@ -66,8 +66,8 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'Roxbury',
         opportunityScore: 5.8,
         schoolQuality: 4,
-        population: 57,884,
-        medianIncome: 34,303,
+        population: 57884,
+        medianIncome: 34303,
         description: 'Roxbury is a historic neighborhood with a rich cultural heritage.'
       },
       geometry: {
@@ -88,7 +88,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'Cambridge',
         opportunityScore: 9.0,
         schoolQuality: 8,
-        population: 118,403,
+        population: 118403,
         medianIncome: 103154,
         description: 'Cambridge is home to prestigious universities and a thriving tech scene.'
       },
@@ -110,7 +110,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'Somerville',
         opportunityScore: 7.8,
         schoolQuality: 7,
-        population: 81,360,
+        population: 81360,
         medianIncome: 91168,
         description: 'Somerville is a vibrant community with a mix of residential and commercial areas.'
       },
@@ -132,7 +132,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'Dorchester',
         opportunityScore: 5.5,
         schoolQuality: 5,
-        population: 126,283,
+        population: 126283,
         medianIncome: 54012,
         description: 'Dorchester is Boston\'s largest neighborhood with diverse communities.'
       },
@@ -154,7 +154,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'Newton',
         opportunityScore: 8.7,
         schoolQuality: 10,
-        population: 88,994,
+        population: 88994,
         medianIncome: 151068,
         description: 'Newton is known for its top-rated public schools and suburban feel.'
       },
@@ -176,7 +176,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'Allston',
         opportunityScore: 6.5,
         schoolQuality: 6,
-        population: 29,178,
+        population: 29178,
         medianIncome: 53777,
         description: 'Allston is a vibrant neighborhood with a large student population.'
       },
@@ -198,7 +198,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'South Boston',
         opportunityScore: 7.0,
         schoolQuality: 7,
-        population: 38,206,
+        population: 38206,
         medianIncome: 81838,
         description: 'South Boston is a rapidly developing neighborhood with waterfront access.'
       },
@@ -220,7 +220,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'Charlestown',
         opportunityScore: 7.5,
         schoolQuality: 8,
-        population: 19,913,
+        population: 19913,
         medianIncome: 94607,
         description: 'Charlestown offers historic charm and waterfront views.'
       },
@@ -242,7 +242,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'East Boston',
         opportunityScore: 6.0,
         schoolQuality: 5,
-        population: 45,212,
+        population: 45212,
         medianIncome: 56878,
         description: 'East Boston is a diverse neighborhood with access to Logan Airport.'
       },
@@ -264,7 +264,7 @@ const neighborhoodData: FeatureCollection<Polygon, NeighborhoodProperties> = {
         name: 'Medford',
         opportunityScore: 7.2,
         schoolQuality: 7,
-        population: 59,659,
+        population: 59659,
         medianIncome: 96053,
         description: 'Medford is a suburban community with good schools and parks.'
       },
