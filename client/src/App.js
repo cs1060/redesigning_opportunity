@@ -25,7 +25,7 @@ function App() {
   const fetchNeighborhoods = async () => {
     try {
       console.log('Fetching all neighborhoods data...');
-      const response = await fetch('http://localhost:5000/api/neighborhoods');
+      const response = await fetch('http://localhost:5001/api/neighborhoods');
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -43,7 +43,7 @@ function App() {
   const fetchFilteredNeighborhoods = async (qualityValue) => {
     try {
       console.log(`Filtering neighborhoods by school quality >= ${qualityValue}...`);
-      const response = await fetch(`http://localhost:5000/api/neighborhoods/filter?schoolQuality=${qualityValue}`);
+      const response = await fetch(`http://localhost:5001/api/neighborhoods/filter?schoolQuality=${qualityValue}`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }

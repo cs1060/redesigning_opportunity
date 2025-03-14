@@ -71,6 +71,8 @@ npm start
 
 3. Open your browser and navigate to http://localhost:3000
 
+   Note: The backend API runs on port 5001 (http://localhost:5001)
+
 ### Usage
 
 - Use the number input or slider to set a school quality threshold (1-10)
