@@ -6,8 +6,8 @@ import neighborhoodData, { NeighborhoodProperties } from '../data/neighborhoodDa
 import { Feature, Polygon } from 'geojson';
 
 // You would normally store this in an environment variable
-// For this prototype, we're hardcoding it (you should replace with your own token)
-mapboxgl.accessToken = 'pk.eyJ1IjoibWFoaWFyYWhtYW45OTcxIiwiYSI6ImNscDFxcTJhNjAyNnAya3Fxb3ZwOWxlMnEifQ.ZPgfzx-H1wL-6J3Dq6a8Lg';
+// For this prototype, we're hardcoding it
+mapboxgl.accessToken = 'pk.eyJ1IjoibWFoaWFyIiwiYSI6ImNtNDY1YnlwdDB2Z2IybHEwd2w3MHJvb3cifQ.wJqnzFFTwLFwYhiPG3SWJA';
 
 interface MapComponentProps {
   schoolQualityFilter: number;
