@@ -1,4 +1,4 @@
-import { FeatureCollection, Feature, Polygon } from 'geojson';
+import { FeatureCollection, Polygon } from 'geojson';
 
 // Define the type for our neighborhood properties
 export interface NeighborhoodProperties {
