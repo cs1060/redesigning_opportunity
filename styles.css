@@ -102,14 +102,105 @@ button:hover {
     background-color: #3251d4;
 }
 
-/* Demographics Page Styles */
-.chart-container {
-    margin-top: 2rem;
-    padding: 1rem;
+/* Demographics Display Styles */
+.demographics-display {
     background: white;
+    padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
 }
+
+.demographics-summary {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.summary-text {
+    font-size: 1.2rem;
+    color: #4a5568;
+}
+
+/* Icons Display */
+.demographics-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.demographic-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 120px;
+}
+
+.icon-group {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.icon-group i {
+    font-size: 1.5rem;
+}
+
+.demographic-label {
+    font-size: 1rem;
+    color: #4a5568;
+    margin-top: 0.5rem;
+}
+
+.demographic-percentage {
+    font-weight: bold;
+    color: #2d3748;
+    font-size: 1.2rem;
+}
+
+/* Table Styles */
+.demographics-table {
+    margin-top: 2rem;
+    border-top: 2px solid #e2e8f0;
+    padding-top: 2rem;
+}
+
+.demographics-table h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #2d3748;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+th {
+    background-color: #f7fafc;
+    font-weight: bold;
+    color: #4a5568;
+}
+
+td {
+    color: #2d3748;
+}
+
+/* Color classes for icons */
+.hispanic-color { color: #4361ee; }
+.white-color { color: #48bb78; }
+.black-color { color: #ed8936; }
+.asian-color { color: #667eea; }
+.other-color { color: #9f7aea; }
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -131,5 +222,25 @@ button:hover {
     
     .form-section {
         padding: 1.5rem;
+    }
+
+    .demographics-icons {
+        gap: 1rem;
+    }
+
+    .demographic-group {
+        min-width: 100px;
+    }
+
+    .icon-group i {
+        font-size: 1.2rem;
+    }
+
+    table {
+        font-size: 0.9rem;
+    }
+
+    th, td {
+        padding: 0.75rem;
     }
 }

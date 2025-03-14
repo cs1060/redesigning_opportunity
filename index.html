@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Your Child's Future</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -88,8 +89,33 @@
                 <label for="zipcode">Enter Zipcode:</label>
                 <input type="text" id="zipcode" name="zipcode" pattern="[0-9]{5}" maxlength="5" required>
             </div>
-            <div class="chart-container">
-                <canvas id="demographicsChart"></canvas>
+
+            <!-- Demographics Display -->
+            <div class="demographics-display">
+                <div class="demographics-summary">
+                    <p class="summary-text">Enter a zipcode to see who lives in this area</p>
+                </div>
+
+                <!-- Icon-based representation -->
+                <div class="demographics-icons">
+                    <!-- Icons will be dynamically inserted here -->
+                </div>
+
+                <!-- Text-based table -->
+                <div class="demographics-table">
+                    <h3>Detailed Breakdown</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Race/Ethnicity</th>
+                                <th>Number per 100 people</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Table rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </section>

@@ -5,77 +5,88 @@ let demographicsChart = null;
 const getDemographicData = (zipcode) => {
     // This is mock data - in a real application, this would fetch from an API
     return {
-        'White': Math.random() * 100,
-        'Black': Math.random() * 100,
-        'Hispanic': Math.random() * 100,
-        'Asian': Math.random() * 100,
-        'Other': Math.random() * 100
+        'Hispanic': Math.floor(Math.random() * 100),
+        'White': Math.floor(Math.random() * 100),
+        'Black': Math.floor(Math.random() * 100),
+        'Asian': Math.floor(Math.random() * 100),
+        'Other': Math.floor(Math.random() * 100)
     };
 };
 
-// Create or update demographics chart
-const updateDemographicsChart = (zipcode) => {
+// Create or update demographics display
+const updateDemographicsDisplay = (zipcode) => {
     const data = getDemographicData(zipcode);
     
-    const chartConfig = {
-        type: 'bar',
-        data: {
-            labels: Object.keys(data),
-            datasets: [{
-                label: 'Population Percentage',
-                data: Object.values(data),
-                backgroundColor: [
-                    '#4361ee',
-                    '#3f37c9',
-                    '#3a0ca3',
-                    '#480ca8',
-                    '#560bad'
-                ],
-                borderColor: 'white',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                title: {
-                    display: true,
-                    text: `Demographics for Zipcode ${zipcode}`,
-                    font: {
-                        size: 16
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    max: 100,
-                    title: {
-                        display: true,
-                        text: 'Percentage (%)'
-                    }
-                }
+    // Normalize data to ensure total is 100
+    const total = Object.values(data).reduce((a, b) => a + b, 0);
+    const normalizedData = {};
+    Object.entries(data).forEach(([key, value]) => {
+        normalizedData[key] = Math.round((value / total) * 100);
+    });
+
+    // Update summary text
+    const summaryElement = document.querySelector('.summary-text');
+    const majorityGroup = Object.entries(normalizedData)
+        .sort(([,a], [,b]) => b - a)[0];
+    summaryElement.textContent = `In ${zipcode}, ${majorityGroup[0]} residents make up the largest group at ${majorityGroup[1]}% of the population.`;
+
+    // Update icons display
+    const iconsContainer = document.querySelector('.demographics-icons');
+    iconsContainer.innerHTML = '';
+
+    Object.entries(normalizedData).forEach(([race, percentage]) => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'demographic-group';
+
+        const iconGroup = document.createElement('div');
+        iconGroup.className = 'icon-group';
+
+        // Add 5 icons, filled based on percentage
+        const numFilledIcons = Math.round(percentage / 20); // 20% per icon
+        for (let i = 0; i < 5; i++) {
+            const icon = document.createElement('i');
+            icon.className = `fas fa-user ${race.toLowerCase()}-color`;
+            if (i >= numFilledIcons) {
+                icon.style.opacity = '0.3';
             }
+            iconGroup.appendChild(icon);
         }
-    };
 
-    if (demographicsChart) {
-        demographicsChart.destroy();
-    }
+        const label = document.createElement('div');
+        label.className = 'demographic-label';
+        label.textContent = race;
 
-    const ctx = document.getElementById('demographicsChart').getContext('2d');
-    demographicsChart = new Chart(ctx, chartConfig);
+        const percentageText = document.createElement('div');
+        percentageText.className = 'demographic-percentage';
+        percentageText.textContent = `${percentage}%`;
+
+        groupDiv.appendChild(iconGroup);
+        groupDiv.appendChild(label);
+        groupDiv.appendChild(percentageText);
+        iconsContainer.appendChild(groupDiv);
+    });
+
+    // Update table
+    const tbody = document.querySelector('.demographics-table tbody');
+    tbody.innerHTML = '';
+
+    Object.entries(normalizedData)
+        .sort(([,a], [,b]) => b - a) // Sort by percentage descending
+        .forEach(([race, percentage]) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${race}</td>
+                <td>${percentage}</td>
+            `;
+            tbody.appendChild(row);
+        });
 };
 
 // Handle zipcode input
 document.getElementById('zipcode').addEventListener('input', (e) => {
     const zipcode = e.target.value;
     if (zipcode.length === 5) {
-        updateDemographicsChart(zipcode);
+        updateDemographicsDisplay(zipcode);
     }
 });
 
@@ -86,7 +97,7 @@ document.getElementById('family-form').addEventListener('submit', (e) => {
     document.getElementById('demographics-page').scrollIntoView({ behavior: 'smooth' });
 });
 
-// Initialize the chart with empty data when the page loads
+// Initialize with empty data
 document.addEventListener('DOMContentLoaded', () => {
-    updateDemographicsChart('00000');
+    updateDemographicsDisplay('00000');
 });
