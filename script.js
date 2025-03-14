@@ -1,92 +1,82 @@
-// Initialize chart
-let demographicsChart = null;
-
 // Sample demographic data (replace with real API data in production)
 const getDemographicData = (zipcode) => {
     // This is mock data - in a real application, this would fetch from an API
     return {
+        'Hispanic': Math.random() * 100,
         'White': Math.random() * 100,
         'Black': Math.random() * 100,
-        'Hispanic': Math.random() * 100,
         'Asian': Math.random() * 100,
         'Other': Math.random() * 100
     };
 };
 
-// Create or update demographics chart
-const updateDemographicsChart = (zipcode) => {
+// Helper function to format numbers
+const formatNumber = (num) => {
+    return Math.round(num);
+};
+
+// Helper function to describe proportion
+const describeProportion = (percentage) => {
+    if (percentage >= 75) return "vast majority";
+    if (percentage >= 50) return "majority";
+    if (percentage >= 30) return "significant portion";
+    if (percentage >= 15) return "notable portion";
+    return "small portion";
+};
+
+// Create or update demographics display
+const updateDemographicsDisplay = (zipcode) => {
     const data = getDemographicData(zipcode);
     
-    const chartConfig = {
-        type: 'bar',
-        data: {
-            labels: Object.keys(data),
-            datasets: [{
-                label: 'Population Percentage',
-                data: Object.values(data),
-                backgroundColor: [
-                    '#4361ee',
-                    '#3f37c9',
-                    '#3a0ca3',
-                    '#480ca8',
-                    '#560bad'
-                ],
-                borderColor: 'white',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                title: {
-                    display: true,
-                    text: `Demographics for Zipcode ${zipcode}`,
-                    font: {
-                        size: 16
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    max: 100,
-                    title: {
-                        display: true,
-                        text: 'Percentage (%)'
-                    }
-                }
-            }
-        }
-    };
+    // Normalize data to ensure total is 100
+    const total = Object.values(data).reduce((a, b) => a + b, 0);
+    const normalizedData = {};
+    Object.entries(data).forEach(([key, value]) => {
+        normalizedData[key] = (value / total) * 100;
+    });
 
-    if (demographicsChart) {
-        demographicsChart.destroy();
-    }
+    // Sort demographics by percentage
+    const sortedDemographics = Object.entries(normalizedData)
+        .sort(([,a], [,b]) => b - a);
 
-    const ctx = document.getElementById('demographicsChart').getContext('2d');
-    demographicsChart = new Chart(ctx, chartConfig);
+    // Generate primary summary
+    const primaryGroup = sortedDemographics[0];
+    const primarySummary = document.querySelector('.primary-summary');
+    primarySummary.textContent = `In this neighborhood, ${primaryGroup[0]} residents make up the ${describeProportion(primaryGroup[1])} of the community at ${formatNumber(primaryGroup[1])}%.`;
+
+    // Generate detailed summary
+    const detailedSummary = document.querySelector('.detailed-summary');
+    detailedSummary.textContent = `For every 100 people in this area, you'll find about ${
+        sortedDemographics.map(([race, pct]) => 
+            `${formatNumber(pct)} ${race}`
+        ).join(', ').replace(/,([^,]*)$/, ' and$1')
+    } residents.`;
+
+    // Generate context summary
+    const contextSummary = document.querySelector('.context-summary');
+    const diversity = sortedDemographics[0][1] > 75 ? "less" : "more";
+    contextSummary.textContent = `This is a ${diversity} diverse community compared to many other areas. ${
+        diversity === "more" 
+            ? "This means your child will have opportunities to interact with people from various backgrounds."
+            : `With a strong ${sortedDemographics[0][0]} presence, your child will be exposed to rich cultural traditions and community values.`
+    }`;
 };
 
 // Handle zipcode input
 document.getElementById('zipcode').addEventListener('input', (e) => {
     const zipcode = e.target.value;
     if (zipcode.length === 5) {
-        updateDemographicsChart(zipcode);
+        updateDemographicsDisplay(zipcode);
     }
 });
 
 // Handle form submission
 document.getElementById('family-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    // Smooth scroll to demographics section
     document.getElementById('demographics-page').scrollIntoView({ behavior: 'smooth' });
 });
 
-// Initialize the chart with empty data when the page loads
+// Initialize with empty data
 document.addEventListener('DOMContentLoaded', () => {
-    updateDemographicsChart('00000');
+    updateDemographicsDisplay('00000');
 });

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Your Child's Future</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- Page 1: Title Page -->
@@ -84,12 +83,37 @@
     <section id="demographics-page" class="page">
         <div class="content">
             <h2>Community Demographics</h2>
-            <div class="form-group">
-                <label for="zipcode">Enter Zipcode:</label>
-                <input type="text" id="zipcode" name="zipcode" pattern="[0-9]{5}" maxlength="5" required>
-            </div>
-            <div class="chart-container">
-                <canvas id="demographicsChart"></canvas>
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="zipcode">Enter Zipcode:</label>
+                    <input type="text" id="zipcode" name="zipcode" pattern="[0-9]{5}" maxlength="5" required>
+                </div>
+
+                <div class="demographics-display">
+                    <!-- Primary Summary -->
+                    <div class="demographics-primary">
+                        <h3>Community Overview</h3>
+                        <p class="primary-summary">
+                            Enter a zipcode above to learn about the community.
+                        </p>
+                    </div>
+
+                    <!-- Detailed Summary -->
+                    <div class="demographics-detailed">
+                        <h3>Detailed Breakdown</h3>
+                        <p class="detailed-summary">
+                            We'll show you a detailed breakdown of who lives in this area.
+                        </p>
+                    </div>
+
+                    <!-- Additional Context -->
+                    <div class="demographics-context">
+                        <h3>What This Means For You</h3>
+                        <p class="context-summary">
+                            Once you enter a zipcode, we'll help you understand what these demographics mean for your family.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
