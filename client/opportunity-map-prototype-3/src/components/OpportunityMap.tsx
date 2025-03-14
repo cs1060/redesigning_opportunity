@@ -4,9 +4,8 @@ import { FeatureCollection, Feature, Geometry } from 'geojson';
 import { Box, Typography } from '@mui/material';
 import { NeighborhoodProperties } from '../data/neighborhoodData';
 
-// You would need to get your own Mapbox token
-// This is a placeholder - replace with your actual token
-mapboxgl.accessToken = 'pk.eyJ1IjoibWFoaWFyYWhtYW45OTcxIiwiYSI6ImNscGVqN3VtYzAyYXEyanA4ZnVvYWVxdWsifQ.nYVEzf1oOQvxBWYxL8JVUQ';
+// Mapbox access token
+mapboxgl.accessToken = 'pk.eyJ1IjoibWFoaWFyIiwiYSI6ImNtNDY1YnlwdDB2Z2IybHEwd2w3MHJvb3cifQ.wJqnzFFTwLFwYhiPG3SWJA';
 
 interface OpportunityMapProps {
   data: FeatureCollection<Geometry, NeighborhoodProperties>;
