@@ -102,7 +102,8 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
       // Add hover effects
       map.current.on('mousemove', 'neighborhood-fills', (e) => {
         if (e.features && e.features.length > 0) {
-          const feature = e.features[0] as Feature<Geometry, NeighborhoodProperties>;
+          // First cast to unknown, then to our specific type to avoid TypeScript error
+          const feature = e.features[0] as unknown as { properties: NeighborhoodProperties };
           setHoveredNeighborhood(feature.properties);
           
           map.current!.getCanvas().style.cursor = 'pointer';
