@@ -25,7 +25,9 @@ function App() {
   const fetchNeighborhoods = async () => {
     try {
       console.log('Fetching all neighborhoods data...');
-      const response = await fetch('http://localhost:5001/api/neighborhoods');
+      const API_URL = 'http://localhost:5001/api/neighborhoods';
+      console.log('Fetching from:', API_URL);
+      const response = await fetch(API_URL);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -43,7 +45,9 @@ function App() {
   const fetchFilteredNeighborhoods = async (qualityValue) => {
     try {
       console.log(`Filtering neighborhoods by school quality >= ${qualityValue}...`);
-      const response = await fetch(`http://localhost:5001/api/neighborhoods/filter?schoolQuality=${qualityValue}`);
+      const API_URL = `http://localhost:5001/api/neighborhoods/filter?schoolQuality=${qualityValue}`;
+      console.log('Fetching from:', API_URL);
+      const response = await fetch(API_URL);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -118,7 +122,7 @@ function App() {
                 <Typography>{error}</Typography>
               </Box>
             ) : (
-              <Box sx={{ position: 'relative', height: '70vh' }}>
+              <Box sx={{ position: 'relative', height: '75vh', width: '100%', border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
                 <OpportunityMap neighborhoods={neighborhoods} />
                 <Legend />
               </Box>
