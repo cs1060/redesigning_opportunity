@@ -103,7 +103,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ schoolQualityFilter }) => {
         map.current = null;
       }
     };
-  }, []);
+  }, [schoolQualityFilter]); // Add schoolQualityFilter as a dependency
 
   // Update the filter when schoolQualityFilter changes
   useEffect(() => {
