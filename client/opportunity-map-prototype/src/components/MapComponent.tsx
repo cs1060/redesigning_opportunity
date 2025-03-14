@@ -127,8 +127,8 @@ const MapComponent: React.FC<MapComponentProps> = ({ schoolQualityFilter }) => {
   }, [schoolQualityFilter]);
 
   return (
-    <Box sx={{ position: 'relative', height: '70vh', width: '100%' }}>
-      <div ref={mapContainer} style={{ height: '100%', width: '100%', borderRadius: '8px' }} />
+    <Box sx={{ position: 'relative', height: '70vh', width: '100%', border: '1px solid #ddd' }}>
+      <div ref={mapContainer} className="map-container" style={{ borderRadius: '8px' }} />
       
       {/* Map Legend */}
       <Paper 

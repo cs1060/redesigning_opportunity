@@ -16,6 +16,8 @@ code {
 /* Map container styles */
 .mapboxgl-map {
   font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .mapboxgl-popup {
@@ -30,4 +32,15 @@ code {
 /* Make sure the map canvas takes up the full height */
 .mapboxgl-canvas {
   outline: none;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Map container class */
+.map-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
