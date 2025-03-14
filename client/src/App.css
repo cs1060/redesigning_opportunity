@@ -1,0 +1,49 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: #f5f5f5;
+}
+
+.App {
+  text-align: left;
+  padding-bottom: 2rem;
+}
+
+/* Map container styles */
+.mapboxgl-map {
+  border-radius: 4px;
+}
+
+.mapboxgl-popup {
+  max-width: 300px;
+}
+
+.mapboxgl-popup-content {
+  padding: 15px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Slider customization */
+.MuiSlider-root {
+  color: #1764ab;
+}
+
+.MuiSlider-thumb {
+  height: 24px;
+  width: 24px;
+  background-color: #fff;
+  border: 2px solid currentColor;
+}
+
+.MuiSlider-valueLabel {
+  background-color: #1764ab;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .App {
+    padding: 1rem;
+  }
+}

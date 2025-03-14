@@ -1,0 +1,205 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tract-1",
+        "name": "Downtown",
+        "opportunityScore": 8.5,
+        "schoolQuality": 9,
+        "description": "Urban center with excellent schools and amenities"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-73.98, 40.73],
+          [-73.96, 40.73],
+          [-73.96, 40.75],
+          [-73.98, 40.75],
+          [-73.98, 40.73]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tract-2",
+        "name": "Midtown",
+        "opportunityScore": 7.8,
+        "schoolQuality": 8,
+        "description": "Business district with good schools"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-73.98, 40.75],
+          [-73.96, 40.75],
+          [-73.96, 40.77],
+          [-73.98, 40.77],
+          [-73.98, 40.75]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tract-3",
+        "name": "Uptown",
+        "opportunityScore": 9.2,
+        "schoolQuality": 10,
+        "description": "Residential area with top-rated schools"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-73.98, 40.77],
+          [-73.96, 40.77],
+          [-73.96, 40.79],
+          [-73.98, 40.79],
+          [-73.98, 40.77]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tract-4",
+        "name": "Westside",
+        "opportunityScore": 6.5,
+        "schoolQuality": 7,
+        "description": "Developing area with improving schools"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-74.00, 40.73],
+          [-73.98, 40.73],
+          [-73.98, 40.75],
+          [-74.00, 40.75],
+          [-74.00, 40.73]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tract-5",
+        "name": "Eastside",
+        "opportunityScore": 5.8,
+        "schoolQuality": 6,
+        "description": "Mixed-use area with average schools"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-73.96, 40.73],
+          [-73.94, 40.73],
+          [-73.94, 40.75],
+          [-73.96, 40.75],
+          [-73.96, 40.73]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tract-6",
+        "name": "Southside",
+        "opportunityScore": 4.2,
+        "schoolQuality": 4,
+        "description": "Industrial area with below-average schools"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-73.98, 40.71],
+          [-73.96, 40.71],
+          [-73.96, 40.73],
+          [-73.98, 40.73],
+          [-73.98, 40.71]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tract-7",
+        "name": "Northside",
+        "opportunityScore": 7.1,
+        "schoolQuality": 8,
+        "description": "Residential area with good schools"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-73.98, 40.79],
+          [-73.96, 40.79],
+          [-73.96, 40.81],
+          [-73.98, 40.81],
+          [-73.98, 40.79]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tract-8",
+        "name": "Northwest",
+        "opportunityScore": 6.8,
+        "schoolQuality": 7,
+        "description": "Diverse area with good schools"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-74.00, 40.77],
+          [-73.98, 40.77],
+          [-73.98, 40.79],
+          [-74.00, 40.79],
+          [-74.00, 40.77]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tract-9",
+        "name": "Northeast",
+        "opportunityScore": 5.5,
+        "schoolQuality": 5,
+        "description": "Emerging area with improving schools"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-73.96, 40.77],
+          [-73.94, 40.77],
+          [-73.94, 40.79],
+          [-73.96, 40.79],
+          [-73.96, 40.77]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "tract-10",
+        "name": "Southeast",
+        "opportunityScore": 3.9,
+        "schoolQuality": 3,
+        "description": "Developing area with below-average schools"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-73.96, 40.71],
+          [-73.94, 40.71],
+          [-73.94, 40.73],
+          [-73.96, 40.73],
+          [-73.96, 40.71]
+        ]]
+      }
+    }
+  ]
+}
