@@ -82,7 +82,8 @@ const MapComponent: React.FC<MapComponentProps> = ({ schoolQualityFilter }) => {
       // Add hover effect
       map.current.on('mousemove', 'neighborhood-fills', (e) => {
         if (e.features && e.features.length > 0) {
-          const feature = e.features[0] as Feature<Polygon, NeighborhoodProperties>;
+          // Cast to unknown first to avoid TypeScript error
+          const feature = e.features[0] as unknown as Feature<Polygon, NeighborhoodProperties>;
           setHoveredNeighborhood(feature.properties);
         }
       });
