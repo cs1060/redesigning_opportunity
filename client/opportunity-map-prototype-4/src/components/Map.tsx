@@ -80,7 +80,8 @@ const Map: React.FC<MapProps> = ({ data, filterSettings, filtersApplied }) => {
         // Add hover effect
         map.current.on('mousemove', 'neighborhood-fills', (e) => {
           if (e.features && e.features.length > 0) {
-            setHoveredFeature(e.features[0] as Feature<Geometry, NeighborhoodProperties>);
+            // Cast to unknown first to avoid TypeScript error
+            setHoveredFeature(e.features[0] as unknown as Feature<Geometry, NeighborhoodProperties>);
           }
         });
 
