@@ -13,3 +13,5 @@ const CONFIG = {
     // API endpoint (replace with your actual backend endpoint)
     apiEndpoint: 'http://localhost:3000/api'
 };
+
+module.exports = CONFIG;

@@ -172,3 +172,9 @@ const DataService = {
             : mockData.housing(zipcode);
     }
 };
+
+module.exports = {
+    DataService,
+    mockData,
+    apiData
+};
