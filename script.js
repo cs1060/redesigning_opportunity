@@ -1,84 +1,8 @@
-// Mock data providers (can be replaced with API calls later)
-const getMockNeighborhoods = (zipcode) => {
-    // This would be replaced with OpenAI API call
-    return [
-        {
-            name: "Greenfield Heights",
-            distance: "5 miles",
-            description: "Family-friendly area with excellent public parks and community centers."
-        },
-        {
-            name: "Oakwood District",
-            distance: "8 miles",
-            description: "Known for its great schools and safe streets. Active community events."
-        },
-        {
-            name: "Pine Hill Estates",
-            distance: "10 miles",
-            description: "Affordable housing with growing community programs and new developments."
-        }
-    ];
-};
-
-const getMockSchools = (zipcode) => {
-    // This would be replaced with OpenAI API call
-    return [
-        {
-            name: "Lincoln Elementary School",
-            type: "Public",
-            description: "Strong focus on STEM education with after-school programs."
-        },
-        {
-            name: "Westview Academy",
-            type: "Charter",
-            description: "Offers bilingual education and cultural enrichment programs."
-        },
-        {
-            name: "Greenfield High School",
-            type: "Public",
-            description: "High graduation rates and diverse AP course offerings."
-        }
-    ];
-};
-
-const getMockHousingResources = (zipcode) => {
-    // This would be replaced with OpenAI API call
-    return [
-        {
-            name: "Zillow Listings",
-            url: "https://www.zillow.com",
-            description: "Find homes for sale & rent in this area"
-        },
-        {
-            name: "Affordable Housing Directory",
-            url: "https://www.hud.gov",
-            description: "Government & nonprofit housing programs"
-        },
-        {
-            name: "Community Housing Support",
-            url: "https://www.usa.gov/housing-help",
-            description: "Local resources and assistance for new residents"
-        }
-    ];
-};
-
-const getDemographicData = (zipcode) => {
-    // This would be replaced with real API data
-    return {
-        'Hispanic': Math.random() * 100,
-        'White': Math.random() * 100,
-        'Black': Math.random() * 100,
-        'Asian': Math.random() * 100,
-        'Other': Math.random() * 100
-    };
-};
-
-// Helper function to format numbers
+// Helper functions
 const formatNumber = (num) => {
     return Math.round(num);
 };
 
-// Helper function to describe proportion
 const describeProportion = (percentage) => {
     if (percentage >= 75) return "vast majority";
     if (percentage >= 50) return "majority";
@@ -88,46 +12,55 @@ const describeProportion = (percentage) => {
 };
 
 // Update neighborhoods section
-const updateNeighborhoods = (zipcode) => {
-    const neighborhoods = getMockNeighborhoods(zipcode);
+const updateNeighborhoods = async (zipcode) => {
     const container = document.querySelector('.neighborhood-list');
     
     if (!zipcode) {
         container.innerHTML = '<p class="placeholder-text">Enter a zipcode to discover nearby neighborhoods.</p>';
         return;
     }
-    
-    container.innerHTML = neighborhoods.map(n => `
-        <div class="neighborhood-item">
-            <div class="neighborhood-name">${n.name}</div>
-            <div class="neighborhood-distance">${n.distance}</div>
-            <div class="neighborhood-description">${n.description}</div>
-        </div>
-    `).join('');
+
+    try {
+        const neighborhoods = await DataService.getNeighborhoods(zipcode);
+        container.innerHTML = neighborhoods.map(n => `
+            <div class="neighborhood-item">
+                <div class="neighborhood-name">${n.name}</div>
+                <div class="neighborhood-distance">${n.distance}</div>
+                <div class="neighborhood-description">${n.description}</div>
+            </div>
+        `).join('');
+    } catch (error) {
+        container.innerHTML = '<p class="error-text">Sorry, we couldn\'t load neighborhood data. Please try again later.</p>';
+        console.error('Error updating neighborhoods:', error);
+    }
 };
 
 // Update schools section
-const updateSchools = (zipcode) => {
-    const schools = getMockSchools(zipcode);
+const updateSchools = async (zipcode) => {
     const container = document.querySelector('.schools-list');
     
     if (!zipcode) {
         container.innerHTML = '<p class="placeholder-text">Enter a zipcode to see local schools.</p>';
         return;
     }
-    
-    container.innerHTML = schools.map(s => `
-        <div class="school-item">
-            <div class="school-name">${s.name}</div>
-            <div class="school-type">${s.type}</div>
-            <div class="school-description">${s.description}</div>
-        </div>
-    `).join('');
+
+    try {
+        const schools = await DataService.getSchools(zipcode);
+        container.innerHTML = schools.map(s => `
+            <div class="school-item">
+                <div class="school-name">${s.name}</div>
+                <div class="school-type">${s.type}</div>
+                <div class="school-description">${s.description}</div>
+            </div>
+        `).join('');
+    } catch (error) {
+        container.innerHTML = '<p class="error-text">Sorry, we couldn\'t load school data. Please try again later.</p>';
+        console.error('Error updating schools:', error);
+    }
 };
 
 // Update demographics section
-const updateDemographics = (zipcode) => {
-    const data = getDemographicData(zipcode);
+const updateDemographics = async (zipcode) => {
     const primarySummary = document.querySelector('.primary-summary');
     const detailedSummary = document.querySelector('.detailed-summary');
     const contextSummary = document.querySelector('.context-summary');
@@ -138,61 +71,75 @@ const updateDemographics = (zipcode) => {
         contextSummary.textContent = "Once you enter a zipcode, we'll help you understand what these demographics mean for your family.";
         return;
     }
-    
-    // Normalize data to ensure total is 100
-    const total = Object.values(data).reduce((a, b) => a + b, 0);
-    const normalizedData = {};
-    Object.entries(data).forEach(([key, value]) => {
-        normalizedData[key] = (value / total) * 100;
-    });
 
-    // Sort demographics by percentage
-    const sortedDemographics = Object.entries(normalizedData)
-        .sort(([,a], [,b]) => b - a);
+    try {
+        const data = await DataService.getDemographics(zipcode);
+        
+        // Normalize data to ensure total is 100
+        const total = Object.values(data).reduce((a, b) => a + b, 0);
+        const normalizedData = {};
+        Object.entries(data).forEach(([key, value]) => {
+            normalizedData[key] = (value / total) * 100;
+        });
 
-    // Generate primary summary
-    const primaryGroup = sortedDemographics[0];
-    primarySummary.textContent = `In this neighborhood, ${primaryGroup[0]} residents make up the ${describeProportion(primaryGroup[1])} of the community at ${formatNumber(primaryGroup[1])}%.`;
+        // Sort demographics by percentage
+        const sortedDemographics = Object.entries(normalizedData)
+            .sort(([,a], [,b]) => b - a);
 
-    // Generate detailed summary
-    detailedSummary.textContent = `For every 100 people in this area, you'll find about ${
-        sortedDemographics.map(([race, pct]) => 
-            `${formatNumber(pct)} ${race}`
-        ).join(', ').replace(/,([^,]*)$/, ' and$1')
-    } residents.`;
+        // Generate primary summary
+        const primaryGroup = sortedDemographics[0];
+        primarySummary.textContent = `In this neighborhood, ${primaryGroup[0]} residents make up the ${describeProportion(primaryGroup[1])} of the community at ${formatNumber(primaryGroup[1])}%.`;
 
-    // Generate context summary
-    const diversity = sortedDemographics[0][1] > 75 ? "less" : "more";
-    contextSummary.textContent = `This is a ${diversity} diverse community compared to many other areas. ${
-        diversity === "more" 
-            ? "This means your child will have opportunities to interact with people from various backgrounds."
-            : `With a strong ${sortedDemographics[0][0]} presence, your child will be exposed to rich cultural traditions and community values.`
-    }`;
+        // Generate detailed summary
+        detailedSummary.textContent = `For every 100 people in this area, you'll find about ${
+            sortedDemographics.map(([race, pct]) => 
+                `${formatNumber(pct)} ${race}`
+            ).join(', ').replace(/,([^,]*)$/, ' and$1')
+        } residents.`;
+
+        // Generate context summary
+        const diversity = sortedDemographics[0][1] > 75 ? "less" : "more";
+        contextSummary.textContent = `This is a ${diversity} diverse community compared to many other areas. ${
+            diversity === "more" 
+                ? "This means your child will have opportunities to interact with people from various backgrounds."
+                : `With a strong ${sortedDemographics[0][0]} presence, your child will be exposed to rich cultural traditions and community values.`
+        }`;
+    } catch (error) {
+        primarySummary.textContent = 'Sorry, we couldn\'t load demographic data. Please try again later.';
+        detailedSummary.textContent = '';
+        contextSummary.textContent = '';
+        console.error('Error updating demographics:', error);
+    }
 };
 
 // Update housing resources section
-const updateHousingResources = (zipcode) => {
-    const resources = getMockHousingResources(zipcode);
+const updateHousingResources = async (zipcode) => {
     const container = document.querySelector('.housing-links');
     
     if (!zipcode) {
         container.innerHTML = '<p class="placeholder-text">Enter a zipcode to find housing resources.</p>';
         return;
     }
-    
-    container.innerHTML = resources.map(r => `
-        <a href="${r.url}" target="_blank" class="housing-link">
-            <i class="fas fa-external-link-alt"></i>
-            <div>
-                <div>${r.name}</div>
-                <div class="housing-link-description">${r.description}</div>
-            </div>
-        </a>
-    `).join('');
+
+    try {
+        const resources = await DataService.getHousing(zipcode);
+        container.innerHTML = resources.map(r => `
+            <a href="${r.url}" target="_blank" class="housing-link">
+                <i class="fas fa-external-link-alt"></i>
+                <div>
+                    <div>${r.name}</div>
+                    <div class="housing-link-description">${r.description}</div>
+                </div>
+            </a>
+        `).join('');
+    } catch (error) {
+        container.innerHTML = '<p class="error-text">Sorry, we couldn\'t load housing resources. Please try again later.</p>';
+        console.error('Error updating housing resources:', error);
+    }
 };
 
 // Update all sections when zipcode changes
-const updateAllSections = (zipcode) => {
+const updateAllSections = async (zipcode) => {
     // Show loading state
     document.querySelectorAll('.results-section').forEach(section => {
         section.classList.remove('loaded');
@@ -201,12 +148,14 @@ const updateAllSections = (zipcode) => {
         }
     });
 
-    // Simulate API delay
-    setTimeout(() => {
-        updateNeighborhoods(zipcode);
-        updateSchools(zipcode);
-        updateDemographics(zipcode);
-        updateHousingResources(zipcode);
+    try {
+        // Update all sections in parallel
+        await Promise.all([
+            updateNeighborhoods(zipcode),
+            updateSchools(zipcode),
+            updateDemographics(zipcode),
+            updateHousingResources(zipcode)
+        ]);
 
         // Remove loading state and show content
         document.querySelectorAll('.results-section').forEach(section => {
@@ -215,7 +164,13 @@ const updateAllSections = (zipcode) => {
                 section.classList.add('loaded');
             }
         });
-    }, 500);
+    } catch (error) {
+        console.error('Error updating sections:', error);
+        // Remove loading state even if there's an error
+        document.querySelectorAll('.results-section').forEach(section => {
+            section.classList.remove('loading');
+        });
+    }
 };
 
 // Handle zipcode input
