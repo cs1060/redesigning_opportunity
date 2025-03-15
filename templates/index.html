@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redesigning Opportunity - Accessible Action Planning</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Skip to main content link for keyboard users -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" role="navigation" aria-label="Main navigation">
+        <div class="container">
+            <a class="navbar-brand" href="#" aria-label="Home">Redesigning Opportunity</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#assess" aria-label="Go to Assess section">Assess</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#opportunity-map" aria-label="Go to Opportunity Map section">Opportunity Map</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#learn" aria-label="Go to Learn section">Learn</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#take-action" aria-label="Go to Take Action section">Take Action</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#next-steps" aria-label="Go to Next Steps section">Next Steps</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#community" aria-label="Go to Community section">Community</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Accessibility Controls -->
+    <div class="accessibility-controls" role="region" aria-label="Accessibility controls">
+        <div class="container py-2">
+            <button class="btn btn-sm" id="high-contrast-toggle" aria-pressed="false">
+                High Contrast Mode
+            </button>
+            <button class="btn btn-sm" id="simplified-view-toggle" aria-pressed="false">
+                Simplified View
+            </button>
+            <button class="btn btn-sm" id="text-size-increase" aria-label="Increase text size">
+                A+
+            </button>
+            <button class="btn btn-sm" id="text-size-decrease" aria-label="Decrease text size">
+                A-
+            </button>
+        </div>
+    </div>
+
+    <main id="main-content" tabindex="-1">
+        <!-- Welcome Section -->
+        <section id="welcome" class="container section" aria-labelledby="welcome-title">
+            <h1 id="welcome-title" class="text-center">Welcome to Redesigning Opportunity</h1>
+            <p class="lead text-center" role="text">Empowering communities through education and action</p>
+        </section>
+
+        <!-- Take Action Section -->
+        <section id="take-action" class="container section" aria-labelledby="take-action-title">
+            <h2 id="take-action-title">Take Action</h2>
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Choose Your Focus Area</h3>
+                    <div class="form-group">
+                        <label for="focusArea" class="form-label">Select a focus area to generate your action plan:</label>
+                        <select id="focusArea" class="form-select" aria-describedby="focusAreaHelp">
+                            <option value="">Please select...</option>
+                            <option value="schools">Schools</option>
+                            <option value="community">Community Programs</option>
+                            <option value="resources">Educational Resources</option>
+                        </select>
+                        <div id="focusAreaHelp" class="form-text">
+                            Your selection will help us create a personalized action plan.
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-3" onclick="generateActionPlan()" 
+                            aria-label="Generate action plan based on selected focus area">
+                        Generate Action Plan
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Next Steps Section -->
+        <section id="next-steps" class="container section" aria-labelledby="next-steps-title">
+            <h2 id="next-steps-title">Next Steps</h2>
+            <div id="action-steps-container" role="list" aria-label="Action steps list">
+                <!-- Action steps will be dynamically inserted here -->
+            </div>
+            <button class="btn btn-primary mt-3" onclick="addNewStep()" 
+                    aria-label="Add new action step">
+                Add New Step
+            </button>
+        </section>
+
+        <!-- Placeholder Sections -->
+        <section id="assess" class="container section" aria-labelledby="assess-title">
+            <h2 id="assess-title">Assess</h2>
+            <p>Understand your community's educational landscape and identify areas for improvement.</p>
+        </section>
+
+        <section id="opportunity-map" class="container section" aria-labelledby="opportunity-map-title">
+            <h2 id="opportunity-map-title">Opportunity Map</h2>
+            <p>Explore educational resources and opportunities in your area.</p>
+        </section>
+
+        <section id="learn" class="container section" aria-labelledby="learn-title">
+            <h2 id="learn-title">Learn</h2>
+            <p>Access educational resources and best practices for community improvement.</p>
+        </section>
+
+        <section id="community" class="container section" aria-labelledby="community-title">
+            <h2 id="community-title">Community</h2>
+            <p>Connect with other community members and share experiences.</p>
+        </section>
+    </main>
+
+    <!-- Templates -->
+    <template id="action-step-template">
+        <div class="action-step card mb-3" role="listitem">
+            <div class="card-body">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input step-checkbox" id="">
+                    <label class="form-check-label step-label" for=""></label>
+                </div>
+                <div class="step-details mt-2" aria-live="polite"></div>
+                <div class="btn-group mt-3" role="group">
+                    <button class="btn btn-outline-primary btn-sm edit-btn" aria-label="Edit step">
+                        Edit
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm speak-btn" aria-label="Read step aloud">
+                        Read Aloud
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Step</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="editDescription" aria-describedby="editDescriptionHelp">
+                        <div id="editDescriptionHelp" class="form-text">
+                            Enter a clear, concise description of the step.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDetails" class="form-label">Details</label>
+                        <textarea class="form-control" id="editDetails" rows="3" aria-describedby="editDetailsHelp"></textarea>
+                        <div id="editDetailsHelp" class="form-text">
+                            Add any additional details or instructions for this step.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDifficulty" class="form-label">Difficulty Level</label>
+                        <select class="form-select" id="editDifficulty" aria-describedby="editDifficultyHelp">
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                        <div id="editDifficultyHelp" class="form-text">
+                            Select the difficulty level of this step.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEdit()">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
