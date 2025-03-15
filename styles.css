@@ -116,6 +116,35 @@ button:hover {
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     margin-top: 2rem;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.results-section.loading {
+    position: relative;
+}
+
+.results-section.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    content: '\f110';
+    font-size: 2rem;
+    color: #4361ee;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .placeholder-text {
@@ -123,6 +152,8 @@ button:hover {
     font-style: italic;
     text-align: center;
     margin: 1rem 0;
+    opacity: 0.8;
+    transition: opacity 0.3s ease-in-out;
 }
 
 /* Neighborhood Styles */

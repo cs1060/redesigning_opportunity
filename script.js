@@ -92,6 +92,11 @@ const updateNeighborhoods = (zipcode) => {
     const neighborhoods = getMockNeighborhoods(zipcode);
     const container = document.querySelector('.neighborhood-list');
     
+    if (!zipcode) {
+        container.innerHTML = '<p class="placeholder-text">Enter a zipcode to discover nearby neighborhoods.</p>';
+        return;
+    }
+    
     container.innerHTML = neighborhoods.map(n => `
         <div class="neighborhood-item">
             <div class="neighborhood-name">${n.name}</div>
@@ -106,6 +111,11 @@ const updateSchools = (zipcode) => {
     const schools = getMockSchools(zipcode);
     const container = document.querySelector('.schools-list');
     
+    if (!zipcode) {
+        container.innerHTML = '<p class="placeholder-text">Enter a zipcode to see local schools.</p>';
+        return;
+    }
+    
     container.innerHTML = schools.map(s => `
         <div class="school-item">
             <div class="school-name">${s.name}</div>
@@ -118,6 +128,16 @@ const updateSchools = (zipcode) => {
 // Update demographics section
 const updateDemographics = (zipcode) => {
     const data = getDemographicData(zipcode);
+    const primarySummary = document.querySelector('.primary-summary');
+    const detailedSummary = document.querySelector('.detailed-summary');
+    const contextSummary = document.querySelector('.context-summary');
+    
+    if (!zipcode) {
+        primarySummary.textContent = 'Enter a zipcode to learn about the community.';
+        detailedSummary.textContent = "We'll show you a detailed breakdown of who lives in this area.";
+        contextSummary.textContent = "Once you enter a zipcode, we'll help you understand what these demographics mean for your family.";
+        return;
+    }
     
     // Normalize data to ensure total is 100
     const total = Object.values(data).reduce((a, b) => a + b, 0);
@@ -132,11 +152,9 @@ const updateDemographics = (zipcode) => {
 
     // Generate primary summary
     const primaryGroup = sortedDemographics[0];
-    const primarySummary = document.querySelector('.primary-summary');
     primarySummary.textContent = `In this neighborhood, ${primaryGroup[0]} residents make up the ${describeProportion(primaryGroup[1])} of the community at ${formatNumber(primaryGroup[1])}%.`;
 
     // Generate detailed summary
-    const detailedSummary = document.querySelector('.detailed-summary');
     detailedSummary.textContent = `For every 100 people in this area, you'll find about ${
         sortedDemographics.map(([race, pct]) => 
             `${formatNumber(pct)} ${race}`
@@ -144,7 +162,6 @@ const updateDemographics = (zipcode) => {
     } residents.`;
 
     // Generate context summary
-    const contextSummary = document.querySelector('.context-summary');
     const diversity = sortedDemographics[0][1] > 75 ? "less" : "more";
     contextSummary.textContent = `This is a ${diversity} diverse community compared to many other areas. ${
         diversity === "more" 
@@ -157,6 +174,11 @@ const updateDemographics = (zipcode) => {
 const updateHousingResources = (zipcode) => {
     const resources = getMockHousingResources(zipcode);
     const container = document.querySelector('.housing-links');
+    
+    if (!zipcode) {
+        container.innerHTML = '<p class="placeholder-text">Enter a zipcode to find housing resources.</p>';
+        return;
+    }
     
     container.innerHTML = resources.map(r => `
         <a href="${r.url}" target="_blank" class="housing-link">
@@ -171,10 +193,29 @@ const updateHousingResources = (zipcode) => {
 
 // Update all sections when zipcode changes
 const updateAllSections = (zipcode) => {
-    updateNeighborhoods(zipcode);
-    updateSchools(zipcode);
-    updateDemographics(zipcode);
-    updateHousingResources(zipcode);
+    // Show loading state
+    document.querySelectorAll('.results-section').forEach(section => {
+        section.classList.remove('loaded');
+        if (zipcode && zipcode.length === 5) {
+            section.classList.add('loading');
+        }
+    });
+
+    // Simulate API delay
+    setTimeout(() => {
+        updateNeighborhoods(zipcode);
+        updateSchools(zipcode);
+        updateDemographics(zipcode);
+        updateHousingResources(zipcode);
+
+        // Remove loading state and show content
+        document.querySelectorAll('.results-section').forEach(section => {
+            section.classList.remove('loading');
+            if (zipcode && zipcode.length === 5) {
+                section.classList.add('loaded');
+            }
+        });
+    }, 500);
 };
 
 // Handle zipcode input
@@ -182,6 +223,8 @@ document.getElementById('zipcode').addEventListener('input', (e) => {
     const zipcode = e.target.value;
     if (zipcode.length === 5) {
         updateAllSections(zipcode);
+    } else if (zipcode.length === 0) {
+        updateAllSections('');
     }
 });
 
@@ -191,7 +234,7 @@ document.getElementById('family-form').addEventListener('submit', (e) => {
     document.getElementById('results-page').scrollIntoView({ behavior: 'smooth' });
 });
 
-// Initialize with empty data
+// Initialize with empty state
 document.addEventListener('DOMContentLoaded', () => {
-    updateAllSections('00000');
+    updateAllSections('');
 });
