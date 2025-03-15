@@ -1,0 +1,119 @@
+/* General Styles */
+body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    font-family: 'Roboto', sans-serif;
+}
+
+main {
+    flex: 1 0 auto;
+    padding-top: 20px;
+}
+
+.section {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+/* Action Steps */
+.action-step {
+    margin: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+.action-step.sortable-ghost {
+    opacity: 0.4;
+}
+
+.step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.step-title {
+    margin: 0 !important;
+    font-size: 1.4rem !important;
+}
+
+.step-urgency {
+    display: flex;
+    align-items: center;
+}
+
+.step-urgency i {
+    margin-left: 8px;
+}
+
+.urgency-urgent i {
+    color: #f44336;
+}
+
+.urgency-normal i {
+    color: #2196f3;
+}
+
+.urgency-optional i {
+    color: #4caf50;
+}
+
+.step-details {
+    margin: 1rem 0;
+    color: rgba(0,0,0,0.7);
+}
+
+.step-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.drag-handle {
+    cursor: move;
+}
+
+.action-step.completed {
+    opacity: 0.7;
+}
+
+.action-step.completed .step-title {
+    text-decoration: line-through;
+}
+
+/* Mobile Responsiveness */
+@media only screen and (max-width: 600px) {
+    .step-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .step-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .step-urgency {
+        margin-top: 0.5rem;
+    }
+}
+
+/* Animation */
+.action-step {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

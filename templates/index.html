@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redesigning Opportunity</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav-extended blue darken-1">
+        <div class="nav-wrapper container">
+            <a href="#" class="brand-logo">Redesigning Opportunity</a>
+            <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+            <ul id="nav-mobile" class="right hide-on-med-and-down">
+                <li><a href="#assess">Assess</a></li>
+                <li><a href="#opportunity-map">Opportunity Map</a></li>
+                <li><a href="#learn">Learn</a></li>
+                <li><a href="#take-action">Take Action</a></li>
+                <li><a href="#next-steps">Next Steps</a></li>
+                <li><a href="#community">Community</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation -->
+    <ul class="sidenav" id="mobile-nav">
+        <li><a href="#assess">Assess</a></li>
+        <li><a href="#opportunity-map">Opportunity Map</a></li>
+        <li><a href="#learn">Learn</a></li>
+        <li><a href="#take-action">Take Action</a></li>
+        <li><a href="#next-steps">Next Steps</a></li>
+        <li><a href="#community">Community</a></li>
+    </ul>
+
+    <main>
+        <!-- Welcome Section -->
+        <section id="welcome" class="container section">
+            <div class="row">
+                <div class="col s12 center-align">
+                    <h1 class="header">Welcome to Redesigning Opportunity</h1>
+                    <p class="flow-text grey-text">Empowering communities through education and action</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Take Action Section -->
+        <section id="take-action" class="container section">
+            <h2 class="header">Take Action</h2>
+            <div class="row">
+                <div class="col s12 m6">
+                    <div class="card">
+                        <div class="card-content">
+                            <span class="card-title">Choose Your Focus Area</span>
+                            <div class="input-field">
+                                <select id="focusArea">
+                                    <option value="" disabled selected>Select a focus area</option>
+                                    <option value="schools">Schools</option>
+                                    <option value="community">Community Programs</option>
+                                    <option value="resources">Educational Resources</option>
+                                </select>
+                                <label>Focus Area</label>
+                            </div>
+                            <button class="btn waves-effect waves-light" onclick="generateActionPlan()">
+                                Generate Action Plan
+                                <i class="material-icons right">send</i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Next Steps Section -->
+        <section id="next-steps" class="container section">
+            <h2 class="header">Next Steps</h2>
+            <div id="action-plan-container">
+                <div id="actionStepsList" class="action-steps-list"></div>
+                <div class="fixed-action-btn">
+                    <a class="btn-floating btn-large blue" onclick="addNewStep()">
+                        <i class="large material-icons">add</i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Placeholder Sections -->
+        <section id="assess" class="container section">
+            <h2 class="header">Assess</h2>
+            <p class="flow-text">Understand your community's educational landscape and identify areas for improvement.</p>
+        </section>
+
+        <section id="opportunity-map" class="container section">
+            <h2 class="header">Opportunity Map</h2>
+            <p class="flow-text">Explore educational resources and opportunities in your area.</p>
+        </section>
+
+        <section id="learn" class="container section">
+            <h2 class="header">Learn</h2>
+            <p class="flow-text">Access educational resources and best practices for community improvement.</p>
+        </section>
+
+        <section id="community" class="container section">
+            <h2 class="header">Community</h2>
+            <p class="flow-text">Connect with other community members and share experiences.</p>
+        </section>
+    </main>
+
+    <!-- Templates -->
+    <template id="action-step-template">
+        <div class="card action-step" data-id="">
+            <div class="card-content">
+                <div class="step-header">
+                    <span class="card-title step-title"></span>
+                    <div class="step-urgency">
+                        <i class="material-icons"></i>
+                    </div>
+                </div>
+                <div class="step-details"></div>
+                <div class="step-actions">
+                    <label>
+                        <input type="checkbox" class="filled-in step-checkbox" />
+                        <span>Complete</span>
+                    </label>
+                    <button class="btn-flat waves-effect waves-light edit-btn">
+                        <i class="material-icons">edit</i>
+                    </button>
+                    <button class="btn-flat waves-effect waves-light drag-handle">
+                        <i class="material-icons">drag_handle</i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
