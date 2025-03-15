@@ -1,4 +1,4 @@
-# Resource Chatbot - Attempt 4 (Final Version)
+# Resource Chatbot - Attempt 4
 
 ## Overview
 Final version of the resource chatbot with comprehensive features, detailed resource information, and an optimized user experience. This version implements a full-featured chatbot that provides organized, detailed, and actionable resource recommendations.
