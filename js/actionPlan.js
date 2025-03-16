@@ -10,6 +10,7 @@ export default class ActionPlan {
         // Bind methods
         this.handleStepClick = this.handleStepClick.bind(this);
         this.handleEditStep = this.handleEditStep.bind(this);
+        this.handleKeyDown = this.handleKeyDown.bind(this);
         
         // Initialize event listeners
         this.initializeEventListeners();
@@ -17,11 +18,29 @@ export default class ActionPlan {
 
     initializeEventListeners() {
         this.stepsList.addEventListener('click', this.handleStepClick);
+        this.stepsList.addEventListener('keydown', this.handleKeyDown);
         
         // Custom event listeners for external updates
         document.addEventListener('nextStepsUpdate', (event) => {
             this.updateStepsFromNextSteps(event.detail);
         });
+    }
+
+    handleKeyDown(event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        
+        const button = event.target.closest('.step-button');
+        if (!button) return;
+
+        event.preventDefault();
+        const stepElement = button.closest('.action-step');
+        const stepIndex = Array.from(this.stepsList.children).indexOf(stepElement);
+
+        if (button.querySelector('.fa-edit')) {
+            this.handleEditStep(stepIndex);
+        } else if (button.querySelector('.fa-square') || button.querySelector('.fa-check')) {
+            this.toggleStepCompletion(stepIndex);
+        }
     }
 
     handleStepClick(event) {
