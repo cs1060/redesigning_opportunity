@@ -6,6 +6,7 @@
     <title>Building Your Child's Future</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="css/chatWidget.css">
+    <link rel="stylesheet" href="css/actionPlan.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -168,14 +169,98 @@
         </div>
     </section>
 
+    <!-- Page 4: Action Plan -->
+    <section id="action-plan-page" class="page">
+        <div class="content">
+            <div class="action-plan">
+                <div class="action-plan-header">
+                    <h2 class="action-plan-title">Your Action Plan</h2>
+                    <span class="action-plan-focus">Focus: Education</span>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 33%"></div>
+                </div>
+
+                <ul class="action-steps">
+                    <!-- Step 1 -->
+                    <li class="action-step completed">
+                        <div class="action-step-header">
+                            <span class="step-number">1</span>
+                            <h3 class="step-title">Research Local Schools</h3>
+                        </div>
+                        <p class="step-description">
+                            Look up school ratings, performance metrics, and student demographics for schools in your area.
+                        </p>
+                        <div class="step-actions">
+                            <button class="step-button">
+                                <i class="fas fa-check"></i>
+                                Completed
+                            </button>
+                            <button class="step-button">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </button>
+                        </div>
+                    </li>
+
+                    <!-- Step 2 -->
+                    <li class="action-step">
+                        <div class="action-step-header">
+                            <span class="step-number">2</span>
+                            <h3 class="step-title">Schedule School Visits</h3>
+                        </div>
+                        <p class="step-description">
+                            Contact your top 3 school choices to arrange tours and meetings with administrators.
+                        </p>
+                        <div class="step-actions">
+                            <button class="step-button">
+                                <i class="far fa-square"></i>
+                                Mark Complete
+                            </button>
+                            <button class="step-button">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </button>
+                        </div>
+                    </li>
+
+                    <!-- Step 3 -->
+                    <li class="action-step">
+                        <div class="action-step-header">
+                            <span class="step-number">3</span>
+                            <h3 class="step-title">Review Educational Programs</h3>
+                        </div>
+                        <p class="step-description">
+                            Compare special programs, extracurricular activities, and support services offered by each school.
+                        </p>
+                        <div class="step-actions">
+                            <button class="step-button">
+                                <i class="far fa-square"></i>
+                                Mark Complete
+                            </button>
+                            <button class="step-button">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="config.js"></script>
     <script src="services.js"></script>
-    <script src="script.js"></script>
+    <script type="module">
+        import ChatWidget from './js/chatWidget.js';
+        import ActionPlan from './js/actionPlan.js';
+        
+        const chatWidget = new ChatWidget();
+        const actionPlan = new ActionPlan();
+        
+        chatWidget.init();
+    </script>
 </body>
-<script type="module">
-    import ChatWidget from './js/chatWidget.js';
-    const chatWidget = new ChatWidget();
-    chatWidget.init();
-</script>
 </html>
