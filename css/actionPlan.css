@@ -113,6 +113,67 @@
     font-size: 1rem;
 }
 
+/* Edit Form Styles */
+.step-edit-form {
+    margin: 12px 0 12px 36px;
+    padding: 16px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.step-edit-form .form-group {
+    margin-bottom: 12px;
+}
+
+.step-edit-form input,
+.step-edit-form textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.step-edit-form textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.edit-actions button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.save-edit {
+    background-color: #4caf50;
+    color: white;
+}
+
+.save-edit:hover {
+    background-color: #43a047;
+}
+
+.cancel-edit {
+    background-color: #f5f5f5;
+    color: #666;
+}
+
+.cancel-edit:hover {
+    background-color: #e0e0e0;
+}
+
 .progress-bar {
     background-color: #e9ecef;
     border-radius: 8px;
