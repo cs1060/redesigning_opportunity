@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geocoding Service Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-top: 4px;
+            font-size: 16px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        #result {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .coordinates-group {
+            display: flex;
+            gap: 10px;
+        }
+        .coordinates-group input {
+            width: calc(50% - 5px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Geocoding Service Demo</h1>
+        
+        <div class="input-group">
+            <h2>Forward Geocoding</h2>
+            <label for="address">Enter Address:</label><br>
+            <input type="text" id="address" placeholder="e.g., New York, NY">
+            <button onclick="geocodeAddress()">Geocode</button>
+        </div>
+
+        <div class="input-group">
+            <h2>Reverse Geocoding</h2>
+            <div class="coordinates-group">
+                <div>
+                    <label for="lat">Latitude:</label><br>
+                    <input type="number" id="lat" step="any" placeholder="e.g., 40.7128">
+                </div>
+                <div>
+                    <label for="lon">Longitude:</label><br>
+                    <input type="number" id="lon" step="any" placeholder="e.g., -74.0060">
+                </div>
+            </div>
+            <button onclick="reverseGeocode()">Reverse Geocode</button>
+        </div>
+
+        <pre id="result">Results will appear here...</pre>
+    </div>
+
+    <script type="module">
+        import GeocodingService from './js/geocodingService.js';
+        
+        const geocoder = new GeocodingService();
+        
+        window.geocodeAddress = async () => {
+            const address = document.getElementById('address').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.textContent = 'Loading...';
+                const result = await geocoder.geocodeAddress(address);
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+            }
+        };
+        
+        window.reverseGeocode = async () => {
+            const lat = parseFloat(document.getElementById('lat').value);
+            const lon = parseFloat(document.getElementById('lon').value);
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.textContent = 'Loading...';
+                const result = await geocoder.reverseGeocode(lat, lon);
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+            }
+        };
+    </script>
+</body>
+</html>
