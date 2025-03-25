@@ -1,3 +1,7 @@
+// Import required modules
+import OpportunityMap from './js/opportunityMap.js';
+import { GeocodingService } from './js/geocodingService.js';
+
 // Helper functions
 const formatNumber = (num) => {
     return Math.round(num);
@@ -154,7 +158,8 @@ const updateAllSections = async (zipcode) => {
             updateNeighborhoods(zipcode),
             updateSchools(zipcode),
             updateDemographics(zipcode),
-            updateHousingResources(zipcode)
+            updateHousingResources(zipcode),
+            updateOpportunityMap(zipcode)
         ]);
 
         // Remove loading state and show content
@@ -187,6 +192,143 @@ document.getElementById('zipcode').addEventListener('input', (e) => {
 document.getElementById('family-form').addEventListener('submit', (e) => {
     e.preventDefault();
     document.getElementById('results-page').scrollIntoView({ behavior: 'smooth' });
+});
+
+// Add event listener for map address search button and initialize map
+document.addEventListener('DOMContentLoaded', async () => {
+    const mapSearchButton = document.getElementById('map-address-search');
+    if (mapSearchButton) {
+        mapSearchButton.addEventListener('click', handleAddressSearch);
+    }
+    
+    // Initialize map on page load
+    try {
+        console.log('Initializing map on page load');
+        opportunityMap = new OpportunityMap('opportunity-map', MAPBOX_ACCESS_TOKEN);
+        await opportunityMap.initialize();
+        console.log('Map initialized successfully:', opportunityMap.map);
+    } catch (error) {
+        console.error('Error initializing map:', error);
+    }
+});
+
+// Initialize Opportunity Map variables
+
+// Initialize Opportunity Map
+let opportunityMap = null;
+let geocoder = null;
+const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibWFoaWFyIiwiYSI6ImNtNDY1YnlwdDB2Z2IybHEwd2w3MHJvb3cifQ.wJqnzFFTwLFwYhiPG3SWJA';
+
+// Update opportunity map with neighborhood data
+const updateOpportunityMap = async (zipcode) => {
+    const mapContainer = document.getElementById('opportunity-map');
+    const mapLegend = document.querySelector('.map-legend');
+    
+    if (!zipcode) {
+        mapLegend.innerHTML = '<p class="placeholder-text">Enter your address to view neighborhood opportunities on the map.</p>';
+        return;
+    }
+
+    try {
+        // Initialize map if not already done
+        if (!opportunityMap) {
+            opportunityMap = new OpportunityMap('opportunity-map', MAPBOX_ACCESS_TOKEN);
+            await opportunityMap.initialize();
+        }
+
+        // Get neighborhood data
+        const neighborhoods = await dataService.getNeighborhoods(zipcode);
+        
+        // Add coordinates to neighborhood data (mock coordinates for demonstration)
+        const neighborhoodsWithCoordinates = neighborhoods.map((neighborhood, index) => {
+            // Generate some coordinates around the center point (this would come from real data in production)
+            const lat = 37.7749 + (Math.random() - 0.5) * 0.05;
+            const lon = -122.4194 + (Math.random() - 0.5) * 0.05;
+            
+            return {
+                ...neighborhood,
+                coordinates: { lat, lon }
+            };
+        });
+
+        // Update the map with neighborhood data
+        opportunityMap.updateNeighborhoods(neighborhoodsWithCoordinates);
+        
+        // Update the legend
+        mapLegend.innerHTML = `
+            <div class="map-legend-content">
+                <p><strong>${neighborhoods.length} neighborhoods</strong> found near ${zipcode}.</p>
+                <p>Click on markers to see details about each neighborhood.</p>
+            </div>
+        `;
+    } catch (error) {
+        mapLegend.innerHTML = '<p class="error-text">Sorry, we couldn\'t load map data. Please try again later.</p>';
+        console.error('Error updating opportunity map:', error);
+    }
+};
+
+// Handle address search for the map
+const handleAddressSearch = async () => {
+    const addressInput = document.getElementById('map-address-input');
+    const address = addressInput.value.trim();
+    
+    if (!address) {
+        alert('Please enter an address to search.');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        document.getElementById('opportunity-map-section').classList.add('loading');
+        
+        // Initialize map if not already done
+        if (!opportunityMap) {
+            console.log('Initializing map with container ID:', 'opportunity-map');
+            opportunityMap = new OpportunityMap('opportunity-map', MAPBOX_ACCESS_TOKEN);
+            await opportunityMap.initialize();
+            console.log('Map initialized:', opportunityMap.map);
+        }
+        
+        // Create geocoder if not already done
+        if (!geocoder) {
+            geocoder = new GeocodingService();
+        }
+        
+        // Update map based on address
+        const result = await opportunityMap.updateFromAddress(address, geocoder);
+        
+        if (result) {
+            // Extract zipcode if available
+            const zipcode = result.address_details?.postcode || '';
+            
+            if (zipcode) {
+                // Update the zipcode input field
+                document.getElementById('zipcode').value = zipcode;
+                
+                // Trigger zipcode update to load all sections
+                updateAllSections(zipcode);
+            } else {
+                // Just update the map if no zipcode is available
+                updateOpportunityMap('');
+            }
+        }
+    } catch (error) {
+        console.error('Error searching address:', error);
+        alert('There was an error searching for this address. Please try again.');
+    } finally {
+        // Remove loading state
+        document.getElementById('opportunity-map-section').classList.remove('loading');
+    }
+};
+
+// Add event listener for address search button
+document.getElementById('map-address-search')?.addEventListener('click', handleAddressSearch);
+
+// Add event listener for address input (enter key)
+document.getElementById('map-address-input')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        handleAddressSearch();
+    }
 });
 
 // Initialize with empty state
