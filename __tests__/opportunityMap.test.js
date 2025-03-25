@@ -195,4 +195,19 @@ describe('OpportunityMap', () => {
       }
     });
   });
+  
+  test('should handle errors during address search gracefully', async () => {
+    await opportunityMap.initialize();
+    
+    // Mock the geocoder to throw an error
+    const geocoder = new GeocodingService();
+    geocoder.geocodeAddress.mockRejectedValueOnce(new Error('Geocoding failed'));
+    
+    // Should not throw an error but return null
+    const address = 'Invalid Address';
+    const result = await opportunityMap.updateFromAddress(address, geocoder);
+    
+    expect(geocoder.geocodeAddress).toHaveBeenCalledWith(address);
+    expect(result).toBeNull();
+  });
 });

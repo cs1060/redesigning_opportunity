@@ -193,7 +193,7 @@ class OpportunityMap {
             
             if (!result) {
                 console.error('Could not geocode address:', address);
-                return;
+                return null;
             }
             
             // Check if address is in the US
@@ -203,8 +203,9 @@ class OpportunityMap {
             
             if (!isUS) {
                 console.warn('Address is not in the US:', address);
-                alert('Please enter a US address for the best experience.');
-                return;
+                // Replace alert with console warning
+                console.warn('Non-US address detected. Some features may not work correctly.');
+                // We still continue with the address to show the location
             }
             
             // Center map on the geocoded location
@@ -214,6 +215,7 @@ class OpportunityMap {
             return result;
         } catch (error) {
             console.error('Error updating map from address:', error);
+            return null;
         }
     }
 }
