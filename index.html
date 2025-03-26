@@ -11,6 +11,7 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/neighborhoodAnalysis.js" type="module"></script>
 </head>
 <body>
     <!-- Page 1: Title Page -->
@@ -168,9 +169,188 @@
                             <input type="text" id="map-address-input" placeholder="Enter your address to see opportunities">
                             <button id="map-address-search">Search</button>
                         </div>
-                        <div id="opportunity-map" class="map-container"></div>
+                        <div class="map-container-wrapper">
+                            <div id="opportunity-map" class="map-container"></div>
+                            
+                            <!-- Neighborhood Analysis Panel -->
+                            <div class="neighborhood-analysis">
+                                <div class="opportunity-score">
+                                    <h4>Your Opportunity Score</h4>
+                                    <div class="score-circle">
+                                        <span class="score-value">9/10</span>
+                                    </div>
+                                    <p class="score-description">This score represents the economic mobility potential for children in this area.</p>
+                                </div>
+                                
+                                <div class="neighborhood-factors">
+                                    <h4>Neighborhood Factors</h4>
+                                    <p class="factor-instruction">(Click to set your own rating)</p>
+                                    
+                                    <!-- School Quality Factor -->
+                                    <div class="factor-item">
+                                        <div class="factor-row">
+                                            <span class="factor-name">School Quality</span>
+                                            <span class="factor-score">7/10</span>
+                                        </div>
+                                        <div class="factor-icons">
+                                            <i class="fas fa-graduation-cap factor-icon"></i>
+                                            <i class="fas fa-graduation-cap factor-icon"></i>
+                                            <i class="fas fa-graduation-cap factor-icon"></i>
+                                            <i class="fas fa-graduation-cap factor-icon"></i>
+                                            <i class="fas fa-graduation-cap factor-icon"></i>
+                                            <i class="fas fa-graduation-cap factor-icon"></i>
+                                            <i class="fas fa-graduation-cap factor-icon"></i>
+                                            <i class="fas fa-graduation-cap factor-icon inactive"></i>
+                                            <i class="fas fa-graduation-cap factor-icon inactive"></i>
+                                            <i class="fas fa-graduation-cap factor-icon inactive"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Safety Factor -->
+                                    <div class="factor-item">
+                                        <div class="factor-row">
+                                            <span class="factor-name">Safety</span>
+                                            <span class="factor-score">8/10</span>
+                                        </div>
+                                        <div class="factor-icons">
+                                            <i class="fas fa-shield-alt factor-icon"></i>
+                                            <i class="fas fa-shield-alt factor-icon"></i>
+                                            <i class="fas fa-shield-alt factor-icon"></i>
+                                            <i class="fas fa-shield-alt factor-icon"></i>
+                                            <i class="fas fa-shield-alt factor-icon"></i>
+                                            <i class="fas fa-shield-alt factor-icon"></i>
+                                            <i class="fas fa-shield-alt factor-icon"></i>
+                                            <i class="fas fa-shield-alt factor-icon"></i>
+                                            <i class="fas fa-shield-alt factor-icon inactive"></i>
+                                            <i class="fas fa-shield-alt factor-icon inactive"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Healthcare Factor -->
+                                    <div class="factor-item">
+                                        <div class="factor-row">
+                                            <span class="factor-name">Healthcare</span>
+                                            <span class="factor-score">7/10</span>
+                                        </div>
+                                        <div class="factor-icons">
+                                            <i class="fas fa-hospital factor-icon"></i>
+                                            <i class="fas fa-hospital factor-icon"></i>
+                                            <i class="fas fa-hospital factor-icon"></i>
+                                            <i class="fas fa-hospital factor-icon"></i>
+                                            <i class="fas fa-hospital factor-icon"></i>
+                                            <i class="fas fa-hospital factor-icon"></i>
+                                            <i class="fas fa-hospital factor-icon"></i>
+                                            <i class="fas fa-hospital factor-icon inactive"></i>
+                                            <i class="fas fa-hospital factor-icon inactive"></i>
+                                            <i class="fas fa-hospital factor-icon inactive"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Amenities Factor -->
+                                    <div class="factor-item">
+                                        <div class="factor-row">
+                                            <span class="factor-name">Amenities</span>
+                                            <span class="factor-score">8/10</span>
+                                        </div>
+                                        <div class="factor-icons">
+                                            <i class="fas fa-store factor-icon"></i>
+                                            <i class="fas fa-store factor-icon"></i>
+                                            <i class="fas fa-store factor-icon"></i>
+                                            <i class="fas fa-store factor-icon"></i>
+                                            <i class="fas fa-store factor-icon"></i>
+                                            <i class="fas fa-store factor-icon"></i>
+                                            <i class="fas fa-store factor-icon"></i>
+                                            <i class="fas fa-store factor-icon"></i>
+                                            <i class="fas fa-store factor-icon inactive"></i>
+                                            <i class="fas fa-store factor-icon inactive"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Housing Factor -->
+                                    <div class="factor-item">
+                                        <div class="factor-row">
+                                            <span class="factor-name">Housing</span>
+                                            <span class="factor-score">6/10</span>
+                                        </div>
+                                        <div class="factor-icons">
+                                            <i class="fas fa-home factor-icon"></i>
+                                            <i class="fas fa-home factor-icon"></i>
+                                            <i class="fas fa-home factor-icon"></i>
+                                            <i class="fas fa-home factor-icon"></i>
+                                            <i class="fas fa-home factor-icon"></i>
+                                            <i class="fas fa-home factor-icon"></i>
+                                            <i class="fas fa-home factor-icon inactive"></i>
+                                            <i class="fas fa-home factor-icon inactive"></i>
+                                            <i class="fas fa-home factor-icon inactive"></i>
+                                            <i class="fas fa-home factor-icon inactive"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Transportation Factor -->
+                                    <div class="factor-item">
+                                        <div class="factor-row">
+                                            <span class="factor-name">Transportation</span>
+                                            <span class="factor-score">7/10</span>
+                                        </div>
+                                        <div class="factor-icons">
+                                            <i class="fas fa-bus factor-icon"></i>
+                                            <i class="fas fa-bus factor-icon"></i>
+                                            <i class="fas fa-bus factor-icon"></i>
+                                            <i class="fas fa-bus factor-icon"></i>
+                                            <i class="fas fa-bus factor-icon"></i>
+                                            <i class="fas fa-bus factor-icon"></i>
+                                            <i class="fas fa-bus factor-icon"></i>
+                                            <i class="fas fa-bus factor-icon inactive"></i>
+                                            <i class="fas fa-bus factor-icon inactive"></i>
+                                            <i class="fas fa-bus factor-icon inactive"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="map-legend">
-                            <p class="placeholder-text">Enter your address to view neighborhood opportunities on the map.</p>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #e53e3e;"></div>
+                                <span class="legend-label">1</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #dd6b20;"></div>
+                                <span class="legend-label">2</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #d69e2e;"></div>
+                                <span class="legend-label">3</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #b7791f;"></div>
+                                <span class="legend-label">4</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #975a16;"></div>
+                                <span class="legend-label">5</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #68d391;"></div>
+                                <span class="legend-label">6</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #48bb78;"></div>
+                                <span class="legend-label">7</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #38a169;"></div>
+                                <span class="legend-label">8</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #2f855a;"></div>
+                                <span class="legend-label">9</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #276749;"></div>
+                                <span class="legend-label">10</span>
+                            </div>
+                            <span class="legend-text">Opportunity Score (1-10)</span>
                         </div>
                     </div>
                 </div>
@@ -484,10 +664,91 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     console.log('Map initialized directly:', directMap);
                     
+                    // Import and initialize neighborhood analysis panel
+                    import('./js/neighborhoodAnalysis.js').then(module => {
+                        const NeighborhoodAnalysis = module.default;
+                        const neighborhoodPanel = new NeighborhoodAnalysis('.neighborhood-analysis');
+                        
+                        // Store the panel instance globally for access in event handlers
+                        window.neighborhoodPanel = neighborhoodPanel;
+                    }).catch(error => {
+                        console.error('Error loading neighborhood analysis module:', error);
+                    });
+                    
                     // Add event listener for search button
                     const searchButton = document.getElementById('map-address-search');
                     if (searchButton) {
-                        searchButton.addEventListener('click', searchAddress);
+                        searchButton.addEventListener('click', async function() {
+                            await searchAddress();
+                            
+                            // Make sure the neighborhood panel is initialized
+                            if (window.neighborhoodPanel) {
+                                // Update neighborhood analysis panel with mock data for now
+                                // In a real implementation, this would come from the API
+                                const mockData = {
+                                    opportunityScore: 9,
+                                    factors: {
+                                        schoolQuality: 7,
+                                        safety: 8,
+                                        healthcare: 7,
+                                        amenities: 8,
+                                        housing: 6,
+                                        transportation: 7
+                                    }
+                                };
+                                
+                                window.neighborhoodPanel.updateAnalysis(mockData);
+                                
+                                // Add job opportunities based on the memories
+                                // Using the exact structure from the JobOpportunity type mentioned in the memories
+                                const jobOpportunities = [
+                                    {
+                                        sector: 'Technology',
+                                        growthRate: 14.5,
+                                        medianSalary: 95000,
+                                        description: 'Strong demand for software developers and IT specialists.',
+                                        resources: [{
+                                            name: 'Tech Career Hub',
+                                            url: 'https://techcareerhub.com',
+                                            description: 'Resources for tech job seekers'
+                                        }]
+                                    },
+                                    {
+                                        sector: 'Healthcare',
+                                        growthRate: 12.8,
+                                        medianSalary: 78000,
+                                        description: 'Growing need for healthcare professionals at all levels.',
+                                        resources: [{
+                                            name: 'Healthcare Jobs',
+                                            url: 'https://healthcarejobs.org',
+                                            description: 'Healthcare career opportunities'
+                                        }]
+                                    },
+                                    {
+                                        sector: 'Education',
+                                        growthRate: 8.2,
+                                        medianSalary: 65000,
+                                        description: 'Steady demand for teachers and educational support staff.',
+                                        resources: [{
+                                            name: 'Education Jobs',
+                                            url: 'https://educationjobs.org',
+                                            description: 'Teaching and education positions'
+                                        }]
+                                    }
+                                ];
+                                
+                                window.neighborhoodPanel.addJobOpportunities(jobOpportunities);
+                                
+                                // Generate personalized job opportunity advice based on income
+                                // This follows the generateJobOpportunityAdvice function mentioned in memories
+                                const income = document.getElementById('income')?.value || 75000;
+                                const hasChildren = document.getElementById('child-name')?.value ? true : false;
+                                const advice = window.neighborhoodPanel.generateJobOpportunityAdvice(income, hasChildren);
+                                console.log('Job opportunity advice:', advice);
+                            } else {
+                                console.error('Neighborhood panel not initialized yet');
+                            }
+                        });
                     }
                 } else {
                     console.error('Map container not found');
