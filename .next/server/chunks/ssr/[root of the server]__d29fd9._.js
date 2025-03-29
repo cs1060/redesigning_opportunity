@@ -2222,6 +2222,14 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                         lineNumber: 114,
                         columnNumber: 11
                     }, this),
+                    selectedAction === 'move' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(Move, {
+                        onSaveChoices: handleSaveChoices,
+                        assessmentData: assessmentData
+                    }, void 0, false, {
+                        fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
+                        lineNumber: 117,
+                        columnNumber: 11
+                    }, this),
                     savedChoices && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mt-12 bg-[#6CD9CA] bg-opacity-10 p-6 rounded-lg",
                         children: [
@@ -2230,7 +2238,7 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                 children: "Your Saved Choices"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                lineNumber: 119,
+                                lineNumber: 122,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2242,7 +2250,7 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                                 children: "Town:"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                                lineNumber: 121,
+                                                lineNumber: 124,
                                                 columnNumber: 18
                                             }, this),
                                             " ",
@@ -2250,7 +2258,7 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                        lineNumber: 121,
+                                        lineNumber: 124,
                                         columnNumber: 15
                                     }, this),
                                     selectedAction === 'move' && savedChoices.selectedNeighborhood && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2259,7 +2267,7 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                                 children: "Selected Neighborhood:"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                                lineNumber: 123,
+                                                lineNumber: 126,
                                                 columnNumber: 20
                                             }, this),
                                             " ",
@@ -2267,7 +2275,7 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                        lineNumber: 123,
+                                        lineNumber: 126,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2276,7 +2284,7 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                                 children: "Selected School:"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                                lineNumber: 125,
+                                                lineNumber: 128,
                                                 columnNumber: 18
                                             }, this),
                                             " ",
@@ -2284,7 +2292,7 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                        lineNumber: 125,
+                                        lineNumber: 128,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2293,7 +2301,7 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                                 children: "Selected Community Programs:"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                                lineNumber: 127,
+                                                lineNumber: 130,
                                                 columnNumber: 17
                                             }, this),
                                             ' ',
@@ -2301,7 +2309,7 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                        lineNumber: 126,
+                                        lineNumber: 129,
                                         columnNumber: 15
                                     }, this),
                                     selectedAction === 'move' && savedChoices.selectedHousingType && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2310,7 +2318,7 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                                 children: "Housing Type:"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                                lineNumber: 131,
+                                                lineNumber: 134,
                                                 columnNumber: 20
                                             }, this),
                                             " ",
@@ -2318,19 +2326,19 @@ const TakeAction = ({ onSaveActionAndChoices })=>{
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                        lineNumber: 131,
+                                        lineNumber: 134,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                                lineNumber: 120,
+                                lineNumber: 123,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/action-plan/ActionPlan.tsx",
-                        lineNumber: 118,
+                        lineNumber: 121,
                         columnNumber: 11
                     }, this)
                 ]
