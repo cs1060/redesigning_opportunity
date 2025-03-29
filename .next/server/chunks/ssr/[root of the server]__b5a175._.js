@@ -127,7 +127,7 @@ const Welcome = ()=>{
                     }, void 0, false, {
                         fileName: "[project]/src/components/Welcome.tsx",
                         lineNumber: 46,
-                        columnNumber: 11
+                        columnNumber: 12
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/Welcome.tsx",

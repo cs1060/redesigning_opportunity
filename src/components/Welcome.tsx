@@ -43,7 +43,7 @@ const Welcome = () => {
             }
           }}
         >
-          <FaChevronDown className="mx-auto" />
+          {<FaChevronDown className="mx-auto" />}
         </div>
       </div>
     </div>
