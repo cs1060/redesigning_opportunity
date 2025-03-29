@@ -29,13 +29,13 @@ module.exports = mod;
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-__turbopack_context__.s({
+/** @type {import('postcss-load-config').Config} */ __turbopack_context__.s({
     "default": (()=>__TURBOPACK__default__export__)
 });
 const config = {
-    plugins: [
-        "@tailwindcss/postcss"
-    ]
+    plugins: {
+        tailwindcss: {}
+    }
 };
 const __TURBOPACK__default__export__ = config;
 }}),
