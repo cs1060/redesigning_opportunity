@@ -1,0 +1,3 @@
+{
+  "/api/openai/route": "app/api/openai/route.js"
+}
