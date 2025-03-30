@@ -1,5 +1,4 @@
 {
   "/page": "app/page.js",
-  "/api/save-family-data/route": "app/api/save-family-data/route.js",
-  "/api/openai/route": "app/api/openai/route.js"
+  "/_not-found/page": "app/_not-found/page.js"
 }
