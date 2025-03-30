@@ -1,29 +1,37 @@
-// app/api/save-family-data/route.ts
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { AssessData } from '@/components/AssessQuiz';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const familyData = await request.json();
+    // Parse the JSON body from the request
+    const data: AssessData = await request.json();
     
-    // Here you would implement database storage logic
-    // For example with Prisma, Firebase, MongoDB, etc.
+    // Validate the data (you can add more validation as needed)
+    if (!data.address || !data.income || !data.children || data.children.length === 0) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
     
-    // For now, we'll simply log the data (in a real app, store it in a database)
-    console.log('Received family data:', familyData);
+    // Here you would typically save the data to a database
+    // For now, we'll just return success with the data
+    console.log('Family data received:', data);
     
-    // Simulate processing time
+    // Simulate processing time (optional)
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    // Return success response
+    // Return a success response
     return NextResponse.json({ 
       success: true, 
-      message: 'Family data saved successfully' 
+      message: 'Family data saved successfully',
+      data
     });
   } catch (error) {
-    console.error('Error saving family data:', error);
-    
+    console.error('Error processing family data:', error);
     return NextResponse.json(
-      { success: false, message: 'Failed to save family data' },
+      { error: 'Failed to process family data' },
       { status: 500 }
     );
   }
