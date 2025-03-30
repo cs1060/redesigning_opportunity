@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from 'react'
 import Stay from './Stay'
+import Move from './Move'
 import { useAssessment } from '../AssessQuiz'
 
 interface SavedChoices {
@@ -112,6 +113,9 @@ const TakeAction: React.FC<TakeActionProps> = ({ onSaveActionAndChoices }) => {
         {/* Action Details Section (conditionally rendered) */}
         {selectedAction === 'stay' && (
           <Stay onSaveChoices={handleSaveChoices} assessmentData={assessmentData} />
+        )}
+        {selectedAction === 'move' && (
+          <Move onSaveChoices={handleSaveChoices} assessmentData={assessmentData} />
         )}
         {/* Saved Choices Summary */}
         {savedChoices && (
