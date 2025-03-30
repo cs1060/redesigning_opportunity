@@ -5,6 +5,7 @@ import Welcome from '../components/Welcome'
 import PersonalizationQuiz, { usePersonalization } from '../components/AssessQuiz'
 import TakeAction from '@/components/action-plan/ActionPlan'
 import { PersonalizationProvider } from '../components/AssessQuiz'
+import CommunityConnections from '../components/CommunityConnections'
 
 interface SavedChoices {
   town: string;
@@ -94,6 +95,12 @@ function HomeContent({
       <section className="bg-gray-100 w-full">
         <div className="container mx-auto">
           <TakeAction onSaveActionAndChoices={handleActionAndChoicesSave} />
+        </div>
+      </section>
+
+      <section className="bg-gray-100 w-full">
+        <div className="container mx-auto">
+          <CommunityConnections />
         </div>
       </section>
     </>
