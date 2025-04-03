@@ -3,6 +3,7 @@ import { RefObject, useEffect, useRef, useState } from 'react'
 import Navbar from '../components/Navbar'
 import Welcome from '../components/Welcome'
 import PersonalizationQuiz, { usePersonalization } from '../components/AssessQuiz'
+import OpportunityMap from '../components/OpportunityMap'
 import TakeAction from '@/components/action-plan/ActionPlan'
 import { PersonalizationProvider } from '../components/AssessQuiz'
 import CommunityConnections from '../components/CommunityConnections'
@@ -89,6 +90,12 @@ function HomeContent({
       <section className="bg-gray-100 w-full">
         <div className="container mx-auto">
           <PersonalizationQuiz />
+        </div>
+      </section>
+
+      <section className="bg-white w-full">
+        <div className="container mx-auto">
+          <OpportunityMap address={data.address} />
         </div>
       </section>
       
