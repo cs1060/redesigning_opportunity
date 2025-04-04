@@ -117,6 +117,30 @@ const AssessYourCommunity = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Always validate address before submitting, regardless of current status
+    if (formData.street && formData.city && formData.state) {
+      setAddressValidationStatus('validating');
+      const result = await geocodeAddress(formData.address);
+      
+      if (!result) {
+        setAddressValidationStatus('invalid');
+        setValidationMessage('This address may not exist or could not be found. Please verify your address.');
+        
+        // Show warning and prevent submission unless explicitly confirmed
+        if (!window.confirm('The address you entered could not be validated. This may cause the map to display incorrect information. Do you still want to continue?')) {
+          return; // Stop form submission if user cancels
+        }
+      } else {
+        setAddressValidationStatus('valid');
+      }
+    } else {
+      // If any address field is empty, show validation error
+      setAddressValidationStatus('invalid');
+      setValidationMessage('Please complete all address fields');
+      return; // Prevent submission with incomplete address
+    }
+    
     setIsSubmitting(true);
     
     try {
