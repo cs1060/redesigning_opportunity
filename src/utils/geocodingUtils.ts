@@ -9,6 +9,12 @@
  */
 export const geocodeAddress = async (address: string): Promise<{lng: number, lat: number} | null> => {
   try {
+    // Skip geocoding for obviously invalid addresses
+    if (!address || address.length < 5 || address.includes('idk') || address.includes('test')) {
+      console.log('Skipping geocoding for invalid address:', address);
+      return null;
+    }
+
     // Using Mapbox Geocoding API
     const encodedAddress = encodeURIComponent(address);
     const accessToken = 'pk.eyJ1IjoibWFoaWFyIiwiYSI6ImNtNDY1YnlwdDB2Z2IybHEwd2w3MHJvb3cifQ.wJqnzFFTwLFwYhiPG3SWJA';
@@ -22,6 +28,21 @@ export const geocodeAddress = async (address: string): Promise<{lng: number, lat
     const data = await response.json();
     
     if (data.features && data.features.length > 0) {
+      // Check if the result is too generic (like just a state)
+      const resultType = data.features[0].place_type;
+      const relevance = data.features[0].relevance;
+      
+      // Reject results that are too generic (just state or country level) or low relevance
+      if (
+        resultType.includes('country') || 
+        resultType.includes('region') || 
+        resultType.includes('state') || 
+        relevance < 0.75
+      ) {
+        console.log('Geocoding result too generic or low relevance:', resultType, relevance);
+        return null;
+      }
+      
       const [lng, lat] = data.features[0].center;
       return { lng, lat };
     }

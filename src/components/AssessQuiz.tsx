@@ -1,6 +1,7 @@
 'use client'
-import { useState, createContext, useContext, ReactNode } from 'react';
-import { FaChevronDown } from 'react-icons/fa';
+import { useState, createContext, useContext, ReactNode, useEffect } from 'react';
+import { FaChevronDown, FaExclamationTriangle } from 'react-icons/fa';
+import { geocodeAddress } from '../utils/geocodingUtils';
 
 // Define all the types we need
 type ChildInfo = {
@@ -11,6 +12,9 @@ type ChildInfo = {
 };
 
 export type AssessData = {
+  street: string;
+  city: string;
+  state: string;
   address: string;
   income: string;
   country: string;
@@ -26,6 +30,9 @@ interface AssessContextType {
 
 // Initial default values
 const defaultData: AssessData = {
+  street: '',
+  city: '',
+  state: '',
   address: '',
   income: '',
   country: '',
@@ -73,8 +80,11 @@ export { AssessProvider as PersonalizationProvider };
 const AssessYourCommunity = () => {
   const { setFullData } = useAssessment();
   
-  // Initialize formData with ALL fields, including address
+  // Initialize formData with ALL fields, including address components
   const [formData, setFormData] = useState<AssessData>({
+    street: '',
+    city: '',
+    state: '',
     address: '',
     income: '',
     country: '',
@@ -83,13 +93,28 @@ const AssessYourCommunity = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [addressValidationStatus, setAddressValidationStatus] = useState<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
+  const [validationMessage, setValidationMessage] = useState('');
 
   const handleParentInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value
-    }));
+    setFormData(prevData => {
+      const newData = {
+        ...prevData,
+        [name]: value
+      };
+      
+      // If any address component changes, update the combined address
+      if (['street', 'city', 'state'].includes(name)) {
+        newData.address = `${newData.street}, ${newData.city}, ${newData.state}`.replace(/^[,\s]+|[,\s]+$/g, '');
+        
+        // Reset validation status when address changes
+        setAddressValidationStatus('idle');
+        setValidationMessage('');
+      }
+      
+      return newData;
+    });
   };
 
   const handleChildInfoChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -110,8 +135,67 @@ const AssessYourCommunity = () => {
     });
   };
 
+  // Validate address when all address fields are filled
+  useEffect(() => {
+    const validateAddress = async () => {
+      // Only validate if all address fields have values
+      if (formData.street && formData.city && formData.state) {
+        setAddressValidationStatus('validating');
+        
+        try {
+          const result = await geocodeAddress(formData.address);
+          
+          if (result) {
+            setAddressValidationStatus('valid');
+            setValidationMessage('Address validated successfully');
+          } else {
+            setAddressValidationStatus('invalid');
+            setValidationMessage('This address may not exist or could not be found. Please verify your address.');
+          }
+        } catch (err) {
+          setAddressValidationStatus('invalid');
+          setValidationMessage('Error validating address. Please check your input.');
+          console.error('Address validation error:', err);
+        }
+      }
+    };
+    
+    // Debounce validation to avoid too many API calls
+    const timeoutId = setTimeout(() => {
+      if (formData.street && formData.city && formData.state && addressValidationStatus === 'idle') {
+        validateAddress();
+      }
+    }, 1000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [formData.address, formData.street, formData.city, formData.state, addressValidationStatus]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Always validate address before submitting, regardless of current status
+    if (formData.street && formData.city && formData.state) {
+      setAddressValidationStatus('validating');
+      const result = await geocodeAddress(formData.address);
+      
+      if (!result) {
+        setAddressValidationStatus('invalid');
+        setValidationMessage('This address may not exist or could not be found. Please verify your address.');
+        
+        // Show warning and prevent submission unless explicitly confirmed
+        if (!window.confirm('The address you entered could not be validated. This may cause the map to display incorrect information. Do you still want to continue?')) {
+          return; // Stop form submission if user cancels
+        }
+      } else {
+        setAddressValidationStatus('valid');
+      }
+    } else {
+      // If any address field is empty, show validation error
+      setAddressValidationStatus('invalid');
+      setValidationMessage('Please complete all address fields');
+      return; // Prevent submission with incomplete address
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -143,8 +227,8 @@ const AssessYourCommunity = () => {
           mapSection.scrollIntoView({ behavior: 'smooth' });
         }
       }, 300);
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    } catch (err) {
+      console.error('Error submitting form:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -168,61 +252,170 @@ const AssessYourCommunity = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label htmlFor="address" className="block text-sm font-medium">
-                  Address<span className="text-red-500">*</span>
+                <label htmlFor="street" className="block text-sm font-medium">
+                  Street Address<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address || ''}
+                  id="street"
+                  name="street"
+                  value={formData.street || ''}
                   onChange={handleParentInfoChange}
-                  placeholder="Enter your full address"
+                  placeholder="Enter your street address"
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className={`w-full px-4 py-2 border ${addressValidationStatus === 'invalid' ? 'border-red-500' : 'border-gray-300'} rounded-md focus:ring-2 focus:ring-primary focus:border-transparent`}
                 />
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="income" className="block text-sm font-medium">
-                  Annual Household Income<span className="text-red-500">*</span>
+                <label htmlFor="city" className="block text-sm font-medium">
+                  City<span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <select
-                    id="income"
-                    name="income"
-                    value={formData.income || ''}
-                    onChange={handleParentInfoChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md appearance-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="">Select income range</option>
-                    <option value="<25k">Less than $25,000</option>
-                    <option value="25-50k">$25,000 - $50,000</option>
-                    <option value="50-75k">$50,000 - $75,000</option>
-                    <option value="75-100k">$75,000 - $100,000</option>
-                    <option value=">100k">More than $100,000</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                    <FaChevronDown className="text-gray-400" />
+                <input
+                  type="text"
+                  id="city"
+                  name="city"
+                  value={formData.city || ''}
+                  onChange={handleParentInfoChange}
+                  placeholder="Enter your city"
+                  required
+                  className={`w-full px-4 py-2 border ${addressValidationStatus === 'invalid' ? 'border-red-500' : 'border-gray-300'} rounded-md focus:ring-2 focus:ring-primary focus:border-transparent`}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="state" className="block text-sm font-medium">
+                  State<span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="state"
+                  name="state"
+                  value={formData.state || ''}
+                  onChange={handleParentInfoChange}
+                  required
+                  className={`w-full px-4 py-2 border ${addressValidationStatus === 'invalid' ? 'border-red-500' : 'border-gray-300'} rounded-md appearance-none focus:ring-2 focus:ring-primary focus:border-transparent`}
+                >
+                  <option value="">Select state</option>
+                  <option value="AL">Alabama</option>
+                  <option value="AK">Alaska</option>
+                  <option value="AZ">Arizona</option>
+                  <option value="AR">Arkansas</option>
+                  <option value="CA">California</option>
+                  <option value="CO">Colorado</option>
+                  <option value="CT">Connecticut</option>
+                  <option value="DE">Delaware</option>
+                  <option value="FL">Florida</option>
+                  <option value="GA">Georgia</option>
+                  <option value="HI">Hawaii</option>
+                  <option value="ID">Idaho</option>
+                  <option value="IL">Illinois</option>
+                  <option value="IN">Indiana</option>
+                  <option value="IA">Iowa</option>
+                  <option value="KS">Kansas</option>
+                  <option value="KY">Kentucky</option>
+                  <option value="LA">Louisiana</option>
+                  <option value="ME">Maine</option>
+                  <option value="MD">Maryland</option>
+                  <option value="MA">Massachusetts</option>
+                  <option value="MI">Michigan</option>
+                  <option value="MN">Minnesota</option>
+                  <option value="MS">Mississippi</option>
+                  <option value="MO">Missouri</option>
+                  <option value="MT">Montana</option>
+                  <option value="NE">Nebraska</option>
+                  <option value="NV">Nevada</option>
+                  <option value="NH">New Hampshire</option>
+                  <option value="NJ">New Jersey</option>
+                  <option value="NM">New Mexico</option>
+                  <option value="NY">New York</option>
+                  <option value="NC">North Carolina</option>
+                  <option value="ND">North Dakota</option>
+                  <option value="OH">Ohio</option>
+                  <option value="OK">Oklahoma</option>
+                  <option value="OR">Oregon</option>
+                  <option value="PA">Pennsylvania</option>
+                  <option value="RI">Rhode Island</option>
+                  <option value="SC">South Carolina</option>
+                  <option value="SD">South Dakota</option>
+                  <option value="TN">Tennessee</option>
+                  <option value="TX">Texas</option>
+                  <option value="UT">Utah</option>
+                  <option value="VT">Vermont</option>
+                  <option value="VA">Virginia</option>
+                  <option value="WA">Washington</option>
+                  <option value="WV">West Virginia</option>
+                  <option value="WI">Wisconsin</option>
+                  <option value="WY">Wyoming</option>
+                </select>
+              </div>
+            </div>
+            
+            {/* Address validation message */}
+            {addressValidationStatus !== 'idle' && (
+              <div className={`mt-2 ${addressValidationStatus === 'valid' ? 'text-green-600' : addressValidationStatus === 'invalid' ? 'text-red-600' : 'text-gray-600'} text-sm flex items-center`}>
+                {addressValidationStatus === 'validating' ? (
+                  <div className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Validating address...
                   </div>
+                ) : addressValidationStatus === 'invalid' ? (
+                  <div className="flex items-center">
+                    <FaExclamationTriangle className="mr-2" />
+                    {validationMessage}
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {validationMessage}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <label htmlFor="income" className="block text-sm font-medium">
+                Annual Household Income<span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  id="income"
+                  name="income"
+                  value={formData.income || ''}
+                  onChange={handleParentInfoChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md appearance-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="">Select income range</option>
+                  <option value="<25k">Less than $25,000</option>
+                  <option value="25-50k">$25,000 - $50,000</option>
+                  <option value="50-75k">$50,000 - $75,000</option>
+                  <option value="75-100k">$75,000 - $100,000</option>
+                  <option value=">100k">More than $100,000</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <FaChevronDown className="text-gray-400" />
                 </div>
               </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="country" className="block text-sm font-medium">
-                  Country of Origin (Optional)
-                </label>
-                <input
-                  type="text"
-                  id="country"
-                  name="country"
-                  value={formData.country || ''}
-                  onChange={handleParentInfoChange}
-                  placeholder="Enter country"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="country" className="block text-sm font-medium">
+                Country of Origin (Optional)
+              </label>
+              <input
+                type="text"
+                id="country"
+                name="country"
+                value={formData.country || ''}
+                onChange={handleParentInfoChange}
+                placeholder="Enter country"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
             </div>
           </div>
           
