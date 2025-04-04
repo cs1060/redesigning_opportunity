@@ -5,6 +5,7 @@ import Welcome from '../components/Welcome'
 import PersonalizationQuiz, { usePersonalization } from '../components/AssessQuiz'
 import OpportunityMap from '../components/OpportunityMap'
 import TakeAction from '@/components/action-plan/ActionPlan'
+import NextSteps from '../components/NextSteps'
 import { PersonalizationProvider } from '../components/AssessQuiz'
 import CommunityConnections from '../components/CommunityConnections'
 
@@ -102,6 +103,12 @@ function HomeContent({
       <section className="bg-gray-100 w-full">
         <div className="container mx-auto">
           <TakeAction onSaveActionAndChoices={handleActionAndChoicesSave} />
+        </div>
+      </section>
+
+      <section className="bg-white w-full">
+        <div className="container mx-auto">
+          <NextSteps selectedAction={selectedAction} savedChoices={savedChoices} />
         </div>
       </section>
 
