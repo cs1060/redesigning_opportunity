@@ -5,6 +5,7 @@ import Welcome from '../components/Welcome'
 import PersonalizationQuiz, { usePersonalization } from '../components/AssessQuiz'
 import OpportunityMap from '../components/OpportunityMap'
 import TakeAction from '@/components/action-plan/ActionPlan'
+import NextSteps from '../components/NextSteps'
 import { PersonalizationProvider } from '../components/AssessQuiz'
 import CommunityConnections from '../components/CommunityConnections'
 
@@ -23,7 +24,7 @@ function Home() {
   const [savedChoices, setSavedChoices] = useState<SavedChoices | null>(null)
   
   // Function to receive action and choices from TakeAction component
-  const handleActionAndChoicesSave = (action: 'stay' | 'move', choices: SavedChoices) => {
+  const handleActionAndChoicesSave = (action: 'stay' | 'move', choices: SavedChoices | null) => {
     setSelectedAction(action)
     setSavedChoices(choices)
   }
@@ -74,7 +75,7 @@ function HomeContent({
 }: { 
   selectedAction: 'stay' | 'move' | null;
   savedChoices: SavedChoices | null;
-  handleActionAndChoicesSave: (action: 'stay' | 'move', choices: SavedChoices) => void;
+  handleActionAndChoicesSave: (action: 'stay' | 'move', choices: SavedChoices | null) => void;
 }) {
   // Now we can use the personalization context
   const { data } = usePersonalization();
@@ -102,6 +103,16 @@ function HomeContent({
       <section className="bg-gray-100 w-full">
         <div className="container mx-auto">
           <TakeAction onSaveActionAndChoices={handleActionAndChoicesSave} />
+        </div>
+      </section>
+
+      <section className="bg-white w-full">
+        <div className="container mx-auto">
+          <NextSteps 
+            key={selectedAction} 
+            selectedAction={selectedAction} 
+            savedChoices={savedChoices} 
+          />
         </div>
       </section>
 
