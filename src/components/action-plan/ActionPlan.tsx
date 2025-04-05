@@ -13,7 +13,7 @@ interface SavedChoices {
 }
 
 interface TakeActionProps {
-  onSaveActionAndChoices?: (action: 'stay' | 'move', choices: SavedChoices) => void;
+  onSaveActionAndChoices?: (action: 'stay' | 'move', choices: SavedChoices | null) => void;
 }
 
 const TakeAction: React.FC<TakeActionProps> = ({ onSaveActionAndChoices }) => {
@@ -24,6 +24,16 @@ const TakeAction: React.FC<TakeActionProps> = ({ onSaveActionAndChoices }) => {
   const { data: assessmentData } = useAssessment()
   
   const handleActionSelect = (action: 'stay' | 'move') => {
+    // Reset saved choices when action changes
+    if (action !== selectedAction) {
+      setSavedChoices(null)
+      
+      // Pass null to parent component to ensure NextSteps resets completely
+      if (onSaveActionAndChoices) {
+        // Reset the parent component state completely
+        onSaveActionAndChoices(action, null);
+      }
+    }
     setSelectedAction(action)
   }
   
