@@ -26,7 +26,7 @@ export default function RootLayout({
   
   return (
     <html lang={locale} className={nunito.variable}>
-      <body className="font-nunito">
+      <body className="font-nunito" suppressHydrationWarning={true}>
         {children}
       </body>
     </html>

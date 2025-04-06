@@ -8,7 +8,7 @@ type Props = {
 
 // Define supported locales
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'es' }]; // Add all supported locales here
+  return [{ locale: 'en' }, { locale: 'es' }, { locale: 'fr' }]; // All supported locales
 }
 
 // Helper function to load messages
@@ -24,11 +24,8 @@ async function loadMessages(locale: string) {
 // Main layout component (Server Component)
 export default async function LocaleLayout({
   children,
-  params
+  params: { locale }
 }: Props) {
-  // Get the locale string from the params object
-  const locale = params.locale;
-  
   // Load messages dynamically using the helper function
   const messages = await loadMessages(locale);
   

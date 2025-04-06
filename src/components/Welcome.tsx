@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 
 const Welcome = () => {
   const t = useTranslations('welcome');
-  
+
   return (
     <div id="welcome" className="min-h-screen flex flex-col items-center justify-center text-center px-4 pt-20 pb-10">
       <div className="max-w-4xl mx-auto">
@@ -22,8 +22,8 @@ const Welcome = () => {
         </div>
         
         <div className="mt-8 mb-12 space-y-2">
-          <p className="text-xl font-semibold">{t('journey')}</p>
-          <p className="text-xl font-semibold">{t('step')}</p>
+          <p className="text-xl font-semibold">{t('journey1')}</p>
+          <p className="text-xl font-semibold">{t('journey2')}</p>
         </div>
         
         <div 
@@ -46,7 +46,7 @@ const Welcome = () => {
             }
           }}
         >
-          {<FaChevronDown className="mx-auto" />}
+          <FaChevronDown className="mx-auto" />
         </div>
       </div>
     </div>

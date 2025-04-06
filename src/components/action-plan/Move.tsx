@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
-import { School, Home, Briefcase } from 'lucide-react'
+import { School, Home } from 'lucide-react'
 import { useAssessment, AssessData } from '../AssessQuiz'
 import { MapOnly } from '../OpportunityMap'
 import { useTranslations } from 'next-intl'
@@ -52,6 +52,7 @@ type EducationLevel = {
 type ReligiousGroup = {
   religion: string;
   percentage: number;
+  displayName?: string;
 };
 
 type CommunityDemographics = {
@@ -71,20 +72,6 @@ type HousingOption = {
   suitability?: number; // New field for family suitability score (1-5)
 };
 
-type JobResource = {
-  name: string;
-  url: string;
-  description: string;
-};
-
-type JobOpportunity = {
-  sector: string;
-  growthRate: number;
-  medianSalary: number;
-  description: string;
-  resources: JobResource[];
-};
-
 type MoveRecommendations = {
   townData: TownData;
   neighborhoodData: NeighborhoodData;
@@ -92,7 +79,6 @@ type MoveRecommendations = {
   communityProgramData: CommunityProgramData[];
   communityDemographics: CommunityDemographics;
   housingOptions: HousingOption[];
-  jobOpportunities: JobOpportunity[];
 };
 
 // Default data to use as fallback
@@ -109,62 +95,6 @@ const defaultRecommendations: MoveRecommendations = {
       { name: 'Greenwood Estates', score: 8.5, description: 'Quiet suburban neighborhood with parks' }
     ]
   },
-  jobOpportunities: [
-    {
-      sector: 'Technology',
-      growthRate: 0.145,
-      medianSalary: 95000,
-      description: 'The technology sector in this area is experiencing rapid growth with opportunities in software development, data science, and IT management. Many tech companies are expanding their operations here.',
-      resources: [
-        {
-          name: 'Tech Connect',
-          url: 'https://www.techconnect.org',
-          description: 'Local tech industry networking and job placement service'
-        },
-        {
-          name: 'Code Academy',
-          url: 'https://www.codeacademy.com',
-          description: 'Online and in-person coding bootcamps and certification programs'
-        }
-      ]
-    },
-    {
-      sector: 'Healthcare',
-      growthRate: 0.128,
-      medianSalary: 78000,
-      description: 'Healthcare is a stable and growing industry in the region with opportunities in nursing, medical technology, and healthcare administration. The area has several major hospitals and medical centers.',
-      resources: [
-        {
-          name: 'Healthcare Professionals Network',
-          url: 'https://www.healthcareprofessionals.org',
-          description: 'Career resources and job listings for healthcare workers'
-        },
-        {
-          name: 'Medical Training Institute',
-          url: 'https://www.medicaltraining.edu',
-          description: 'Certificate and degree programs in healthcare fields'
-        }
-      ]
-    },
-    {
-      sector: 'Education',
-      growthRate: 0.082,
-      medianSalary: 65000,
-      description: 'The education sector offers stable employment with the area\'s excellent school system and nearby colleges. Opportunities exist for teachers, administrators, and support staff.',
-      resources: [
-        {
-          name: 'Educators Association',
-          url: 'https://www.educatorsassociation.org',
-          description: 'Professional development and job placement for educators'
-        },
-        {
-          name: 'Teaching Certification Program',
-          url: 'https://www.teachcert.edu',
-          description: 'Fast-track certification programs for career-changers entering education'
-        }
-      ]
-    }
-  ],
   schoolData: [
     {
       name: 'Arlington Elementary',
@@ -475,43 +405,8 @@ const generatePersonalizedAdvice = (assessmentData: AssessData | undefined): str
   return advice.join(' ');
 };
 
-// Generate job opportunity advice based on income level and family situation
-const generateJobOpportunityAdvice = (assessmentData: AssessData | undefined): string => {
-  if (!assessmentData) return '';
-  
-  const advice = [];
-  
-  // Age-specific advice for job opportunities
-  const hasYoungChild = assessmentData.children?.some(child => parseInt(child.age) <= 10);
-  
-  // Income-based career advice
-  const lowerIncome = assessmentData.income === '<25k' || assessmentData.income === '25-50k';
-  const midIncome = assessmentData.income === '50-75k' || assessmentData.income === '75-100k';
-  const higherIncome = assessmentData.income === '>100k';
-  
-  if (lowerIncome) {
-    advice.push("Consider exploring career advancement opportunities in growing sectors like healthcare and technology. Many entry-level positions offer training programs and pathways for advancement.");
-    if (hasYoungChild) {
-      advice.push("Look for employers that offer flexible schedules or childcare assistance programs.");
-    }
-  } else if (midIncome) {
-    advice.push("This area offers mid-level career opportunities with potential for growth. Consider specialized training or certification programs to enhance your earning potential.");
-    if (assessmentData.children && assessmentData.children.length > 0) {
-      advice.push("Many employers in this region offer family-friendly policies and benefits.");
-    }
-  } else if (higherIncome) {
-    advice.push("This region offers excellent opportunities for senior professionals and specialists. Consider consulting or entrepreneurial ventures that leverage your expertise.");
-    if (assessmentData.children && assessmentData.children.length > 0) {
-      advice.push("Many high-level positions in this area offer flexibility and comprehensive family benefits.");
-    }
-  }
-  
-  // Return the personalized job advice
-  return advice.join(' ');
-};
-
 const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
-  const t = useTranslations();
+  const t = useTranslations('move');
   const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
   const [selectedCommunityPrograms, setSelectedCommunityPrograms] = useState<string[]>([]);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null);
@@ -686,9 +581,6 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             ? recommendationsData.neighborhoodData.topNeighborhoods 
             : defaultRecommendations.neighborhoodData.topNeighborhoods
         },
-        jobOpportunities: Array.isArray(recommendationsData.jobOpportunities)
-          ? recommendationsData.jobOpportunities
-          : defaultRecommendations.jobOpportunities,
         schoolData: Array.isArray(recommendationsData.schoolData) 
           ? recommendationsData.schoolData.map(inferSchoolType)
           : defaultRecommendations.schoolData,
@@ -921,7 +813,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                         <div className="flex justify-between items-center">
                           <h4 className="text-xl font-semibold">{neighborhood.name}</h4>
                           <div className="flex items-center">
-                            <span className="text-sm mr-2">Opportunity Score:</span>
+                            <span className="text-sm mr-2">{t('opportunityScore')}:</span>
                             <span className="bg-[#6CD9CA] text-white font-bold px-2 py-1 rounded-md">{neighborhood.score}/10</span>
                           </div>
                         </div>
@@ -932,7 +824,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
 
                   {selectedNeighborhood && (
                     <p className="mt-4 text-lg font-semibold">
-                      {selectedNeighborhood} looks like a great neighborhood for your family!
+                      {t('neighborhoodSelected', {neighborhood: selectedNeighborhood})}
                     </p>
                   )}
                 </div>
@@ -943,8 +835,8 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           {/* Local Schools */}
           {!loading && filteredSchools.length > 0 && (
             <div className="bg-white shadow-md rounded-lg p-6">
-              <h3 className="text-2xl font-semibold mb-4">Local Schools</h3>
-              <p className="mb-1">Select a school that would be a good option:</p>
+              <h3 className="text-2xl font-semibold mb-4">{t('localSchools')}</h3>
+              <p className="mb-1">{t('selectSchool')}</p>
               <p className="mb-4 text-sm text-gray-600">{getSchoolLevelMessage(userData)}</p>
               
               <div className="space-y-4">
@@ -1064,12 +956,16 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           {/* Community Demographics */}
           {!loading && recommendations?.communityDemographics && (
             <div className="bg-white shadow-md rounded-lg p-6">
-              <h3 className="text-2xl font-semibold mb-6 text-center">Community Demographics</h3>
+              <h3 className="text-2xl font-semibold mb-6 text-center">{t('communityDemographics')}</h3>
               
               {/* ZIP Code Header */}
               {zipCode && (
                 <h4 className="text-xl text-center mb-8">
-                  In {zipCode}, {recommendations.communityDemographics.ethnicComposition.sort((a, b) => b.percentage - a.percentage)[0].group} make up the largest group at {recommendations.communityDemographics.ethnicComposition.sort((a, b) => b.percentage - a.percentage)[0].percentage}% of the population.
+                  {t('inZipCode', {
+                    zipCode,
+                    group: recommendations.communityDemographics.ethnicComposition.sort((a, b) => b.percentage - a.percentage)[0].group,
+                    percentage: recommendations.communityDemographics.ethnicComposition.sort((a, b) => b.percentage - a.percentage)[0].percentage
+                  })}
                 </h4>
               )}
               
@@ -1136,26 +1032,32 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                             case "christian": 
                               iconColor = "text-[#34687e]"; // accent11
                               iconPath = "M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z";
+                              religionData.displayName = "Christian";
                               break;
                             case "jewish": 
                               iconColor = "text-[#4f7f8b]"; // accent10
+                              religionData.displayName = "Jewish";
                               iconPath = "M12 22l-3.5-6.5L2 12l6.5-3.5L12 2l3.5 6.5L22 12l-6.5 3.5L12 22z";
                               break;
                             case "muslim": 
                               iconColor = "text-[#729d9d]"; // accent9
                               iconPath = "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-18a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12zm-3-6a3 3 0 106 0 3 3 0 00-6 0z";
+                              religionData.displayName = "Muslim";
                               break;
                             case "hindu": 
                               iconColor = "text-[#d07e59]"; // accent3
                               iconPath = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7v-2z";
+                              religionData.displayName = "Hindu";
                               break;
                             case "non-religious": 
                               iconColor = "text-[#9dbda9]"; // accent8
                               iconPath = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z";
+                              religionData.displayName = "Non-Religious";
                               break;
                             default: 
                               iconColor = "text-[#b65441]"; // accent2
                               iconPath = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z";
+                              religionData.displayName = religionData.religion;
                           }
                         }
                         
@@ -1167,7 +1069,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                               </svg>
                             </div>
                             <div className="text-center">
-                              <div className="font-medium">{religionData.religion}</div>
+                              <div className="font-medium">{religionData.displayName || religionData.religion}</div>
                               <div className="text-xl font-bold">{religionData.percentage}%</div>
                             </div>
                           </div>
@@ -1203,132 +1105,33 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                   <h4 className="text-xl font-semibold mb-4">Education Levels</h4>
                   <div className="space-y-2">
                     {Array.isArray(recommendations.communityDemographics.educationLevel) && 
-                      recommendations.communityDemographics.educationLevel.map((level) => (
-                        <div key={level.level} className="flex justify-between">
-                          <span>{level.level}</span>
-                          <span>{level.percentage}%</span>
-                        </div>
-                      ))}
+                      recommendations.communityDemographics.educationLevel.map((level) => {
+                        let translationKey = '';
+                        switch(level.level) {
+                          case "Bachelor's or higher":
+                            translationKey = 'bachelorsOrHigher';
+                            break;
+                          case "Some College":
+                            translationKey = 'someCollege';
+                            break;
+                          case "High School":
+                            translationKey = 'highSchool';
+                            break;
+                          case "Less than High School":
+                            translationKey = 'lessThanHighSchool';
+                            break;
+                          default:
+                            translationKey = '';
+                        }
+                        return (
+                          <div key={level.level} className="flex justify-between">
+                            <span>{translationKey ? t(translationKey) : level.level}</span>
+                            <span>{level.percentage}%</span>
+                          </div>
+                        );
+                      })}
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Job Opportunities */}
-          {!loading && recommendations?.jobOpportunities && (
-            <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-              <h3 className="text-2xl font-semibold mb-6 text-center">{t('jobOpportunities.title')}</h3>
-              <p className="mb-6 text-center">{t('jobOpportunities.subtitle')}</p>
-              
-              {/* Personalized Job Advice */}
-              {assessmentData && (
-                <div className="mb-8 p-4 border border-[#6CD9CA] border-opacity-50 rounded-lg bg-[#6CD9CA] bg-opacity-5">
-                  <h4 className="text-xl font-semibold mb-2 text-[#6CD9CA]">{t('common.learnMore')}</h4>
-                  <p>{generateJobOpportunityAdvice(assessmentData)}</p>
-                </div>
-              )}
-              
-              {/* Job Sectors */}
-              <div className="grid md:grid-cols-3 gap-6 mb-8">
-                {recommendations.jobOpportunities.map((job) => (
-                  <div 
-                    key={job.sector}
-                    className="border rounded-lg p-4 transition-all duration-300 hover:border-[#6CD9CA] hover:shadow-md"
-                  >
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-xl font-semibold">
-                        {job.sector === 'Technology' ? t('jobOpportunities.sectors.technology') :
-                         job.sector === 'Healthcare' ? t('jobOpportunities.sectors.healthcare') :
-                         job.sector === 'Education' ? t('jobOpportunities.sectors.education') : job.sector}
-                      </h4>
-                      <Briefcase className="text-[#6CD9CA]" size={20} />
-                    </div>
-                    
-                    <div className="space-y-2 text-gray-700 mb-4">
-                      <p><strong>{t('jobOpportunities.growthRate')}:</strong> {job.growthRate}%</p>
-                      <p><strong>{t('jobOpportunities.medianSalary')}:</strong> ${job.medianSalary.toLocaleString()}</p>
-                      <p>{job.description}</p>
-                    </div>
-                    
-                    {job.resources && job.resources.length > 0 && (
-                      <div>
-                        <h5 className="font-medium mb-2">{t('jobOpportunities.resources')}</h5>
-                        <div className="space-y-2">
-                          {job.resources.map((resource) => (
-                            <a 
-                              key={resource.name}
-                              href={resource.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block p-2 border border-gray-200 rounded hover:bg-gray-50 hover:border-[#6CD9CA] transition-colors"
-                            >
-                              <div className="font-medium">{resource.name}</div>
-                              <div className="text-sm text-gray-600">{resource.description}</div>
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Major Job Search Platforms */}
-              <h4 className="text-xl font-semibold mb-6 text-center">{t('common.search')}</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <a 
-                  href="https://www.linkedin.com/jobs" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
-                >
-                  <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">LinkedIn</span>
-                </a>
-                <a 
-                  href="https://www.indeed.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
-                >
-                  <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Indeed</span>
-                </a>
-                <a 
-                  href="https://www.glassdoor.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
-                >
-                  <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                    </svg>
-                  </div>
-                  <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Glassdoor</span>
-                </a>
-                <a 
-                  href="https://www.usajobs.gov" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
-                >
-                  <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  </div>
-                  <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">USAJobs</span>
-                </a>
               </div>
             </div>
           )}
@@ -1336,8 +1139,8 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           {/* Housing Options - UPDATED WITH SELECTION */}
           {!loading && filteredHousingOptions.length > 0 && (
             <div className="bg-white shadow-md rounded-lg p-6">
-              <h3 className="text-2xl font-semibold mb-6 text-center">Housing Options</h3>
-              <p className="mb-4 text-center">Select a housing type you&apos;re interested in:</p>
+              <h3 className="text-2xl font-semibold mb-6 text-center">{t('housingOptions')}</h3>
+              <p className="mb-4 text-center">{t('selectHousingType')}</p>
               
               <div className="grid md:grid-cols-3 gap-6 mb-8">
                 {filteredHousingOptions.map((option) => (
