@@ -1,0 +1,61 @@
+{
+  "welcome": {
+    "title": "Building Your Child's Future",
+    "subtitle": "A friendly guide to creating opportunities for your family!",
+    "discover": "Discover the best places to live",
+    "search": "Search for the best schools",
+    "find": "Find local resources and community programs",
+    "journey": "Let's take this journey together",
+    "step": "one step at a time"
+  },
+  "navbar": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "quiz": {
+    "title": "Tell us about your family",
+    "subtitle": "Let's personalize your experience"
+  },
+  "map": {
+    "title": "Opportunity Map",
+    "subtitle": "Explore opportunities in your area"
+  },
+  "actionPlan": {
+    "title": "Take Action",
+    "stay": "Stay",
+    "move": "Move"
+  },
+  "nextSteps": {
+    "title": "Next Steps",
+    "subtitle": "Here's what you can do next"
+  },
+  "community": {
+    "title": "Community Connections",
+    "subtitle": "Connect with your community"
+  },
+  "jobOpportunities": {
+    "title": "Job Opportunities",
+    "subtitle": "Explore career options in your area",
+    "sectors": {
+      "technology": "Technology",
+      "healthcare": "Healthcare",
+      "education": "Education"
+    },
+    "growthRate": "Growth Rate",
+    "medianSalary": "Median Salary",
+    "resources": "Career Resources"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "submit": "Submit",
+    "next": "Next",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "select": "Select",
+    "search": "Search",
+    "learnMore": "Learn More"
+  }
+}

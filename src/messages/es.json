@@ -1,0 +1,61 @@
+{
+  "welcome": {
+    "title": "Construyendo el Futuro de tu Hijo",
+    "subtitle": "¡Una guía amigable para crear oportunidades para tu familia!",
+    "discover": "Descubre los mejores lugares para vivir",
+    "search": "Busca las mejores escuelas",
+    "find": "Encuentra recursos locales y programas comunitarios",
+    "journey": "Tomemos este viaje juntos",
+    "step": "un paso a la vez"
+  },
+  "navbar": {
+    "home": "Inicio",
+    "about": "Acerca de",
+    "contact": "Contacto"
+  },
+  "quiz": {
+    "title": "Cuéntanos sobre tu familia",
+    "subtitle": "Personalicemos tu experiencia"
+  },
+  "map": {
+    "title": "Mapa de Oportunidades",
+    "subtitle": "Explora oportunidades en tu área"
+  },
+  "actionPlan": {
+    "title": "Tomar Acción",
+    "stay": "Quedarse",
+    "move": "Mudarse"
+  },
+  "nextSteps": {
+    "title": "Próximos Pasos",
+    "subtitle": "Esto es lo que puedes hacer a continuación"
+  },
+  "community": {
+    "title": "Conexiones Comunitarias",
+    "subtitle": "Conéctate con tu comunidad"
+  },
+  "jobOpportunities": {
+    "title": "Oportunidades de Empleo",
+    "subtitle": "Explora opciones de carrera en tu área",
+    "sectors": {
+      "technology": "Tecnología",
+      "healthcare": "Salud",
+      "education": "Educación"
+    },
+    "growthRate": "Tasa de Crecimiento",
+    "medianSalary": "Salario Medio",
+    "resources": "Recursos de Carrera"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "submit": "Enviar",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "select": "Seleccionar",
+    "search": "Buscar",
+    "learnMore": "Saber Más"
+  }
+}

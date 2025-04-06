@@ -1,8 +1,9 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
-import { School, Home } from 'lucide-react'
+import { School, Home, Briefcase } from 'lucide-react'
 import { useAssessment, AssessData } from '../AssessQuiz'
 import { MapOnly } from '../OpportunityMap'
+import { useTranslations } from 'next-intl'
 
 // Define types for the recommendations data
 type TownData = {
@@ -70,6 +71,20 @@ type HousingOption = {
   suitability?: number; // New field for family suitability score (1-5)
 };
 
+type JobResource = {
+  name: string;
+  url: string;
+  description: string;
+};
+
+type JobOpportunity = {
+  sector: string;
+  growthRate: number;
+  medianSalary: number;
+  description: string;
+  resources: JobResource[];
+};
+
 type MoveRecommendations = {
   townData: TownData;
   neighborhoodData: NeighborhoodData;
@@ -77,6 +92,7 @@ type MoveRecommendations = {
   communityProgramData: CommunityProgramData[];
   communityDemographics: CommunityDemographics;
   housingOptions: HousingOption[];
+  jobOpportunities: JobOpportunity[];
 };
 
 // Default data to use as fallback
@@ -93,6 +109,62 @@ const defaultRecommendations: MoveRecommendations = {
       { name: 'Greenwood Estates', score: 8.5, description: 'Quiet suburban neighborhood with parks' }
     ]
   },
+  jobOpportunities: [
+    {
+      sector: 'Technology',
+      growthRate: 0.145,
+      medianSalary: 95000,
+      description: 'The technology sector in this area is experiencing rapid growth with opportunities in software development, data science, and IT management. Many tech companies are expanding their operations here.',
+      resources: [
+        {
+          name: 'Tech Connect',
+          url: 'https://www.techconnect.org',
+          description: 'Local tech industry networking and job placement service'
+        },
+        {
+          name: 'Code Academy',
+          url: 'https://www.codeacademy.com',
+          description: 'Online and in-person coding bootcamps and certification programs'
+        }
+      ]
+    },
+    {
+      sector: 'Healthcare',
+      growthRate: 0.128,
+      medianSalary: 78000,
+      description: 'Healthcare is a stable and growing industry in the region with opportunities in nursing, medical technology, and healthcare administration. The area has several major hospitals and medical centers.',
+      resources: [
+        {
+          name: 'Healthcare Professionals Network',
+          url: 'https://www.healthcareprofessionals.org',
+          description: 'Career resources and job listings for healthcare workers'
+        },
+        {
+          name: 'Medical Training Institute',
+          url: 'https://www.medicaltraining.edu',
+          description: 'Certificate and degree programs in healthcare fields'
+        }
+      ]
+    },
+    {
+      sector: 'Education',
+      growthRate: 0.082,
+      medianSalary: 65000,
+      description: 'The education sector offers stable employment with the area\'s excellent school system and nearby colleges. Opportunities exist for teachers, administrators, and support staff.',
+      resources: [
+        {
+          name: 'Educators Association',
+          url: 'https://www.educatorsassociation.org',
+          description: 'Professional development and job placement for educators'
+        },
+        {
+          name: 'Teaching Certification Program',
+          url: 'https://www.teachcert.edu',
+          description: 'Fast-track certification programs for career-changers entering education'
+        }
+      ]
+    }
+  ],
   schoolData: [
     {
       name: 'Arlington Elementary',
@@ -403,7 +475,43 @@ const generatePersonalizedAdvice = (assessmentData: AssessData | undefined): str
   return advice.join(' ');
 };
 
+// Generate job opportunity advice based on income level and family situation
+const generateJobOpportunityAdvice = (assessmentData: AssessData | undefined): string => {
+  if (!assessmentData) return '';
+  
+  const advice = [];
+  
+  // Age-specific advice for job opportunities
+  const hasYoungChild = assessmentData.children?.some(child => parseInt(child.age) <= 10);
+  
+  // Income-based career advice
+  const lowerIncome = assessmentData.income === '<25k' || assessmentData.income === '25-50k';
+  const midIncome = assessmentData.income === '50-75k' || assessmentData.income === '75-100k';
+  const higherIncome = assessmentData.income === '>100k';
+  
+  if (lowerIncome) {
+    advice.push("Consider exploring career advancement opportunities in growing sectors like healthcare and technology. Many entry-level positions offer training programs and pathways for advancement.");
+    if (hasYoungChild) {
+      advice.push("Look for employers that offer flexible schedules or childcare assistance programs.");
+    }
+  } else if (midIncome) {
+    advice.push("This area offers mid-level career opportunities with potential for growth. Consider specialized training or certification programs to enhance your earning potential.");
+    if (assessmentData.children && assessmentData.children.length > 0) {
+      advice.push("Many employers in this region offer family-friendly policies and benefits.");
+    }
+  } else if (higherIncome) {
+    advice.push("This region offers excellent opportunities for senior professionals and specialists. Consider consulting or entrepreneurial ventures that leverage your expertise.");
+    if (assessmentData.children && assessmentData.children.length > 0) {
+      advice.push("Many high-level positions in this area offer flexibility and comprehensive family benefits.");
+    }
+  }
+  
+  // Return the personalized job advice
+  return advice.join(' ');
+};
+
 const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
+  const t = useTranslations();
   const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
   const [selectedCommunityPrograms, setSelectedCommunityPrograms] = useState<string[]>([]);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null);
@@ -578,6 +686,9 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             ? recommendationsData.neighborhoodData.topNeighborhoods 
             : defaultRecommendations.neighborhoodData.topNeighborhoods
         },
+        jobOpportunities: Array.isArray(recommendationsData.jobOpportunities)
+          ? recommendationsData.jobOpportunities
+          : defaultRecommendations.jobOpportunities,
         schoolData: Array.isArray(recommendationsData.schoolData) 
           ? recommendationsData.schoolData.map(inferSchoolType)
           : defaultRecommendations.schoolData,
@@ -1100,6 +1211,124 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                       ))}
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Job Opportunities */}
+          {!loading && recommendations?.jobOpportunities && (
+            <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+              <h3 className="text-2xl font-semibold mb-6 text-center">{t('jobOpportunities.title')}</h3>
+              <p className="mb-6 text-center">{t('jobOpportunities.subtitle')}</p>
+              
+              {/* Personalized Job Advice */}
+              {assessmentData && (
+                <div className="mb-8 p-4 border border-[#6CD9CA] border-opacity-50 rounded-lg bg-[#6CD9CA] bg-opacity-5">
+                  <h4 className="text-xl font-semibold mb-2 text-[#6CD9CA]">{t('common.learnMore')}</h4>
+                  <p>{generateJobOpportunityAdvice(assessmentData)}</p>
+                </div>
+              )}
+              
+              {/* Job Sectors */}
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
+                {recommendations.jobOpportunities.map((job) => (
+                  <div 
+                    key={job.sector}
+                    className="border rounded-lg p-4 transition-all duration-300 hover:border-[#6CD9CA] hover:shadow-md"
+                  >
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-xl font-semibold">
+                        {job.sector === 'Technology' ? t('jobOpportunities.sectors.technology') :
+                         job.sector === 'Healthcare' ? t('jobOpportunities.sectors.healthcare') :
+                         job.sector === 'Education' ? t('jobOpportunities.sectors.education') : job.sector}
+                      </h4>
+                      <Briefcase className="text-[#6CD9CA]" size={20} />
+                    </div>
+                    
+                    <div className="space-y-2 text-gray-700 mb-4">
+                      <p><strong>{t('jobOpportunities.growthRate')}:</strong> {job.growthRate}%</p>
+                      <p><strong>{t('jobOpportunities.medianSalary')}:</strong> ${job.medianSalary.toLocaleString()}</p>
+                      <p>{job.description}</p>
+                    </div>
+                    
+                    {job.resources && job.resources.length > 0 && (
+                      <div>
+                        <h5 className="font-medium mb-2">{t('jobOpportunities.resources')}</h5>
+                        <div className="space-y-2">
+                          {job.resources.map((resource) => (
+                            <a 
+                              key={resource.name}
+                              href={resource.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block p-2 border border-gray-200 rounded hover:bg-gray-50 hover:border-[#6CD9CA] transition-colors"
+                            >
+                              <div className="font-medium">{resource.name}</div>
+                              <div className="text-sm text-gray-600">{resource.description}</div>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Major Job Search Platforms */}
+              <h4 className="text-xl font-semibold mb-6 text-center">{t('common.search')}</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <a 
+                  href="https://www.linkedin.com/jobs" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
+                >
+                  <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">LinkedIn</span>
+                </a>
+                <a 
+                  href="https://www.indeed.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
+                >
+                  <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Indeed</span>
+                </a>
+                <a 
+                  href="https://www.glassdoor.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
+                >
+                  <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                    </svg>
+                  </div>
+                  <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Glassdoor</span>
+                </a>
+                <a 
+                  href="https://www.usajobs.gov" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
+                >
+                  <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">USAJobs</span>
+                </a>
               </div>
             </div>
           )}

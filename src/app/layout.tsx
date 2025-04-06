@@ -16,11 +16,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  params
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
+  params?: { locale?: string };
 }) {
+  // Default to 'en' if locale is not available
+  const locale = params?.locale || 'en';
+  
   return (
-    <html lang="en" className={nunito.variable}>
+    <html lang={locale} className={nunito.variable}>
       <body className="font-nunito">
         {children}
       </body>
