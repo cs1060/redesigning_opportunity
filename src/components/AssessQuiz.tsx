@@ -253,7 +253,7 @@ const AssessYourCommunity = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <label htmlFor="street" className="block text-sm font-medium">
-                  Street Address<span className="text-red-500">*</span>
+                  {t('streetAddress')}<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -261,7 +261,7 @@ const AssessYourCommunity = () => {
                   name="street"
                   value={formData.street || ''}
                   onChange={handleParentInfoChange}
-                  placeholder="Enter your street address"
+                  placeholder={t('streetAddressPlaceholder')}
                   required
                   className={`w-full px-4 py-2 border ${addressValidationStatus === 'invalid' ? 'border-red-500' : 'border-gray-300'} rounded-md focus:ring-2 focus:ring-primary focus:border-transparent`}
                 />
@@ -269,7 +269,7 @@ const AssessYourCommunity = () => {
               
               <div className="space-y-2">
                 <label htmlFor="city" className="block text-sm font-medium">
-                  City<span className="text-red-500">*</span>
+                  {t('city')}<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -277,7 +277,7 @@ const AssessYourCommunity = () => {
                   name="city"
                   value={formData.city || ''}
                   onChange={handleParentInfoChange}
-                  placeholder="Enter your city"
+                  placeholder={t('cityPlaceholder')}
                   required
                   className={`w-full px-4 py-2 border ${addressValidationStatus === 'invalid' ? 'border-red-500' : 'border-gray-300'} rounded-md focus:ring-2 focus:ring-primary focus:border-transparent`}
                 />
@@ -285,7 +285,7 @@ const AssessYourCommunity = () => {
 
               <div className="space-y-2">
                 <label htmlFor="state" className="block text-sm font-medium">
-                  State<span className="text-red-500">*</span>
+                  {t('state')}<span className="text-red-500">*</span>
                 </label>
                 <select
                   id="state"
@@ -295,7 +295,7 @@ const AssessYourCommunity = () => {
                   required
                   className={`w-full px-4 py-2 border ${addressValidationStatus === 'invalid' ? 'border-red-500' : 'border-gray-300'} rounded-md appearance-none focus:ring-2 focus:ring-primary focus:border-transparent`}
                 >
-                  <option value="">Select state</option>
+                  <option value="">{t('selectState')}</option>
                   <option value="AL">Alabama</option>
                   <option value="AK">Alaska</option>
                   <option value="AZ">Arizona</option>
@@ -359,19 +359,23 @@ const AssessYourCommunity = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Validating address...
+                    {t('validatingAddress')}
                   </div>
                 ) : addressValidationStatus === 'invalid' ? (
                   <div className="flex items-center">
                     <FaExclamationTriangle className="mr-2" />
-                    {validationMessage}
+                    {validationMessage === 'This address may not exist or could not be found. Please verify your address.' 
+                      ? t('addressNotFound')
+                      : validationMessage === 'Please complete all address fields'
+                      ? t('completeAddressFields')
+                      : validationMessage}
                   </div>
                 ) : (
                   <div className="flex items-center">
                     <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    {validationMessage}
+                    {t('addressValidated')}
                   </div>
                 )}
               </div>
