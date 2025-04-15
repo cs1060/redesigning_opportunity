@@ -72,6 +72,21 @@ type HousingOption = {
   suitability?: number; // New field for family suitability score (1-5)
 };
 
+type JobSector = {
+  name: string;
+  growthRate: number;
+  medianSalary: string;
+  description: string;
+  demandLevel: 'high' | 'medium' | 'low';
+};
+
+type CareerAdvice = {
+  forIncome: string;
+  forFamilySize: string;
+  generalAdvice: string;
+  recommendedSectors: string[];
+};
+
 type MoveRecommendations = {
   townData: TownData;
   neighborhoodData: NeighborhoodData;
@@ -79,6 +94,8 @@ type MoveRecommendations = {
   communityProgramData: CommunityProgramData[];
   communityDemographics: CommunityDemographics;
   housingOptions: HousingOption[];
+  jobSectors?: JobSector[]; // New field for job sectors
+  careerAdvice?: CareerAdvice; // New field for career advice
 };
 
 // Default data to use as fallback
@@ -189,7 +206,43 @@ const defaultRecommendations: MoveRecommendations = {
       description: 'Convenient options with amenities',
       suitability: 2
     }
-  ]
+  ],
+  jobSectors: [
+    {
+      name: 'Healthcare',
+      growthRate: 15,
+      medianSalary: '$75,000',
+      description: 'Healthcare professionals are in high demand across the country, with opportunities in hospitals, clinics, and home care.',
+      demandLevel: 'high'
+    },
+    {
+      name: 'Technology',
+      growthRate: 22,
+      medianSalary: '$92,000',
+      description: 'Software development, IT support, and cybersecurity positions continue to grow rapidly in most urban areas.',
+      demandLevel: 'high'
+    },
+    {
+      name: 'Education',
+      growthRate: 8,
+      medianSalary: '$58,000',
+      description: 'Teaching and educational support roles provide stable employment with good benefits in most communities.',
+      demandLevel: 'medium'
+    },
+    {
+      name: 'Retail & Service',
+      growthRate: 5,
+      medianSalary: '$42,000',
+      description: 'Customer service, retail, and food service positions are widely available but may offer lower wages and fewer benefits.',
+      demandLevel: 'medium'
+    }
+  ],
+  careerAdvice: {
+    forIncome: 'Consider roles that match your current skill set while providing opportunities for advancement.',
+    forFamilySize: 'Look for positions with flexible scheduling and good benefits to support your family needs.',
+    generalAdvice: 'Network within your community and consider additional training to increase your earning potential.',
+    recommendedSectors: ['Healthcare', 'Education']
+  }
 };
 
 interface MoveProps {
@@ -371,6 +424,54 @@ const getSchoolLevelMessage = (assessmentData: AssessData | undefined): string =
   }
 };
 
+// Generate personalized career advice based on the user's specific situation
+const generatePersonalizedCareerAdvice = (assessmentData: AssessData | undefined): CareerAdvice => {
+  if (!assessmentData) return defaultRecommendations.careerAdvice!;
+  
+  const advice: CareerAdvice = {
+    forIncome: '',
+    forFamilySize: '',
+    generalAdvice: '',
+    recommendedSectors: []
+  };
+  
+  // Income-based advice
+  const lowerIncome = assessmentData.income === '<25k' || assessmentData.income === '25-50k';
+  const middleIncome = assessmentData.income === '50-75k' || assessmentData.income === '75-100k';
+  const higherIncome = assessmentData.income === '>100k';
+  
+  if (lowerIncome) {
+    advice.forIncome = 'Focus on stable employment with growth potential. Consider government jobs with good benefits or roles in growing sectors like healthcare support that offer on-the-job training.';
+    advice.recommendedSectors.push('Healthcare', 'Retail & Service');
+  } else if (middleIncome) {
+    advice.forIncome = 'Look for positions that build on your existing skills while offering advancement opportunities. Consider specialized certifications to increase your earning potential.';
+    advice.recommendedSectors.push('Education', 'Technology');
+  } else if (higherIncome) {
+    advice.forIncome = 'Focus on roles that leverage your experience and maximize your earning potential. Consider leadership positions or specialized consulting roles in your field.';
+    advice.recommendedSectors.push('Technology', 'Finance');
+  }
+  
+  // Family size advice
+  const familySize = (assessmentData.children?.length || 0) + 2; // Assuming 2 parents
+  
+  if (familySize <= 3) {
+    advice.forFamilySize = 'With a smaller family, you may have more flexibility to pursue career advancement opportunities, including those requiring additional education or training.';
+  } else if (familySize >= 4) {
+    advice.forFamilySize = 'With a larger family, consider positions with flexible scheduling, comprehensive health benefits, and work-from-home options to balance work and family needs.';
+  }
+  
+  // General advice based on children's ages
+  const hasYoungChild = assessmentData.children?.some(child => parseInt(child.age) <= 10);
+  
+  if (hasYoungChild) {
+    advice.generalAdvice = 'With young children, look for employers offering childcare benefits, flexible scheduling, or remote work options. Consider the school calendar when evaluating job opportunities.';
+  } else {
+    advice.generalAdvice = 'Network within your community and consider additional training or education to increase your earning potential and job security.';
+  }
+  
+  return advice;
+};
+
 // Generate personalized advice based on the user's specific situation
 const generatePersonalizedAdvice = (assessmentData: AssessData | undefined): string => {
   if (!assessmentData) return '';
@@ -420,6 +521,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
   const [filteredHousingOptions, setFilteredHousingOptions] = useState<HousingOption[]>([]);
   const [mapAddress, setMapAddress] = useState<string>('');
   const [shouldFetchData, setShouldFetchData] = useState(false);
+  const [personalizedCareerAdvice, setPersonalizedCareerAdvice] = useState<CareerAdvice | null>(null);
   
   // Get assessment data from context if not provided as prop
   const assessmentContext = useAssessment();
@@ -487,7 +589,8 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           address,
           zipCode,
           income,
-          children
+          children,
+          includeJobData: true // Add flag to request job data
         })
       });
       
@@ -590,7 +693,11 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
         communityDemographics: recommendationsData.communityDemographics || defaultRecommendations.communityDemographics,
         housingOptions: Array.isArray(recommendationsData.housingOptions) 
           ? recommendationsData.housingOptions 
-          : defaultRecommendations.housingOptions
+          : defaultRecommendations.housingOptions,
+        jobSectors: Array.isArray(recommendationsData.jobSectors) 
+          ? recommendationsData.jobSectors 
+          : defaultRecommendations.jobSectors,
+        careerAdvice: recommendationsData.careerAdvice || defaultRecommendations.careerAdvice
       };
       
       // Apply filters based on user data
@@ -615,7 +722,6 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
       
       setFilteredSchools(filteredDefaultSchools);
       setFilteredPrograms(filteredDefaultPrograms);
-      setFilteredHousingOptions(ratedDefaultHousingOptions);
       
       // Use fallback recommendations
       setRecommendations(fallbackRecommendations);
@@ -632,6 +738,13 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
       fetchRecommendations();
     }
   }, [shouldFetchData, fetchRecommendations]);
+
+  useEffect(() => {
+    if (userData) {
+      const advice = generatePersonalizedCareerAdvice(userData);
+      setPersonalizedCareerAdvice(advice);
+    }
+  }, [userData]);
 
   const handleSaveChoices = () => {
     if (onSaveChoices && selectedSchool && selectedCommunityPrograms.length > 0) {
@@ -739,7 +852,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           
           {/* Personalized Advice */}
           {!loading && userData && (
-            <div className="bg-[#6CD9CA] bg-opacity-10 p-6 rounded-lg">
+            <div className="bg-[#6CD9CA] bg-opacity-10 p-6 rounded-lg mb-8">
               <h3 className="text-xl font-semibold mb-2">Personalized Advice</h3>
               <p>{generatePersonalizedAdvice(userData)}</p>
             </div>
@@ -1031,7 +1144,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                           switch(religionData.religion.toLowerCase()) {
                             case "christian": 
                               iconColor = "text-[#34687e]"; // accent11
-                              iconPath = "M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z";
+                              iconPath = "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z";
                               religionData.displayName = "Christian";
                               break;
                             case "jewish": 
@@ -1064,7 +1177,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                         return (
                           <div key={religionData.religion} className="flex flex-col items-center w-32">
                             <div className={`${iconColor} mb-2`}>
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
                                 <path d={iconPath}></path>
                               </svg>
                             </div>
@@ -1193,7 +1306,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                   className="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
                 >
                   <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
                     </svg>
                   </div>
@@ -1246,11 +1359,84 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           {!loading && zipCode && (
             <div className="bg-white shadow-md rounded-lg p-8 mt-8">
               <div className="text-center mb-8">
-                <h3 className="text-3xl font-bold mb-2">Job Resources</h3>
+                <h3 className="text-3xl font-bold mb-2">Job Opportunities</h3>
                 <p className="text-lg text-gray-600">Find employment opportunities in your new area</p>
               </div>
               
-
+              {/* Personalized Career Advice */}
+              {personalizedCareerAdvice && (
+                <div className="bg-[#6CD9CA] bg-opacity-10 p-6 rounded-lg mb-8">
+                  <h4 className="text-xl font-semibold mb-4">Personalized Career Advice</h4>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <p className="font-medium text-[#6CD9CA]">Based on your income:</p>
+                      <p>{personalizedCareerAdvice.forIncome}</p>
+                    </div>
+                    
+                    <div>
+                      <p className="font-medium text-[#6CD9CA]">For your family size:</p>
+                      <p>{personalizedCareerAdvice.forFamilySize}</p>
+                    </div>
+                    
+                    <div>
+                      <p className="font-medium text-[#6CD9CA]">General advice:</p>
+                      <p>{personalizedCareerAdvice.generalAdvice}</p>
+                    </div>
+                    
+                    {personalizedCareerAdvice.recommendedSectors.length > 0 && (
+                      <div>
+                        <p className="font-medium text-[#6CD9CA]">Recommended sectors to explore:</p>
+                        <p>{personalizedCareerAdvice.recommendedSectors.join(', ')}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Job Sectors in Area */}
+              {recommendations.jobSectors && recommendations.jobSectors.length > 0 && (
+                <div className="mb-10">
+                  <h4 className="text-2xl font-semibold mb-4 text-center">Top Job Sectors in {zipCode}</h4>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {recommendations.jobSectors.map((sector) => (
+                      <div 
+                        key={sector.name}
+                        className="border rounded-lg p-5 hover:border-[#6CD9CA] hover:bg-[#6CD9CA] hover:bg-opacity-5 transition-all duration-300"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <h5 className="text-xl font-semibold">{sector.name}</h5>
+                          <div className={`
+                            px-3 py-1 rounded-full text-sm font-medium
+                            ${sector.demandLevel === 'high' ? 'bg-green-100 text-green-800' : 
+                              sector.demandLevel === 'medium' ? 'bg-blue-100 text-blue-800' : 
+                              'bg-gray-100 text-gray-800'}
+                          `}>
+                            {sector.demandLevel === 'high' ? 'High Demand' : 
+                             sector.demandLevel === 'medium' ? 'Medium Demand' : 
+                             'Lower Demand'}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <p>{sector.description}</p>
+                          <div className="flex justify-between text-sm">
+                            <span><strong>Growth Rate:</strong> {sector.growthRate}%</span>
+                            <span><strong>Median Salary:</strong> {sector.medianSalary}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Job Search Resources */}
+              <div className="text-center mb-6">
+                <h4 className="text-2xl font-bold mb-2">Job Search Resources</h4>
+                <p className="text-lg text-gray-600">Find your next career opportunity</p>
+              </div>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
                 <a 
@@ -1287,7 +1473,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                 >
                   <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
                     </svg>
                   </div>
                   <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Glassdoor</span>

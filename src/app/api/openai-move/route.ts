@@ -16,7 +16,7 @@ if (!process.env.OPENAI_API_KEY) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { zipCode, income, children } = body;
+    const { zipCode, income, children, includeJobData = false } = body;
 
     if (!zipCode) {
       return NextResponse.json(
@@ -81,6 +81,21 @@ export async function POST(req: NextRequest) {
                     
                     6. housingOptions: Array with different housing types, price ranges, and sizes
                        - Include a suitability field (1-5) indicating how suitable each option is for this family's size and income
+                    
+                    ${includeJobData ? `
+                    7. jobSectors: Array of job sectors in the area with:
+                       - name: Sector name (e.g., "Healthcare", "Technology", "Education")
+                       - growthRate: Percentage growth rate (numeric value)
+                       - medianSalary: Median salary as string (e.g., "$75,000")
+                       - description: Brief description of job opportunities in this sector
+                       - demandLevel: "high", "medium", or "low" indicating demand for workers
+                    
+                    8. careerAdvice: Object with personalized career advice for this family:
+                       - forIncome: Advice specific to their income level
+                       - forFamilySize: Advice considering their family size
+                       - generalAdvice: General career advice for the area
+                       - recommendedSectors: Array of sector names that would be good matches
+                    ` : ''}
                     
                     Format everything as valid JSON.`
         }
