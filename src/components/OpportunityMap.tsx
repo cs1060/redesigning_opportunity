@@ -150,7 +150,13 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
       zoom: 3,
       projection: 'mercator',
       renderWorldCopies: false,
-      preserveDrawingBuffer: true
+      preserveDrawingBuffer: true,
+      // Add maxBounds to restrict the map to the United States (including Alaska and Hawaii)
+      maxBounds: [
+        [-179.9, 18.8], // Southwest coordinates (includes Hawaii)
+        [-66.9, 71.4]   // Northeast coordinates (includes Alaska)
+      ],
+      minZoom: 2 // Prevent zooming out too far
     });
 
     // Add navigation controls
@@ -182,7 +188,7 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
             const style = map.current.getStyle();
             if (style && style.layers) {
               // Loop through all layers and modify text layers
-              for (let i = 0; i < style.layers.length; i++) {
+              for (let i = 0; i <style.layers.length; i++) {
                 const layer = style.layers[i];
                 
                 // Check if this is a symbol layer (text labels)
@@ -844,7 +850,7 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 mb-4">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
-                <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
+                <path d="M12,3L1,9L12,15L23,9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
               </svg>
             </div>
             <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center mb-3 font-semibold">
