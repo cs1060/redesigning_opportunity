@@ -1,9 +1,11 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { FaCheckCircle, FaCircle, FaExternalLinkAlt } from 'react-icons/fa'
 import { MdDownload, MdEmail, MdPrint, MdInfo } from 'react-icons/md'
 import { useTranslations } from 'next-intl'
+import { jsPDF } from 'jspdf'
+import html2canvas from 'html2canvas'
 
 interface SavedChoices {
   town: string;
@@ -33,6 +35,7 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
   const t = useTranslations('nextSteps');
   const [completedTasks, setCompletedTasks] = useState<string[]>([])
   const [expandedTasks, setExpandedTasks] = useState<string[]>([])
+  const checklistRef = useRef<HTMLDivElement>(null);
   
   // Toggle task completion status
   const toggleTaskCompletion = (taskId: string) => {
@@ -49,6 +52,227 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
       setExpandedTasks(prev => prev.filter(id => id !== taskId))
     } else {
       setExpandedTasks(prev => [...prev, taskId])
+    }
+  }
+
+  // Handle printing the checklist
+  const handlePrint = () => {
+    if (!checklistRef.current || !savedChoices) return;
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow pop-ups to print the checklist.');
+      return;
+    }
+    
+    // Get the checklist content
+    const checklistContent = checklistRef.current.innerHTML;
+    
+    // Create a styled document with only the checklist content
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Next Steps Checklist - ${savedChoices.town}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              max-width: 800px;
+              margin: 0 auto;
+            }
+            h1 {
+              font-size: 24px;
+              margin-bottom: 16px;
+              text-align: center;
+            }
+            h2 {
+              font-size: 20px;
+              margin-bottom: 12px;
+            }
+            .task {
+              margin-bottom: 16px;
+              padding-bottom: 16px;
+              border-bottom: 1px solid #eee;
+            }
+            .task:last-child {
+              border-bottom: none;
+            }
+            .task-header {
+              display: flex;
+              align-items: flex-start;
+              margin-bottom: 8px;
+            }
+            .task-title {
+              font-weight: bold;
+              margin-left: 8px;
+            }
+            .task-details {
+              margin-left: 24px;
+              color: #555;
+            }
+            .task-explanation {
+              margin-top: 8px;
+              margin-left: 24px;
+              padding: 8px;
+              background-color: #f5f5f5;
+              border-radius: 4px;
+            }
+            .task-link {
+              margin-top: 8px;
+              margin-left: 24px;
+              color: #0070f3;
+            }
+            .progress-bar {
+              width: 100%;
+              height: 20px;
+              background-color: #eee;
+              border-radius: 10px;
+              margin-bottom: 8px;
+              overflow: hidden;
+            }
+            .progress-fill {
+              height: 100%;
+              background-color: #0070f3;
+              border-radius: 10px;
+            }
+            @media print {
+              body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Next Steps for ${selectedAction === 'stay' ? 'Improving Opportunities in' : 'Moving to'} ${savedChoices.town}</h1>
+          <div id="saved-choices">
+            <h2>Your Saved Choices</h2>
+            <p><strong>Town:</strong> ${savedChoices.town}</p>
+            ${selectedAction === 'move' && savedChoices.selectedNeighborhood ? 
+              `<p><strong>Selected Neighborhood:</strong> ${savedChoices.selectedNeighborhood}</p>` : ''}
+            <p><strong>Selected School:</strong> ${savedChoices.selectedSchool || 'None'}</p>
+            <p><strong>Selected Community Programs:</strong> ${savedChoices.selectedCommunityPrograms.join(', ') || 'None'}</p>
+            ${selectedAction === 'move' && savedChoices.selectedHousingType ? 
+              `<p><strong>Housing Type:</strong> ${savedChoices.selectedHousingType}</p>` : ''}
+          </div>
+          
+          <div id="progress">
+            <h2>Your Progress</h2>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${Math.round((completedTasks.length / tasks.length) * 100)}%"></div>
+            </div>
+            <p>${completedTasks.length} of ${tasks.length} tasks completed (${Math.round((completedTasks.length / tasks.length) * 100)}%)</p>
+          </div>
+          
+          <div id="checklist">
+            <h2>Your To-Do List</h2>
+            ${tasks.map((task, index) => `
+              <div class="task">
+                <div class="task-header">
+                  <span>${completedTasks.includes(task.id) ? '✓' : '□'}</span>
+                  <span class="task-title ${completedTasks.includes(task.id) ? 'completed' : ''}">${task.text}</span>
+                </div>
+                <div class="task-details">${task.details}</div>
+                ${expandedTasks.includes(task.id) ? 
+                  `<div class="task-explanation">
+                    <strong>Why this matters:</strong> ${task.explanation}
+                  </div>` : ''}
+                ${task.link ? 
+                  `<div class="task-link">
+                    <a href="${task.link.url}" target="_blank">${task.link.label}</a>
+                  </div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </body>
+      </html>
+    `);
+    
+    // Wait for content to load then print
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.print();
+      // Close the window after printing (optional)
+      printWindow.onafterprint = () => {
+        printWindow.close();
+      };
+    };
+  }
+
+  // Handle emailing the checklist
+  const handleEmail = () => {
+    if (!savedChoices) return;
+    
+    const subject = encodeURIComponent(`My Next Steps for ${selectedAction === 'stay' ? 'Improving Opportunities in' : 'Moving to'} ${savedChoices.town}`);
+    
+    // Create email body with task list
+    let body = encodeURIComponent(`My Next Steps for ${selectedAction === 'stay' ? 'Improving Opportunities in' : 'Moving to'} ${savedChoices.town}\n\n`);
+    
+    // Add saved choices
+    body += encodeURIComponent(`Town: ${savedChoices.town}\n`);
+    if (selectedAction === 'move' && savedChoices.selectedNeighborhood) {
+      body += encodeURIComponent(`Selected Neighborhood: ${savedChoices.selectedNeighborhood}\n`);
+    }
+    body += encodeURIComponent(`Selected School: ${savedChoices.selectedSchool || 'None'}\n`);
+    body += encodeURIComponent(`Selected Community Programs: ${savedChoices.selectedCommunityPrograms.join(', ') || 'None'}\n`);
+    if (selectedAction === 'move' && savedChoices.selectedHousingType) {
+      body += encodeURIComponent(`Housing Type: ${savedChoices.selectedHousingType}\n`);
+    }
+    
+    body += encodeURIComponent(`\nMy To-Do List:\n\n`);
+    
+    // Add tasks
+    const tasks = generateTasks();
+    tasks.forEach((task, index) => {
+      const status = completedTasks.includes(task.id) ? '✓' : '□';
+      body += encodeURIComponent(`${status} ${index + 1}. ${task.text}\n   ${task.details}\n\n`);
+    });
+    
+    // Add progress
+    body += encodeURIComponent(`\nProgress: ${completedTasks.length} of ${tasks.length} tasks completed (${Math.round((completedTasks.length / tasks.length) * 100)}%)`);
+    
+    // Open email client
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+
+  // Handle downloading the checklist as PDF
+  const handleDownload = async () => {
+    if (!checklistRef.current || !savedChoices) return;
+    
+    try {
+      // Create a canvas from the checklist element
+      const canvas = await html2canvas(checklistRef.current, {
+        scale: 2, // Higher scale for better quality
+        logging: false,
+        useCORS: true
+      });
+      
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Add title
+      const title = `Next Steps for ${selectedAction === 'stay' ? 'Improving Opportunities in' : 'Moving to'} ${savedChoices.town}`;
+      pdf.setFontSize(16);
+      pdf.text(title, 105, 15, { align: 'center' });
+      
+      // Add image of the checklist
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 10, 25, imgWidth, imgHeight);
+      
+      // Save the PDF
+      pdf.save(`next_steps_checklist_${selectedAction}_${savedChoices.town.replace(/\s+/g, '_').toLowerCase()}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('There was an error generating your PDF. Please try again.');
     }
   }
 
@@ -286,15 +510,24 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
         <div className="flex flex-col md:flex-row justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold mb-4 md:mb-0">Your Progress</h2>
           <div className="flex space-x-3">
-            <button className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90">
+            <button 
+              onClick={handlePrint}
+              className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90"
+            >
               <MdPrint className="mr-2" />
               Print
             </button>
-            <button className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90">
+            <button 
+              onClick={handleEmail}
+              className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90"
+            >
               <MdEmail className="mr-2" />
               Email
             </button>
-            <button className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90">
+            <button 
+              onClick={handleDownload}
+              className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90"
+            >
               <MdDownload className="mr-2" />
               Download
             </button>
@@ -313,7 +546,7 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
       </div>
 
       {/* Task List */}
-      <div className="bg-white rounded-xl shadow-lg p-8">
+      <div ref={checklistRef} className="bg-white rounded-xl shadow-lg p-8">
         <h2 className="text-2xl font-semibold mb-6">Your To-Do List</h2>
         
         <div className="space-y-6">
