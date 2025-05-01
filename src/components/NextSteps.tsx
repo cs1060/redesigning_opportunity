@@ -472,10 +472,10 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
 
   if (!selectedAction || !savedChoices) {
     return (
-      <div id="next-steps" className="min-h-screen px-4 py-10 max-w-6xl mx-auto scroll-mt-20">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">{t('title')}</h1>
-          <p className="text-xl">{t('completeMessage')}</p>
+      <div id="next-steps" className="px-4 py-6 max-w-6xl mx-auto">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('title')}</h1>
+          <p className="text-lg">{t('completeMessage')}</p>
         </div>
       </div>
     )
