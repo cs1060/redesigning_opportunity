@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { FaCheckCircle, FaCircle, FaExternalLinkAlt } from 'react-icons/fa'
 import { MdDownload, MdEmail, MdPrint, MdInfo } from 'react-icons/md'
 import { useTranslations } from 'next-intl'
@@ -36,6 +36,13 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
   const [completedTasks, setCompletedTasks] = useState<string[]>([])
   const [expandedTasks, setExpandedTasks] = useState<string[]>([])
   const checklistRef = useRef<HTMLDivElement>(null);
+  
+  // Reset state when selectedAction or savedChoices changes
+  useEffect(() => {
+    // Reset completed and expanded tasks when action or choices change
+    setCompletedTasks([]);
+    setExpandedTasks([]);
+  }, [selectedAction, savedChoices]);
   
   // Toggle task completion status
   const toggleTaskCompletion = (taskId: string) => {

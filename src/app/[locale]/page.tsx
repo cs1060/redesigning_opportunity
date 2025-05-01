@@ -109,7 +109,7 @@ function HomeContent({
       <section className="bg-white w-full">
         <div className="container mx-auto">
           <NextSteps 
-            key={selectedAction} 
+            key={`${selectedAction}-${JSON.stringify(savedChoices)}`} 
             selectedAction={selectedAction} 
             savedChoices={savedChoices} 
           />
