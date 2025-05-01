@@ -3,13 +3,12 @@
  * 
  * This test checks if the MobileLanguageSwitcher component is properly
  * rendered and visible in the DOM when viewing the application on a mobile device.
- * 
- * IMPORTANT: This test is EXPECTED TO FAIL until the bug is fixed.
  */
 
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MobileLanguageSwitcher from '@/components/MobileLanguageSwitcher';
+import Navbar from '@/components/Navbar';
 
 // Mock the necessary hooks and router
 jest.mock('next-intl', () => ({
@@ -19,7 +18,15 @@ jest.mock('next-intl', () => ({
       'english': 'English',
       'spanish': 'Spanish',
       'chinese': 'Chinese',
-      'language': 'Language'
+      'language': 'Language',
+      'title': 'Opportunity AI',
+      'welcome': 'Welcome',
+      'assess': 'Assess',
+      'opportunityMap': 'Opportunity Map',
+      'takeAction': 'Take Action',
+      'nextSteps': 'Next Steps',
+      'resources': 'Resources',
+      'community': 'Community'
     };
     return translations[key] || key;
   }
@@ -69,28 +76,28 @@ describe('Mobile Language Switcher Rendering', () => {
   });
 
   /**
-   * Test that simulates the application layout without the MobileLanguageSwitcher
-   * This test is expected to fail because the component is missing from the layout
+   * Test that simulates the application layout with the MobileLanguageSwitcher
+   * in the Navbar component
    */
-  it('should be present in the application layout but is currently missing', () => {
-    // Create a mock app structure similar to the real application
-    // but without the MobileLanguageSwitcher (simulating the current bug)
-    render(
-      <div data-testid="app-root">
-        <div data-testid="locale-layout">
-          <div data-testid="content">App Content</div>
-          {/* MobileLanguageSwitcher is intentionally missing here */}
-        </div>
-      </div>
-    );
+  it('should be present in the Navbar on mobile devices', () => {
+    // Mock a ref for the progress bar
+    const mockRef = { current: document.createElement('div') };
+    
+    // Render the Navbar component which should include MobileLanguageSwitcher on mobile
+    const { container } = render(<Navbar progressBarRef={mockRef} />);
 
     // Verify we're in a mobile viewport
     expect(window.matchMedia('(max-width: 768px)').matches).toBe(true);
     
-    // Look for any element that might be the language switcher
-    const languageSwitcherButton = screen.queryByRole('button', { name: /language/i });
+    // Find the mobile menu container (the div with md:hidden class)
+    const mobileMenuContainer = container.querySelector('.md\\:hidden');
+    expect(mobileMenuContainer).not.toBeNull();
     
-    // This assertion is expected to fail because the component is missing
-    expect(languageSwitcherButton).toBeInTheDocument();
+    // Check if the mobile menu container has a button (the language switcher)
+    if (mobileMenuContainer) {
+      const button = mobileMenuContainer.querySelector('button');
+      expect(button).not.toBeNull();
+      expect(button).toBeVisible();
+    }
   });
 });

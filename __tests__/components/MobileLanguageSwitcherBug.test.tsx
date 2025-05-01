@@ -3,11 +3,8 @@
  * 
  * This test specifically checks if the MobileLanguageSwitcher component
  * is properly included in the application for mobile devices.
- * 
- * IMPORTANT: This test is EXPECTED TO FAIL until the bug is fixed.
  */
 
-import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import fs from 'fs';
 import path from 'path';
@@ -15,22 +12,20 @@ import path from 'path';
 describe('Mobile Language Switcher Bug', () => {
   /**
    * This test checks if the MobileLanguageSwitcher component is imported
-   * and used in the locale layout file.
-   * 
-   * It is expected to fail because the component is currently missing from the layout.
+   * and used in the Navbar component for mobile screens.
    */
-  it('should have MobileLanguageSwitcher imported and used in locale layout', () => {
-    // Read the locale layout file content
-    const localeLayoutPath = path.join(process.cwd(), 'src/app/[locale]/layout.tsx');
-    const layoutContent = fs.readFileSync(localeLayoutPath, 'utf8');
+  it('should have MobileLanguageSwitcher imported and used in Navbar', () => {
+    // Read the Navbar component file content
+    const navbarPath = path.join(process.cwd(), 'src/components/Navbar.tsx');
+    const navbarContent = fs.readFileSync(navbarPath, 'utf8');
     
     // Check if MobileLanguageSwitcher is imported
-    const hasImport = layoutContent.includes('import MobileLanguageSwitcher');
+    const hasImport = navbarContent.includes('import MobileLanguageSwitcher');
     
     // Check if MobileLanguageSwitcher component is used
-    const hasComponent = layoutContent.includes('<MobileLanguageSwitcher');
+    const hasComponent = navbarContent.includes('<MobileLanguageSwitcher');
     
-    // These assertions should fail because the component is missing
+    // These assertions should now pass since we've added the component to the Navbar
     expect(hasImport).toBe(true);
     expect(hasComponent).toBe(true);
   });

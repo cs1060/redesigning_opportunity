@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { RefObject } from 'react'
 import { useTranslations } from 'next-intl'
 import LanguageSelector from './LanguageSelector'
+import MobileLanguageSwitcher from './MobileLanguageSwitcher'
 
 interface NavbarProps {
   progressBarRef: RefObject<HTMLDivElement>
@@ -17,6 +18,10 @@ export default function Navbar({ progressBarRef }: NavbarProps) {
       <nav className="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="text-primary text-3xl font-bold pl-4 md:pl-10">{t('title')}</div>
+          {/* Mobile language selector - only visible on mobile */}
+          <div className="flex md:hidden items-center pr-4">
+            <MobileLanguageSwitcher />
+          </div>
           <div className="hidden md:flex items-center space-x-8 pr-4 md:pr-10">
             <Link href="#welcome" className="hover:text-primary transition-colors">{t('welcome')}</Link>
             <Link href="#quiz-section" className="hover:text-primary transition-colors">{t('assess')}</Link>
