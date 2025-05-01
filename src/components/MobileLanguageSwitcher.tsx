@@ -24,21 +24,30 @@ export default function MobileLanguageSwitcher() {
   };
 
   return (
-    <>
-      {/* Floating button */}
+    <div className="relative">
+      {/* Language button in navbar */}
       <button
-        className="fixed bottom-6 right-6 w-12 h-12 bg-primary text-white rounded-full shadow-lg flex items-center justify-center z-40"
-        onClick={() => setIsOpen(true)}
+        className="flex items-center text-gray-700 hover:text-primary transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
         aria-label={t('language')}
       >
         <FaGlobe size={20} />
       </button>
 
-      {/* Modal */}
+      {/* Modal/Dropdown */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-80 max-w-full">
-            <div className="flex justify-between items-center p-4 border-b">
+        <div className="fixed inset-0 z-50 md:relative md:inset-auto">
+          {/* Backdrop for mobile - only covers the full screen on mobile */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 md:hidden"
+            onClick={() => setIsOpen(false)}
+          ></div>
+          
+          {/* Language selection menu */}
+          <div className="fixed top-16 right-0 left-0 mx-4 md:absolute md:right-0 md:left-auto md:top-full md:mt-2 bg-white rounded-md shadow-lg z-50 md:w-48">
+            <div className="flex justify-between items-center p-4 border-b md:hidden">
               <h2 className="text-lg font-semibold">{t('language')}</h2>
               <button 
                 onClick={() => setIsOpen(false)}
@@ -48,27 +57,27 @@ export default function MobileLanguageSwitcher() {
                 <FaTimes />
               </button>
             </div>
-            <div className="p-4">
-              <ul className="space-y-2">
-                {languages.map((language) => (
-                  <li key={language.code}>
-                    <button
-                      className={`w-full text-left px-4 py-3 rounded-md ${
-                        locale === language.code
-                          ? 'bg-primary text-white'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                      onClick={() => handleLanguageChange(language.code)}
-                    >
-                      {language.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <ul className="py-1">
+              {languages.map((language) => (
+                <li key={language.code}>
+                  <button
+                    className={`block w-full text-left px-4 py-3 md:py-2 ${
+                      locale === language.code
+                        ? 'bg-primary text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    onClick={() => handleLanguageChange(language.code)}
+                    aria-selected={locale === language.code}
+                    role="option"
+                  >
+                    {language.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
