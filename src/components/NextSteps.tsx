@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react'
 import { FaCheckCircle, FaCircle, FaExternalLinkAlt } from 'react-icons/fa'
 import { MdDownload, MdEmail, MdPrint, MdInfo } from 'react-icons/md'
 import { useTranslations } from 'next-intl'
-import { jsPDF } from 'jspdf'
+import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
 interface SavedChoices {
