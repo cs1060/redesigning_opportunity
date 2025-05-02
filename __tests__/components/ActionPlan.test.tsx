@@ -16,7 +16,7 @@ jest.mock('@/components/OpportunityMap', () => ({
 
 // Import the component after mocking its dependencies
 import TakeAction from '@/components/action-plan/ActionPlan';
-import { PersonalizationProvider } from '@/components/AssessQuiz';
+import { AssessProvider } from '@/components/AssessProvider';
 
 // Mock the next-intl useTranslations hook
 jest.mock('next-intl', () => ({
@@ -33,16 +33,21 @@ jest.mock('next-intl', () => ({
   }
 }));
 
-// Mock the AssessQuiz component
-jest.mock('@/components/AssessQuiz', () => ({
-  useAssessment: () => ({
-    data: {
-      address: '123 Test St',
-      children: [{ name: 'Test Child', age: 10, gender: 'F', ethnicity: 'W' }]
-    }
-  }),
-  PersonalizationProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
-}));
+// Mock the useAssessment hook but keep the actual AssessProvider
+jest.mock('@/components/AssessProvider', () => {
+  const originalModule = jest.requireActual('@/components/AssessProvider');
+  return {
+    ...originalModule,
+    useAssessment: jest.fn().mockReturnValue({
+      data: {
+        address: '123 Test St',
+        children: [{ name: 'Test Child', age: 10, gender: 'F', ethnicity: 'W' }]
+      },
+      updateData: jest.fn(),
+      setFullData: jest.fn()
+    })
+  };
+});
 
 // Mock the child components
 jest.mock('@/components/action-plan/Stay', () => {
