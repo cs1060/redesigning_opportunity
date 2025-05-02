@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { School } from 'lucide-react'
-import { useAssessment, AssessData } from '../AssessQuiz'
+import { useAssessment, type AssessData } from '../AssessProvider'
 import { useTranslations } from 'next-intl'
 
 // Enhanced types for the recommendations data

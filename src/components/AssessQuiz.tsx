@@ -1,90 +1,16 @@
 'use client'
-import { useState, createContext, useContext, ReactNode, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FaChevronDown, FaExclamationTriangle } from 'react-icons/fa';
 import { geocodeAddress } from '../utils/geocodingUtils';
 import { useTranslations } from 'next-intl';
-
-// Define all the types we need
-type ChildInfo = {
-  name: string;
-  gender: string;
-  age: string;
-  ethnicity: string;
-};
-
-export type AssessData = {
-  street: string;
-  city: string;
-  state: string;
-  address: string;
-  income: string;
-  country: string;
-  isEmployed: boolean;
-  children: ChildInfo[];
-  opportunityScore?: number | null;
-};
-
-interface AssessContextType {
-  data: AssessData;
-  updateData: (data: Partial<AssessData>) => void;
-  setFullData: (data: AssessData) => void;
-}
-
-// Initial default values
-const defaultData: AssessData = {
-  street: '',
-  city: '',
-  state: '',
-  address: '',
-  income: '',
-  country: '',
-  isEmployed: false,
-  children: [],
-  opportunityScore: null
-};
-
-const AssessContext = createContext<AssessContextType | undefined>(undefined);
-
-export function AssessProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<AssessData>(defaultData);
-
-  const updateData = (newData: Partial<AssessData>) => {
-    setData(prevData => ({
-      ...prevData,
-      ...newData
-    }));
-  };
-
-  const setFullData = (newData: AssessData) => {
-    setData(newData);
-  };
-
-  return (
-    <AssessContext.Provider value={{ data, updateData, setFullData }}>
-      {children}
-    </AssessContext.Provider>
-  );
-}
-
-export function useAssessment() {
-  const context = useContext(AssessContext);
-  if (context === undefined) {
-    throw new Error('useAssessment must be used within an AssessProvider');
-  }
-  return context;
-}
-
-// Alias for backward compatibility
-export const usePersonalization = useAssessment;
-
-// Alias for backward compatibility
-export { AssessProvider as PersonalizationProvider };
+import { useAssessment, type AssessData } from './AssessProvider';
 
 const AssessYourCommunity = () => {
   const { setFullData } = useAssessment();
   const t = useTranslations('assessment');
   
   // Initialize formData with ALL fields, including address components
+  // Modified to ensure there's only one child
   const [formData, setFormData] = useState<AssessData>({
     street: '',
     city: '',
@@ -122,20 +48,21 @@ const AssessYourCommunity = () => {
     });
   };
 
-  const handleChildInfoChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Modified to always work with the first (and only) child
+  const handleChildInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const key = name.split('-')[1]; // Extract the field name (name, gender, age, ethnicity)
     
     setFormData(prevData => {
-      const updatedChildren = [...prevData.children];
-      updatedChildren[index] = {
-        ...updatedChildren[index],
+      // Create updated child info (always for index 0)
+      const updatedChild = {
+        ...prevData.children[0],
         [key]: value
       };
       
       return {
         ...prevData,
-        children: updatedChildren
+        children: [updatedChild] // Always just one child
       };
     });
   };
@@ -522,113 +449,96 @@ const AssessYourCommunity = () => {
               <div className="flex-grow ml-4 h-px bg-gray-200"></div>
             </div>
             
-            {formData.children.map((child, index) => (
-              <div key={index} className="space-y-6">
-                <h4 className="font-medium">{t('child')} {index + 1}</h4>
+            {/* Modified to remove child numbering and only use the first child */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="child-name" className="block text-sm font-medium">
+                  {t('childName')}<span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="child-name"
+                  name="child-name"
+                  value={formData.children[0]?.name || ''}
+                  onChange={handleChildInfoChange}
+                  placeholder={t('childNamePlaceholder')}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <label htmlFor="child-gender" className="block text-sm font-medium">
+                    {t('gender')}<span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="child-gender"
+                      name="child-gender"
+                      value={formData.children[0]?.gender || ''}
+                      onChange={handleChildInfoChange}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md appearance-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    >
+                      <option value="">{t('selectGender')}</option>
+                      <option value="M">{t('male')}</option>
+                      <option value="F">{t('female')}</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                      <FaChevronDown className="text-gray-400" />
+                    </div>
+                  </div>
+                </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor={`child${index}-name`} className="block text-sm font-medium">
-                    {t('childName')}<span className="text-red-500">*</span>
+                  <label htmlFor="child-age" className="block text-sm font-medium">
+                    {t('age')}<span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="text"
-                    id={`child${index}-name`}
-                    name={`child-name`}
-                    value={child.name || ''}
-                    onChange={(e) => handleChildInfoChange(index, e)}
-                    placeholder={t('childNamePlaceholder')}
+                    type="number"
+                    id="child-age"
+                    name="child-age"
+                    value={formData.children[0]?.age || ''}
+                    onChange={handleChildInfoChange}
+                    placeholder={t('agePlaceholder')}
+                    min="0"
+                    max="18"
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <label htmlFor={`child${index}-gender`} className="block text-sm font-medium">
-                      {t('gender')}<span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <select
-                        id={`child${index}-gender`}
-                        name={`child-gender`}
-                        value={child.gender || ''}
-                        onChange={(e) => handleChildInfoChange(index, e)}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md appearance-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      >
-                        <option value="">{t('selectGender')}</option>
-                        <option value="M">{t('male')}</option>
-                        <option value="F">{t('female')}</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <FaChevronDown className="text-gray-400" />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label htmlFor={`child${index}-age`} className="block text-sm font-medium">
-                      {t('age')}<span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      id={`child${index}-age`}
-                      name={`child-age`}
-                      value={child.age || ''}
-                      onChange={(e) => handleChildInfoChange(index, e)}
-                      placeholder={t('agePlaceholder')}
-                      min="0"
-                      max="18"
+                <div className="space-y-2">
+                  <label htmlFor="child-ethnicity" className="block text-sm font-medium">
+                    {t('ethnicity')}<span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="child-ethnicity"
+                      name="child-ethnicity"
+                      value={formData.children[0]?.ethnicity || ''}
+                      onChange={handleChildInfoChange}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label htmlFor={`child${index}-ethnicity`} className="block text-sm font-medium">
-                      {t('ethnicity')}<span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <select
-                        id={`child${index}-ethnicity`}
-                        name={`child-ethnicity`}
-                        value={child.ethnicity || ''}
-                        onChange={(e) => handleChildInfoChange(index, e)}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md appearance-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      >
-                        <option value="">{t('selectEthnicity')}</option>
-                        <option value="W">{t('white')}</option>
-                        <option value="B">{t('black')}</option>
-                        <option value="H">{t('hispanic')}</option>
-                        <option value="A">{t('asian')}</option>
-                        <option value="NA">{t('nativeAmerican')}</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <FaChevronDown className="text-gray-400" />
-                      </div>
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md appearance-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    >
+                      <option value="">{t('selectEthnicity')}</option>
+                      <option value="W">{t('white')}</option>
+                      <option value="B">{t('black')}</option>
+                      <option value="H">{t('hispanic')}</option>
+                      <option value="A">{t('asian')}</option>
+                      <option value="NA">{t('nativeAmerican')}</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                      <FaChevronDown className="text-gray-400" />
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
-            
-            {/* Add Child Button */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({
-                  ...prev,
-                  children: [...prev.children, { name: '', gender: '', age: '', ethnicity: '' }]
-                }))}
-                className="text-primary hover:text-primary-dark font-medium"
-              >
-                + {t('addAnotherChild')}
-              </button>
             </div>
+            
+            {/* Removed the "Add Child Button" section */}
           </div>
-          
-          {/* No separate success message - using checkmark next to button */}
           
           {/* Submit Button */}
           <div className="flex justify-center mt-10">

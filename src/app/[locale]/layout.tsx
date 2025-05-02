@@ -1,5 +1,6 @@
 import React from 'react';
 import IntlProvider from '../../components/IntlProvider';
+import MobileLanguageSwitcher from '../../components/MobileLanguageSwitcher';
 
 type Props = {
   children: React.ReactNode;
@@ -31,6 +32,7 @@ export default async function LocaleLayout({
   
   return (
     <IntlProvider locale={locale} messages={messages}>
+      <MobileLanguageSwitcher />
       {children}
     </IntlProvider>
   );

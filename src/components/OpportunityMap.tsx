@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { geocodeAddress } from '../utils/geocodingUtils';
-import { usePersonalization } from './AssessQuiz';
+import { usePersonalization } from './AssessProvider';
 import NeighborhoodAnalysis, { NeighborhoodData } from './NeighborhoodAnalysis';
 import { useTranslations } from 'next-intl';
 

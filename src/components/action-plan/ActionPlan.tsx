@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import Stay from './Stay'
 import Move from './Move'
-import { useAssessment } from '../AssessQuiz'
+import { useAssessment } from '../AssessProvider'
 import { useTranslations } from 'next-intl'
 
 interface SavedChoices {

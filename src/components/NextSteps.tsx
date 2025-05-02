@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import { FaCheckCircle, FaCircle, FaExternalLinkAlt } from 'react-icons/fa'
 import { MdDownload, MdEmail, MdPrint, MdInfo } from 'react-icons/md'
 import { useTranslations } from 'next-intl'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+// We'll import these libraries dynamically in the component functions
+// to avoid SSR issues with Next.js
 
 interface SavedChoices {
   town: string;
@@ -249,9 +249,15 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
     if (!checklistRef.current || !savedChoices) return;
     
     try {
+      // Dynamically import the libraries only when needed
+      const html2canvasModule = await import('html2canvas');
+      const html2canvas = html2canvasModule.default;
+      
+      const jsPDFModule = await import('jspdf');
+      const jsPDF = jsPDFModule.default;
+      
       // Create a canvas from the checklist element
       const canvas = await html2canvas(checklistRef.current, {
-        scale: 2, // Higher scale for better quality
         logging: false,
         useCORS: true
       });
