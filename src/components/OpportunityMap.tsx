@@ -462,11 +462,16 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
           if (geoid) {
             map.current.setFilter('census-tracts-hover', ['==', 'GEOID', geoid]);
             
-            // Keep the user's tract highlighted if it exists
-            if (userTractId && userTractGeometry && map.current.getSource('user-tract-source')) {
+            // Update the user's tract geometry to the newly clicked tract
+            if (map.current.getSource('user-tract-source') && feature.geometry) {
+              // Update the userTractGeometry state with the new geometry
+              setUserTractGeometry(feature.geometry);
+              setUserTractId(geoid);
+              
+              // Update the user tract source with the new geometry
               (map.current.getSource('user-tract-source') as mapboxgl.GeoJSONSource).setData({
                 type: 'Feature',
-                geometry: userTractGeometry,
+                geometry: feature.geometry,
                 properties: {}
               });
             }
