@@ -26,7 +26,7 @@ const customJestConfig = {
     '!src/pages/_document.tsx',
   ],
   coverageDirectory: 'coverage',
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/', '.*\.d\.ts$'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
