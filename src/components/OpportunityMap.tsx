@@ -47,76 +47,102 @@ interface OpportunityMapProps {
   showWrapper?: boolean; // New prop to control whether to show the surrounding UI elements
 }
 
-// This would come from an API in a real application
+// Fetch neighborhood data from OpenAI API
 const fetchNeighborhoodData = async (address: string): Promise<NeighborhoodData> => {
-  // Simulate API call with mock data
-  // In a real app, this would fetch data from a real API based on the address
   console.log(`Fetching neighborhood data for: ${address}`);
   
-  // Mock data - would be replaced with real API data
-  return {
-    schoolQuality: {
-      score: 7.2,
-      description: 'Above average public schools with some specialized programs',
-      details: [
-        'Elementary School Rating: 7.5/10',
-        'Middle School Rating: 6.8/10',
-        'High School Rating: 7.3/10',
-        '82% high school graduation rate',
-        '68% college attendance rate'
-      ]
-    },
-    safety: {
-      score: 8.1,
-      description: 'Low crime rates compared to national averages',
-      details: [
-        'Violent crime: 65% below national average',
-        'Property crime: 42% below national average',
-        'Well-lit streets and active neighborhood watch',
-        'Responsive local police department'
-      ]
-    },
-    healthcare: {
-      score: 6.5,
-      description: 'Adequate healthcare facilities within reasonable distance',
-      details: [
-        '2 hospitals within 10 miles',
-        '5 primary care clinics in the area',
-        'Average wait time for appointments: 12 days',
-        'Limited pediatric specialists locally'
-      ]
-    },
-    amenities: {
-      score: 8.3,
-      description: 'Well-equipped with family-friendly amenities',
-      details: [
-        '5 parks within walking distance',
-        'Public library with children\'s programs',
-        'Community center with youth activities',
-        'Multiple grocery stores and family restaurants'
-      ]
-    },
-    housing: {
-      score: 5.9,
-      description: 'Moderately affordable housing with some options',
-      details: [
-        'Median home price: $375,000',
-        'Average rent (3BR): $2,200/month',
-        'Limited affordable housing programs',
-        'Moderate property tax rates'
-      ]
-    },
-    transportation: {
-      score: 6.7,
-      description: 'Decent public transportation and accessibility',
-      details: [
-        'Bus routes connecting to major areas',
-        'Average commute time: 28 minutes',
-        'Limited late-night transportation options',
-        'Bike-friendly roads in most areas'
-      ]
+  try {
+    // Call the OpenAI API to get neighborhood insights
+    const response = await fetch('/api/openai-neighborhood', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ address }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
     }
-  };
+
+    const data = await response.json();
+    
+    // If we have neighborhood data in the response, use it
+    if (data.neighborhoodData) {
+      return data.neighborhoodData;
+    }
+    
+    // If we don't have the expected format, construct a default response
+    // with any data we can extract from the API response
+    return {
+      schoolQuality: {
+        score: data.schoolQualityScore || 5.0,
+        description: data.schoolQualityDescription || 'School quality information for this area',
+        details: data.schoolQualityDetails || ['No detailed information available']
+      },
+      safety: {
+        score: data.safetyScore || 5.0,
+        description: data.safetyDescription || 'Safety information for this area',
+        details: data.safetyDetails || ['No detailed information available']
+      },
+      healthcare: {
+        score: data.healthcareScore || 5.0,
+        description: data.healthcareDescription || 'Healthcare information for this area',
+        details: data.healthcareDetails || ['No detailed information available']
+      },
+      amenities: {
+        score: data.amenitiesScore || 5.0,
+        description: data.amenitiesDescription || 'Amenities information for this area',
+        details: data.amenitiesDetails || ['No detailed information available']
+      },
+      housing: {
+        score: data.housingScore || 5.0,
+        description: data.housingDescription || 'Housing information for this area',
+        details: data.housingDetails || ['No detailed information available']
+      },
+      transportation: {
+        score: data.transportationScore || 5.0,
+        description: data.transportationDescription || 'Transportation information for this area',
+        details: data.transportationDetails || ['No detailed information available']
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching neighborhood data:', error);
+    
+    // Return default data in case of error
+    return {
+      schoolQuality: {
+        score: 5.0,
+        description: 'No data available',
+        details: ['Could not retrieve school quality data for this location']
+      },
+      safety: {
+        score: 5.0,
+        description: 'No data available',
+        details: ['Could not retrieve safety data for this location']
+      },
+      healthcare: {
+        score: 5.0,
+        description: 'No data available',
+        details: ['Could not retrieve healthcare data for this location']
+      },
+      amenities: {
+        score: 5.0,
+        description: 'No data available',
+        details: ['Could not retrieve amenities data for this location']
+      },
+      housing: {
+        score: 5.0,
+        description: 'No data available',
+        details: ['Could not retrieve housing data for this location']
+      },
+      transportation: {
+        score: 5.0,
+        description: 'No data available',
+        details: ['Could not retrieve transportation data for this location']
+      }
+    };
+  }
 };
 
 const OpportunityMap: React.FC<OpportunityMapProps> = ({ 
