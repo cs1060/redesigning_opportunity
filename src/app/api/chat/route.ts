@@ -46,16 +46,55 @@ interface ChatRequest {
   history?: Message[];
 }
 
+// Constants for limits
+const MAX_MESSAGE_LENGTH = 8000; // Maximum length for user messages
+const MAX_HISTORY_MESSAGES = 10; // Maximum number of history messages to include
+const MAX_TOKENS = 500; // Maximum tokens for the response
+
+/**
+ * Sanitize input to prevent injection attacks
+ * This doesn't modify the input but ensures it's treated as plain text
+ */
+function sanitizeInput(input: string): string {
+  // For now, we're just returning the input as-is since OpenAI handles it as plain text
+  // In a production environment, you might want to implement more robust sanitization
+  return input;
+}
+
+/**
+ * Optimize token usage by truncating extremely long messages
+ */
+function optimizeTokenUsage(message: string): string {
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    return message.substring(0, MAX_MESSAGE_LENGTH) + 
+      "... [Message truncated due to length]"; 
+  }
+  return message;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { message, history } = await request.json() as ChatRequest;
 
+    // Validate message
     if (!message) {
       return NextResponse.json(
         { error: 'Message is required' },
         { status: 400 }
       );
     }
+    
+    // Check message length
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      return NextResponse.json(
+        { error: 'Message is too long. Please keep your message under 8000 characters.' },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize and optimize the user message
+    const sanitizedMessage = sanitizeInput(message);
+    const optimizedMessage = optimizeTokenUsage(sanitizedMessage);
 
     // Build the messages array for the API call
     const messages: Message[] = [
@@ -67,21 +106,31 @@ export async function POST(request: NextRequest) {
     
     // Add conversation history if provided (limited to last 10 messages for context)
     if (history && Array.isArray(history)) {
-      const recentHistory = history.slice(-10);
+      // Filter out any system messages from the history to prevent prompt injection
+      const userAndAssistantMessages = history.filter(
+        msg => msg.role === 'user' || msg.role === 'assistant'
+      );
+      
+      // Get the most recent messages up to the limit
+      const recentHistory = userAndAssistantMessages.slice(-MAX_HISTORY_MESSAGES);
+      
+      // Add the filtered history
       messages.push(...recentHistory);
     }
     
     // Add the current user message
     messages.push({
       role: "user",
-      content: message
+      content: optimizedMessage
     });
 
-    // Call OpenAI API
+    // Call OpenAI API with safety parameters
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages,
-      max_tokens: 500
+      max_tokens: MAX_TOKENS,
+      temperature: 0.7, // Moderate temperature for balanced responses
+      top_p: 0.9, // Slightly constrained to avoid extreme outputs
     });
 
     // Extract the content from the response
