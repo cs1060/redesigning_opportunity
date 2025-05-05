@@ -8,6 +8,7 @@ import TakeAction from '@/components/action-plan/ActionPlan'
 import NextSteps from '../../components/NextSteps'
 import { PersonalizationProvider, usePersonalization } from '../../components/AssessProvider'
 import CommunityConnections from '../../components/CommunityConnections'
+import FadeIn from '@/components/FadeIn'
 
 interface SavedChoices {
   town: string;
@@ -83,43 +84,55 @@ function HomeContent({
   return (
     <>
       <section className="bg-white w-full">
-        <div className="container mx-auto">
-          <Welcome />
-        </div>
+        <FadeIn>
+          <div className="container mx-auto">
+            <Welcome />
+          </div>
+        </FadeIn>
       </section>
       
       <section className="bg-gray-100 w-full">
-        <div className="container mx-auto">
-          <PersonalizationQuiz />
-        </div>
+        <FadeIn threshold={0.15} delay={100}>
+          <div className="container mx-auto">
+            <PersonalizationQuiz />
+          </div>
+        </FadeIn>
       </section>
 
       <section className="bg-white w-full">
-        <div className="container mx-auto">
-          <OpportunityMap address={data.address} />
-        </div>
+        <FadeIn threshold={0.15} delay={200}>
+          <div className="container mx-auto">
+            <OpportunityMap address={data.address} />
+          </div>
+        </FadeIn>
       </section>
       
       <section className="bg-gray-100 w-full">
-        <div className="container mx-auto">
-          <TakeAction onSaveActionAndChoices={handleActionAndChoicesSave} />
-        </div>
+        <FadeIn threshold={0.15} delay={300}>
+          <div className="container mx-auto">
+            <TakeAction onSaveActionAndChoices={handleActionAndChoicesSave} />
+          </div>
+        </FadeIn>
       </section>
 
       <section className="bg-white w-full">
-        <div className="container mx-auto">
-          <NextSteps 
-            key={`${selectedAction}-${JSON.stringify(savedChoices)}`} 
-            selectedAction={selectedAction} 
-            savedChoices={savedChoices} 
-          />
-        </div>
+        <FadeIn threshold={0.15} delay={400}>
+          <div className="container mx-auto">
+            <NextSteps 
+              key={`${selectedAction}-${JSON.stringify(savedChoices)}`} 
+              selectedAction={selectedAction} 
+              savedChoices={savedChoices} 
+            />
+          </div>
+        </FadeIn>
       </section>
 
       <section className="bg-gray-100 w-full">
-        <div className="container mx-auto">
-          <CommunityConnections />
-        </div>
+        <FadeIn threshold={0.15} delay={500}>
+          <div className="container mx-auto">
+            <CommunityConnections />
+          </div>
+        </FadeIn>
       </section>
     </>
   );

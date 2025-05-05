@@ -181,7 +181,7 @@ const ChatWidget: React.FC = () => {
       <div className="relative">
         {/* Popup */}
         {showPopup && !isOpen && (
-          <div className="absolute bottom-16 right-0 bg-white rounded-lg shadow-md px-4 py-3 mb-2 animate-fadeIn">
+          <div className="absolute bottom-16 right-0 bg-white rounded-lg shadow-md px-4 py-3 mb-2 animate-fade-in">
             <div className="relative">
               {/* Close button for popup */}
               <button 

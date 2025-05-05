@@ -26,7 +26,7 @@ module.exports = {
         nunito: ['var(--font-nunito)', 'sans-serif'],
       },
       animation: {
-        fadeIn: 'fadeIn 0.5s ease-in forwards',
+        'fade-in': 'fadeIn 0.8s ease-in forwards',
         bounce: 'bounce 1s infinite',
       },
       keyframes: {
@@ -39,6 +39,15 @@ module.exports = {
           '50%': { transform: 'translateY(0)' }
         }
       },
+      transitionDelay: {
+        '300': '300ms',
+        '500': '500ms',
+        '700': '700ms',
+        '900': '900ms',
+        '1100': '1100ms',
+        '1300': '1300ms',
+        '1500': '1500ms',
+      }
     },
   },
   plugins: [],
