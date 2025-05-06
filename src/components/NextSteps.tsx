@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { FaCheckCircle, FaCircle, FaExternalLinkAlt } from 'react-icons/fa'
 import { MdDownload, MdEmail, MdPrint, MdInfo } from 'react-icons/md'
 import { useTranslations } from 'next-intl'
+import { useAssessment } from './AssessProvider'
 // We'll import these libraries dynamically in the component functions
 // to avoid SSR issues with Next.js
 
@@ -33,6 +34,7 @@ interface Task {
 
 const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) => {
   const t = useTranslations('nextSteps');
+  const assessment = useAssessment();
   const [completedTasks, setCompletedTasks] = useState<string[]>([])
   const [expandedTasks, setExpandedTasks] = useState<string[]>([])
   const checklistRef = useRef<HTMLDivElement>(null);
@@ -286,6 +288,14 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
     }
   }
 
+  // Get the first child's name for personalization, if available
+  const getChildName = () => {
+    if (assessment.data?.children && assessment.data.children.length > 0) {
+      return assessment.data.children[0].name;
+    }
+    return '';
+  };
+
   // Generate tasks based on the selected action and saved choices
   const generateTasks = (): Task[] => {
     if (!selectedAction || !savedChoices) return []
@@ -490,8 +500,8 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{t('yourNextSteps')}</h1>
         <p className="text-xl">
           {selectedAction === 'stay' 
-            ? t('personalizedToDoStay', {town: savedChoices.town})
-            : t('personalizedToDoMove', {town: savedChoices.town})
+            ? t('personalizedToDoStay', {town: savedChoices.town, childName: getChildName()})
+            : t('personalizedToDoMove', {town: savedChoices.town, childName: getChildName()})
           }
         </p>
       </div>
