@@ -165,6 +165,43 @@ export const geocodeNeighborhood = async (
 };
 
 /**
+ * Validates if a ZIP code actually exists (not just format validation)
+ * @param zipCode - The ZIP code to validate
+ * @returns Promise with boolean indicating if the ZIP code exists
+ */
+export const isValidZipCode = async (zipCode: string): Promise<boolean> => {
+  try {
+    // First check the format
+    if (!zipCode || !/^\d{5}(-\d{4})?$/.test(zipCode)) {
+      return false;
+    }
+
+    // Special case: 00000 is not a valid ZIP code
+    if (zipCode === '00000') {
+      return false;
+    }
+
+    // Using Mapbox Geocoding API to check if the ZIP code exists
+    const encodedZipCode = encodeURIComponent(zipCode);
+    const accessToken = 'pk.eyJ1IjoibWFoaWFyIiwiYSI6ImNtNDY1YnlwdDB2Z2IybHEwd2w3MHJvb3cifQ.wJqnzFFTwLFwYhiPG3SWJA';
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedZipCode}.json?access_token=${accessToken}&country=us&types=postcode&limit=1`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      return false;
+    }
+    
+    const data = await response.json();
+    
+    // If we get features back, the ZIP code exists
+    return data.features && data.features.length > 0;
+  } catch (error) {
+    console.error('Error validating ZIP code:', error);
+    return false;
+  }
+};
+
+/**
  * Finds the census tract containing the given coordinates
  * @param map - The Mapbox GL map instance
  * @param coordinates - The coordinates {lng, lat}

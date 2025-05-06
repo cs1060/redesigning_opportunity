@@ -4,6 +4,7 @@ import { School, Home } from 'lucide-react'
 import { useAssessment, type AssessData } from '../AssessProvider'
 import { MapOnly } from '../OpportunityMap'
 import { useTranslations } from 'next-intl'
+import { geocodeNeighborhood, isValidZipCode } from '../../utils/geocodingUtils'
 
 // Define types for the recommendations data
 type TownData = {
@@ -522,11 +523,18 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
   const [mapAddress, setMapAddress] = useState<string>('');
   const [shouldFetchData, setShouldFetchData] = useState(false);
   const [personalizedCareerAdvice, setPersonalizedCareerAdvice] = useState<CareerAdvice | null>(null);
-  
+  const [zipCodeError, setZipCodeError] = useState<string | null>(null);
+
   // Get assessment data from context if not provided as prop
   const assessmentContext = useAssessment();
   const contextData = assessmentContext?.data;
   const userData = assessmentData || contextData;
+
+  const validateZipCode = (zip: string): boolean => {
+    // Check if the ZIP code is a valid US ZIP code format (5 digits or 5+4 format)
+    const zipRegex = /^\d{5}(-\d{4})?$/;
+    return zipRegex.test(zip);
+  };
 
   const handleSchoolSelect = (schoolName: string) => {
     setSelectedSchool(schoolName);
@@ -554,11 +562,16 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
   };
 
   const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setZipCode(e.target.value);
-    // Set flag to fetch data when zipCode changes and length is at least 5
-    if (e.target.value.length >= 5) {
-      setShouldFetchData(true);
+    const newZipCode = e.target.value;
+    setZipCode(newZipCode);
+    
+    // Clear any previous errors when the user is typing
+    if (zipCodeError) {
+      setZipCodeError(null);
     }
+    
+    // Don't automatically fetch when typing - let the user click the button
+    setShouldFetchData(false);
   };
   
   // Fallback data in case the API call fails
@@ -566,10 +579,19 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
 
   // Fetch personalized recommendations from OpenAI API
   const fetchRecommendations = useCallback(async () => {
-    if (!zipCode || zipCode.length < 5) return;
+    if (!zipCode) {
+      setZipCodeError('Please enter a ZIP code');
+      return;
+    }
+    
+    if (!validateZipCode(zipCode)) {
+      setZipCodeError('Invalid ZIP code format. Please enter a 5-digit or 5+4 ZIP code.');
+      return;
+    }
     
     setLoading(true);
     setError(null);
+    setZipCodeError(null);
     
     try {
       const data = userData || {};
@@ -774,6 +796,30 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
     ? recommendations.neighborhoodData.topNeighborhoods 
     : defaultRecommendations.neighborhoodData.topNeighborhoods;
 
+  const handleZipCodeSubmit = async () => {
+    // First check the format
+    if (!validateZipCode(zipCode)) {
+      setZipCodeError('Invalid ZIP code format. Please enter a 5-digit or 5+4 ZIP code.');
+      return;
+    }
+    
+    // Set loading state while we check if the ZIP code exists
+    setLoading(true);
+    
+    // Check if the ZIP code actually exists
+    const isValid = await isValidZipCode(zipCode);
+    
+    if (isValid) {
+      // ZIP code exists, proceed with fetching data
+      setZipCodeError(null);
+      setShouldFetchData(true);
+    } else {
+      // ZIP code doesn't exist
+      setZipCodeError('This ZIP code does not appear to be valid. Please enter a valid US ZIP code.');
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-12 mt-16">
       {/* ZIP Code Input */}
@@ -789,7 +835,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
               value={zipCode}
               onChange={handleZipCodeChange}
               placeholder="e.g. 22204"
-              className="border-2 border-[#6CD9CA] rounded-md px-4 py-2 text-lg w-40"
+              className={`border-2 ${zipCodeError ? 'border-red-500' : 'border-[#6CD9CA]'} rounded-md px-4 py-2 text-lg w-40`}
               disabled={loading}
             />
             {loading && zipCode && (
@@ -800,13 +846,18 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           </div>
           {zipCode && !loading && (
             <button 
-              onClick={() => setShouldFetchData(true)}
+              onClick={handleZipCodeSubmit}
               className="ml-2 bg-[#6CD9CA] hover:bg-opacity-90 text-white py-2 px-4 rounded-md text-sm transition-colors"
             >
               Update
             </button>
           )}
         </div>
+        {zipCodeError && (
+          <div className="mt-2 text-center text-red-500 text-sm">
+            {zipCodeError}
+          </div>
+        )}
       </div>
 
       {/* Render following sections only when ZIP code is entered */}
