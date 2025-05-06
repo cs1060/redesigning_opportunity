@@ -103,6 +103,35 @@ const CommunityConnections: React.FC = () => {
     ))
   }
   
+  // Generate initials from a name (takes first letter of first and last name)
+  const getInitials = (name: string): string => {
+    const nameParts = name.split(' ').filter(part => part.length > 0);
+    if (nameParts.length === 0) return '?';
+    if (nameParts.length === 1) return nameParts[0][0].toUpperCase();
+    return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+  }
+  
+  // Use the site's primary green color for all avatars
+  const getAvatarColor = (): string => {
+    // Primary color from tailwind config
+    return '#6CD9CA';
+  }
+  
+  // Render avatar with initials
+  const renderAvatar = (testimonial: Testimonial) => {
+    const initials = getInitials(testimonial.name);
+    const bgColor = getAvatarColor();
+    
+    return (
+      <div 
+        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-medium"
+        style={{ backgroundColor: bgColor }}
+      >
+        {initials}
+      </div>
+    );
+  }
+  
   return (
     <div id="community-connections" className="min-h-screen px-4 py-10 max-w-6xl mx-auto scroll-mt-20">
       <div className="text-center mb-12">
@@ -143,20 +172,7 @@ const CommunityConnections: React.FC = () => {
             <div key={testimonial.id} className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-start mb-4">
                 <div className="flex-shrink-0 mr-4">
-                  {testimonial.avatar ? (
-                    <Image 
-                      src={testimonial.avatar} 
-                      alt={`${testimonial.name}'s avatar`}
-                      width={48}
-                      height={48}
-                      className="rounded-full"
-                      style={{ backgroundColor: '#6CD9CA' }}
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center">
-                      <FaUser size={20} />
-                    </div>
-                  )}
+                  {renderAvatar(testimonial)}
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold">{testimonial.name}</h3>
