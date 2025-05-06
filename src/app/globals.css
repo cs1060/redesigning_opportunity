@@ -176,11 +176,45 @@
   
   /* Animation for content */
   .fade-in {
-    @apply opacity-0 animate-fadeIn;
+    @apply opacity-0 animate-fade-in;
+  }
+  
+  /* Animation classes */
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-in forwards;
+  }
+  
+  /* Animation delay classes */
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+  
+  .animation-delay-700 {
+    animation-delay: 700ms;
+  }
+  
+  .animation-delay-900 {
+    animation-delay: 900ms;
+  }
+  
+  .animation-delay-1100 {
+    animation-delay: 1100ms;
+  }
+  
+  .animation-delay-1300 {
+    animation-delay: 1300ms;
+  }
+  
+  .animation-delay-1500 {
+    animation-delay: 1500ms;
   }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

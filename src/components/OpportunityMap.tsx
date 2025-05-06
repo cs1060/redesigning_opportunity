@@ -790,13 +790,13 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
   return (
     <div id="opportunity-map" className="min-h-screen px-4 py-16 max-w-6xl mx-auto scroll-mt-28">
       <div className="text-center mb-10">
-        <h2 className="text-3xl md:text-4xl font-bold mb-2">{t('title')}</h2>
-        <p className="text-lg text-gray-600">{t('subtitle')}</p>
+        <h2 className="text-3xl md:text-4xl font-bold mb-2 animate-fade-in">{t('title')}</h2>
+        <p className="text-lg text-gray-600 animate-fade-in animation-delay-300">{t('subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[65%_35%] gap-8 md:grid-flow-col auto-rows-fr">
         {/* Left side - Map Container */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-full">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-full animate-fade-in animation-delay-500">
           <div 
             ref={mapContainer} 
             className="map-container h-[600px] flex-grow relative"

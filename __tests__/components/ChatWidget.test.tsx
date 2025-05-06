@@ -2,8 +2,6 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ChatWidget from '../../src/components/ChatWidget';
 import '@testing-library/jest-dom';
-
-// Mock the fetch API
 global.fetch = jest.fn();
 
 // Mock localStorage
@@ -12,12 +10,12 @@ const localStorageMock = (() => {
   return {
     getItem: jest.fn((key: string) => store[key] || null),
     setItem: jest.fn((key: string, value: string) => {
-      store[key] = value;
+store[key] = value;
     }),
     removeItem: jest.fn((key: string) => {
       delete store[key];
     }),
-    clear: jest.fn(() => {
+clear: jest.fn(() => {
       store = {};
     }),
   };
@@ -162,7 +160,7 @@ describe('ChatWidget Component', () => {
     render(<ChatWidget />);
     
     // Open the chat
-    const chatButton = screen.getByRole('button', { name: /open chat/i });
+const chatButton = screen.getByRole('button', { name: /open chat/i });
     await user.click(chatButton);
     
     // Type a message and press Enter
