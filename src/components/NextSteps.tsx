@@ -73,9 +73,6 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
       return;
     }
     
-    // Get the checklist content
-    const checklistContent = checklistRef.current.innerHTML;
-    
     // Create a styled document with only the checklist content
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -175,7 +172,7 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
           
           <div id="checklist">
             <h2>Your To-Do List</h2>
-            ${tasks.map((task, index) => `
+            ${tasks.map((task) => `
               <div class="task">
                 <div class="task-header">
                   <span>${completedTasks.includes(task.id) ? '✓' : '□'}</span>

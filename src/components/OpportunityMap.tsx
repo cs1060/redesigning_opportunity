@@ -28,9 +28,6 @@ const calculateOpportunityScore = (income: number): number => {
 // Set Mapbox access token
 mapboxgl.accessToken = 'pk.eyJ1IjoibWFoaWFyIiwiYSI6ImNtNDY1YnlwdDB2Z2IybHEwd2w3MHJvb3cifQ.wJqnzFFTwLFwYhiPG3SWJA';
 
-// Define GeoJSON types for TypeScript
-type Geometry = GeoJSON.Geometry;
-
 // Define the interface for census tract data
 interface TractData {
   GEOID?: string;
@@ -159,11 +156,14 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
   const [selectedTract, setSelectedTract] = useState<TractData | null>(null);
   const [mapStyleLoaded, setMapStyleLoaded] = useState(false);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
-  const [userTractId, setUserTractId] = useState<string | null>(null);
-  const [userTractGeometry, setUserTractGeometry] = useState<Geometry | null>(null);
   const [insightsData, setInsightsData] = useState<NeighborhoodData | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(true);
   const [loadingAddress, setLoadingAddress] = useState(false);
+  // These state variables are used to store the user's selected tract information
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [userTractGeometry, setUserTractGeometry] = useState<GeoJSON.Geometry | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [userTractId, setUserTractId] = useState<string>('');
 
   useEffect(() => {
     if (map.current) return; // initialize map only once

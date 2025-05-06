@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { AssessData } from '@/components/AssessQuiz';
+import type { AssessData } from '@/components/AssessProvider';
 
 export async function POST(request: NextRequest) {
   try {

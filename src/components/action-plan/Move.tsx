@@ -718,7 +718,6 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
       // Use fallback recommendations but apply filtering
       const filteredDefaultSchools = filterSchoolsByChildAge(fallbackRecommendations.schoolData, userData);
       const filteredDefaultPrograms = filterCommunityPrograms(fallbackRecommendations.communityProgramData, userData);
-      const ratedDefaultHousingOptions = filterHousingOptions(fallbackRecommendations.housingOptions, userData);
       
       setFilteredSchools(filteredDefaultSchools);
       setFilteredPrograms(filteredDefaultPrograms);
