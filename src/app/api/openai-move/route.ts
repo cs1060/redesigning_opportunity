@@ -276,7 +276,8 @@ export async function POST(req: NextRequest) {
                     2. neighborhoodData: Object with a topNeighborhoods array listing top 3 neighborhoods with scores (1-10) and descriptions.
                     
                     3. schoolData: Array of school recommendations with:
-                       - name, rating (1-10), description, website
+                       - name, rating (1-10), description
+                       - For the website field, DO NOT try to provide the exact school website URL. Instead, provide a Google search URL in this format: "https://www.google.com/search?q=school+name+town+state" (replace spaces with +)
                        - schoolType: "elementary", "middle", "high", or "all" based on grade levels
                        - Make sure each school is appropriate for the children's ages:
                          * Ages 5-10: elementary schools
@@ -284,7 +285,8 @@ export async function POST(req: NextRequest) {
                          * Ages 14-18: high schools
                     
                     4. communityProgramData: Array of recommendations with:
-                       - name, description, website
+                       - name, description
+                       - For the website field, provide a Google search URL in this format: "https://www.google.com/search?q=program+name+town+state" (replace spaces with +)
                        - ageRanges: Array of ["preschool", "elementary", "middle", "high", "all"]
                        - genderFocus: "all", "boys", or "girls" if applicable
                        - tags: Array of relevant categories like "stem", "arts", "sports", etc.
