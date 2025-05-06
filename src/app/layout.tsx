@@ -15,15 +15,17 @@ export const metadata: Metadata = {
   description: 'A friendly guide to creating opportunities for your family',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
   params
 }: {
   children: React.ReactNode;
-  params?: { locale?: string };
+  params?: Promise<{ locale?: string }>;
 }) {
+  // Resolve params if provided (in root layout it will usually be undefined)
+  const resolvedParams = params ? await params : undefined;
   // Default to 'en' if locale is not available
-  const locale = params?.locale || 'en';
+  const locale = resolvedParams?.locale || 'en';
   
   return (
     <html lang={locale} className={nunito.variable}>
