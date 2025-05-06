@@ -2,11 +2,6 @@ import React from 'react';
 import IntlProvider from '../../components/IntlProvider';
 import MobileLanguageSwitcher from '../../components/MobileLanguageSwitcher';
 
-type Props = {
-  children: React.ReactNode;
-  params: { locale: string };
-};
-
 // Define supported locales
 export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'es' }, { locale: 'fr' }]; // All supported locales
@@ -25,8 +20,12 @@ async function loadMessages(locale: string) {
 // Main layout component (Server Component)
 export default async function LocaleLayout({
   children,
-  params: { locale }
-}: Props) {
+  params,
+}: {
+  children: React.ReactNode;
+  params: { locale: string };
+}) {
+  const { locale } = params;
   // Load messages dynamically using the helper function
   const messages = await loadMessages(locale);
   
