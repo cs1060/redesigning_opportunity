@@ -4,7 +4,6 @@ import { School, Home } from 'lucide-react'
 import { useAssessment, type AssessData } from '../AssessProvider'
 import { MapOnly } from '../OpportunityMap'
 import { useTranslations } from 'next-intl'
-import { geocodeNeighborhood, isValidZipCode } from '../../utils/geocodingUtils'
 
 // Define types for the recommendations data
 type TownData = {
@@ -523,18 +522,11 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
   const [mapAddress, setMapAddress] = useState<string>('');
   const [shouldFetchData, setShouldFetchData] = useState(false);
   const [personalizedCareerAdvice, setPersonalizedCareerAdvice] = useState<CareerAdvice | null>(null);
-  const [zipCodeError, setZipCodeError] = useState<string | null>(null);
-
+  
   // Get assessment data from context if not provided as prop
   const assessmentContext = useAssessment();
   const contextData = assessmentContext?.data;
   const userData = assessmentData || contextData;
-
-  const validateZipCode = (zip: string): boolean => {
-    // Check if the ZIP code is a valid US ZIP code format (5 digits or 5+4 format)
-    const zipRegex = /^\d{5}(-\d{4})?$/;
-    return zipRegex.test(zip);
-  };
 
   const handleSchoolSelect = (schoolName: string) => {
     setSelectedSchool(schoolName);
@@ -562,16 +554,11 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
   };
 
   const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newZipCode = e.target.value;
-    setZipCode(newZipCode);
-    
-    // Clear any previous errors when the user is typing
-    if (zipCodeError) {
-      setZipCodeError(null);
+    setZipCode(e.target.value);
+    // Set flag to fetch data when zipCode changes and length is at least 5
+    if (e.target.value.length >= 5) {
+      setShouldFetchData(true);
     }
-    
-    // Don't automatically fetch when typing - let the user click the button
-    setShouldFetchData(false);
   };
   
   // Fallback data in case the API call fails
@@ -579,19 +566,10 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
 
   // Fetch personalized recommendations from OpenAI API
   const fetchRecommendations = useCallback(async () => {
-    if (!zipCode) {
-      setZipCodeError('Please enter a ZIP code');
-      return;
-    }
-    
-    if (!validateZipCode(zipCode)) {
-      setZipCodeError('Invalid ZIP code format. Please enter a 5-digit or 5+4 ZIP code.');
-      return;
-    }
+    if (!zipCode || zipCode.length < 5) return;
     
     setLoading(true);
     setError(null);
-    setZipCodeError(null);
     
     try {
       const data = userData || {};
@@ -796,30 +774,6 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
     ? recommendations.neighborhoodData.topNeighborhoods 
     : defaultRecommendations.neighborhoodData.topNeighborhoods;
 
-  const handleZipCodeSubmit = async () => {
-    // First check the format
-    if (!validateZipCode(zipCode)) {
-      setZipCodeError('Invalid ZIP code format. Please enter a 5-digit or 5+4 ZIP code.');
-      return;
-    }
-    
-    // Set loading state while we check if the ZIP code exists
-    setLoading(true);
-    
-    // Check if the ZIP code actually exists
-    const isValid = await isValidZipCode(zipCode);
-    
-    if (isValid) {
-      // ZIP code exists, proceed with fetching data
-      setZipCodeError(null);
-      setShouldFetchData(true);
-    } else {
-      // ZIP code doesn't exist
-      setZipCodeError('This ZIP code does not appear to be valid. Please enter a valid US ZIP code.');
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-12 mt-16">
       {/* ZIP Code Input */}
@@ -835,7 +789,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
               value={zipCode}
               onChange={handleZipCodeChange}
               placeholder="e.g. 22204"
-              className={`border-2 ${zipCodeError ? 'border-red-500' : 'border-[#6CD9CA]'} rounded-md px-4 py-2 text-lg w-40`}
+              className="border-2 border-[#6CD9CA] rounded-md px-4 py-2 text-lg w-40"
               disabled={loading}
             />
             {loading && zipCode && (
@@ -846,18 +800,13 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           </div>
           {zipCode && !loading && (
             <button 
-              onClick={handleZipCodeSubmit}
+              onClick={() => setShouldFetchData(true)}
               className="ml-2 bg-[#6CD9CA] hover:bg-opacity-90 text-white py-2 px-4 rounded-md text-sm transition-colors"
             >
               Update
             </button>
           )}
         </div>
-        {zipCodeError && (
-          <div className="mt-2 text-center text-red-500 text-sm">
-            {zipCodeError}
-          </div>
-        )}
       </div>
 
       {/* Render following sections only when ZIP code is entered */}
@@ -950,7 +899,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                 {/* Neighborhoods List - Takes up right half on desktop */}
                 <div className="w-full lg:w-1/2">
                   <h3 className="text-2xl font-semibold mb-4">Top Neighborhoods in {zipCode}</h3>
-                  <p className="mb-4 text-center">Select a neighborhood to view on the map</p>
+                  <p className="mb-4 text-center">{t('selectNeighborhood')}</p>
                   
                   <div className="space-y-4">
                     {neighborhoods.map((neighborhood) => (
@@ -967,7 +916,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                         <div className="flex justify-between items-center">
                           <h4 className="text-xl font-semibold">{neighborhood.name}</h4>
                           <div className="flex items-center">
-                            <span className="text-sm mr-2">Opportunity Score:</span>
+                            <span className="text-sm mr-2">{t('opportunityScore')}:</span>
                             <span className="bg-[#6CD9CA] text-white font-bold px-2 py-1 rounded-md">{neighborhood.score}/10</span>
                           </div>
                         </div>
@@ -978,7 +927,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
 
                   {selectedNeighborhood && (
                     <p className="mt-4 text-lg font-semibold">
-                      {t('neighborhoodSelected', { neighborhood: selectedNeighborhood })}
+                      {t('neighborhoodSelected', {neighborhood: selectedNeighborhood})}
                     </p>
                   )}
                 </div>
@@ -990,7 +939,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           {!loading && filteredSchools.length > 0 && (
             <div className="bg-white shadow-md rounded-lg p-6">
               <h3 className="text-2xl font-semibold mb-4">{t('localSchools')}</h3>
-              <p className="mb-1">Select a school to learn more:</p>
+              <p className="mb-1">{t('selectSchool')}</p>
               <p className="mb-4 text-sm text-gray-600">{getSchoolLevelMessage(userData)}</p>
               
               <div className="space-y-4">
@@ -1113,12 +1062,12 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
               <h3 className="text-2xl font-semibold mb-6 text-center">{t('communityDemographics')}</h3>
               
               {/* ZIP Code Header */}
-              {zipCode && recommendations?.communityDemographics?.ethnicComposition && recommendations.communityDemographics.ethnicComposition.length > 0 && (
+              {zipCode && (
                 <h4 className="text-xl text-center mb-8">
-                  {t('inZipCode', { 
-                    zipCode, 
-                    group: recommendations.communityDemographics.ethnicComposition[0].group, 
-                    percentage: recommendations.communityDemographics.ethnicComposition[0].percentage 
+                  {t('inZipCode', {
+                    zipCode,
+                    group: recommendations.communityDemographics.ethnicComposition.sort((a, b) => b.percentage - a.percentage)[0].group,
+                    percentage: recommendations.communityDemographics.ethnicComposition.sort((a, b) => b.percentage - a.percentage)[0].percentage
                   })}
                 </h4>
               )}
@@ -1185,7 +1134,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                           switch(religionData.religion.toLowerCase()) {
                             case "christian": 
                               iconColor = "text-[#34687e]"; // accent11
-                              iconPath = "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z";
+                              iconPath = "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z";
                               religionData.displayName = "Christian";
                               break;
                             case "jewish": 
@@ -1294,7 +1243,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           {!loading && filteredHousingOptions.length > 0 && (
             <div className="bg-white shadow-md rounded-lg p-6">
               <h3 className="text-2xl font-semibold mb-6 text-center">{t('housingOptions')}</h3>
-              <p className="mb-4 text-center">Select a housing type that suits your family&apos;s needs:</p>
+              <p className="mb-4 text-center">{t('selectHousingType')}</p>
               
               <div className="grid md:grid-cols-3 gap-6 mb-8">
                 {filteredHousingOptions.map((option) => (
@@ -1348,7 +1297,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                 >
                   <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
                     </svg>
                   </div>
                   <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Redfin</span>
@@ -1374,7 +1323,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                 >
                   <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
                   <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Affordable Housing</span>
@@ -1488,7 +1437,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                 >
                   <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
                   <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Indeed</span>
@@ -1514,7 +1463,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                 >
                   <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
                     </svg>
                   </div>
                   <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Glassdoor</span>
@@ -1604,5 +1553,4 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
   );
 };
 
-export { getSchoolTypeForAge };
 export default Move;

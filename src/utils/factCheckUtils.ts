@@ -49,11 +49,18 @@ export const verifyPlace = async (
       // Check if the feature name contains our place name
       if (featureText.includes(placeNameLower) || placeNameLower.includes(featureText)) {
         // Check if the ZIP code is mentioned in the context
-        const hasZipCode = feature.context?.some((ctx: any) => 
-          ctx.text === zipCode || (ctx.text || '').includes(zipCode)
-        );
+        let hasZipCode = false;
+        if (feature.context) {
+          for (const ctx of feature.context as Array<Record<string, string>>) {
+            if (ctx.id?.startsWith('postcode') && ctx.text?.includes(zipCode)) {
+              hasZipCode = true;
+              break;
+            }
+          }
+        }
         
-        if (hasZipCode && relevance > highestRelevance) {
+        // If this is a better match than what we've found so far, update our best match
+        if ((hasZipCode || relevance > 0.8) && relevance > highestRelevance) {
           bestMatch = feature;
           highestRelevance = relevance;
         }
@@ -61,18 +68,21 @@ export const verifyPlace = async (
     }
     
     if (bestMatch) {
-      return { 
-        exists: true, 
-        confidence: highestRelevance, 
-        message: `Verified '${placeName}' exists in or near ZIP code ${zipCode}` 
+      // Calculate confidence based on relevance and other factors
+      const confidence = Math.min(1, bestMatch.relevance * 1.2); // Boost relevance a bit but cap at 1
+      
+      return {
+        exists: true,
+        confidence,
+        message: `Verified '${placeName}' with ${Math.round(confidence * 100)}% confidence`
       };
     }
     
-    // If we found results but none matched our criteria
-    return { 
-      exists: false, 
-      confidence: 0.2, // Low confidence
-      message: `Found places called '${placeName}' but couldn't verify they're in ZIP code ${zipCode}` 
+    // No good match found
+    return {
+      exists: false,
+      confidence: 0.1, // Very low confidence
+      message: `Could not confidently verify '${placeName}' in ZIP code ${zipCode}`
     };
     
   } catch (error) {
@@ -80,7 +90,7 @@ export const verifyPlace = async (
     return { 
       exists: false, 
       confidence: 0, 
-      message: `Error verifying '${placeName}': ${error instanceof Error ? error.message : String(error)}` 
+      message: `Error verifying place '${placeName}': ${error instanceof Error ? error.message : String(error)}` 
     };
   }
 };
@@ -138,9 +148,15 @@ export const verifySchool = async (
         feature.properties?.category === 'education';
       
       // Check if the ZIP code is mentioned in the context
-      const hasZipCode = feature.context?.some((ctx: any) => 
-        ctx.text === zipCode || (ctx.text || '').includes(zipCode)
-      );
+      let hasZipCode = false;
+      if (feature.context) {
+        for (const ctx of feature.context as Array<Record<string, string>>) {
+          if (ctx.id?.startsWith('postcode') && ctx.text?.includes(zipCode)) {
+            hasZipCode = true;
+            break;
+          }
+        }
+      }
       
       if (isSchool && hasZipCode && relevance > highestRelevance) {
         bestMatch = feature;
@@ -194,33 +210,103 @@ export const verifyWebsite = async (
     // Validate URL format
     try {
       new URL(url);
-    } catch (_error) {
+    } catch {
       return { 
         exists: false, 
         confidence: 0, 
         message: `Invalid URL format: ${url}` 
       };
     }
+    
+    // Check for suspicious patterns that might indicate fake websites
+    const suspiciousPatterns = [
+      /\.(tk|ml|ga|cf|gq|xyz)$/i, // Free domains often used for spam
+      /^https?:\/\/\d+\.\d+\.\d+\.\d+/i, // IP addresses
+      /^https?:\/\/localhost/i, // localhost
+      /^https?:\/\/.*\.example\.(com|org|net)/i, // example domains
+      /^https?:\/\/.*\.test\.(com|org|net)/i, // test domains
+      /^https?:\/\/.*\.invalid/i, // .invalid TLD
+      /^https?:\/\/.*\.local/i, // .local TLD
+    ];
 
-    // We can't actually fetch the URL from the server side due to CORS and security issues
-    // So we'll just validate the format and return a moderate confidence
+    for (const pattern of suspiciousPatterns) {
+      if (pattern.test(url)) {
+        return {
+          exists: false,
+          confidence: 0.2,
+          message: `URL appears to be suspicious: ${url}`
+        };
+      }
+    }
+
+    // Actually try to connect to the website
+    const response = await fetch(url, { 
+      method: 'GET', 
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      },
+      // Set a timeout to avoid hanging
+      signal: AbortSignal.timeout(10000) // 10 second timeout
+    });
     
-    // Check for common website patterns
-    const hasCommonTLD = /\.(com|org|net|gov|edu|io)$/i.test(url);
-    const hasRealisticStructure = /^https?:\/\/([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]*[a-z0-9])?(\/.*)*/i.test(url);
-    
-    if (hasCommonTLD && hasRealisticStructure) {
+    // Check if the response is OK and is HTML
+    const contentType = response.headers.get('content-type');
+    if (!response.ok || !contentType || !contentType.includes('text/html')) {
       return { 
-        exists: true, 
-        confidence: 0.7, // Moderate confidence since we can't actually check
-        message: `URL format appears valid: ${url}` 
+        exists: false, 
+        confidence: 0.3, 
+        message: `Website returned invalid response: ${response.status} ${response.statusText}` 
+      };
+    }
+
+    // Check if the page has basic HTML structure
+    const text = await response.text();
+    const hasHtmlStructure = text.includes('<title>') || text.includes('<body>');
+    
+    if (!hasHtmlStructure) {
+      return { 
+        exists: false, 
+        confidence: 0.4, 
+        message: `Website doesn't appear to be a valid HTML page` 
+      };
+    }
+
+    // For school websites specifically, check for educational patterns
+    const isSchoolWebsite = 
+      url.toLowerCase().includes('school') || 
+      url.toLowerCase().includes('edu') ||
+      text.toLowerCase().includes('school') ||
+      text.toLowerCase().includes('education') ||
+      text.toLowerCase().includes('student');
+      
+    const hasEduTLD = /\.edu$/i.test(url);
+    const hasSchoolDistrictPattern = /\.(k12|sch)\.[a-z]{2}\.(us|ca|uk)$/i.test(url);
+    
+    if (isSchoolWebsite || hasEduTLD || hasSchoolDistrictPattern) {
+      return {
+        exists: true,
+        confidence: 0.9, // Higher confidence for educational websites
+        message: `Verified educational website: ${url}`
       };
     }
     
+    // Check for common website patterns
+    const hasCommonTLD = /\.(com|org|net|gov|edu|io)$/i.test(url);
+    
+    if (hasCommonTLD) {
+      return { 
+        exists: true, 
+        confidence: 0.8, 
+        message: `Verified website: ${url}` 
+      };
+    }
+    
+    // If we got here, the website exists but doesn't match our specific patterns
     return { 
-      exists: false, 
-      confidence: 0.3, 
-      message: `URL format appears unusual: ${url}` 
+      exists: true, 
+      confidence: 0.7, 
+      message: `Website verified with moderate confidence: ${url}` 
     };
     
   } catch (error) {
@@ -244,6 +330,7 @@ export const batchVerify = async (
     type: 'place' | 'school' | 'website';
     name: string;
     zipCode?: string;
+    context?: string;
   }>
 ): Promise<Record<string, { exists: boolean; confidence: number; message?: string }>> => {
   const results: Record<string, { exists: boolean; confidence: number; message?: string }> = {};
@@ -279,6 +366,38 @@ export const batchVerify = async (
     
     // Small delay between batches to avoid rate limiting
     if (i + batchSize < items.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  
+  return results;
+};
+
+/**
+ * Batch verifies multiple websites for efficiency
+ * @param urls - Array of URLs to verify
+ * @returns Promise with verification results
+ */
+export const batchVerifyWebsites = async (
+  urls: string[]
+): Promise<Record<string, { exists: boolean; confidence: number; message?: string }>> => {
+  const results: Record<string, { exists: boolean; confidence: number; message?: string }> = {};
+  
+  // Process in batches to avoid overwhelming the network
+  const batchSize = 3;
+  for (let i = 0; i < urls.length; i += batchSize) {
+    const batch = urls.slice(i, i + batchSize);
+    const promises = batch.map(url => {
+      return verifyWebsite(url).then(result => {
+        results[url] = result;
+      });
+    });
+    
+    // Wait for each batch to complete before moving to the next
+    await Promise.all(promises);
+    
+    // Small delay between batches to avoid rate limiting
+    if (i + batchSize < urls.length) {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
