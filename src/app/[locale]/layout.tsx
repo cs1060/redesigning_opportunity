@@ -17,14 +17,15 @@ async function loadMessages(locale: string) {
   }
 }
 
-// Main layout component (Server Component)
-export default async function LocaleLayout({
-  children,
-  params,
-}: {
+type LocaleLayoutProps = {
   children: React.ReactNode;
-  params: { locale: string };
-}) {
+  params: {
+    locale: string;
+  };
+}
+
+// Main layout component (Server Component)
+export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
   const { locale } = params;
   // Load messages dynamically using the helper function
   const messages = await loadMessages(locale);

@@ -5,10 +5,12 @@ const withNextIntl = require('next-intl/plugin')('./src/i18n.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
-  // Disable Turbopack for now as it may be causing the buildId/deploymentId errors
+  // Fix the experimental.turbo setting to be an object instead of a boolean
   experimental: {
     // Set to false to disable Turbopack
-    turbo: false
+    turbo: { 
+      enabled: false
+    }
   }
 };
 
