@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { batchVerify } from '../../../utils/factCheckUtils';
-import { geocodeZipCode } from '../../../utils/geocodingUtils';
+import { geocodeZipCode, isValidZipCode } from '../../../utils/geocodingUtils';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -227,17 +227,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate input data
-    if (!Array.isArray(children)) {
+    // Format validation
+    if (!validateZipCode(zipCode)) {
       return NextResponse.json(
-        { error: 'Children data must be an array' },
+        { error: 'Invalid ZIP code format' },
         { status: 400 }
       );
     }
 
-    if (!validateZipCode(zipCode)) {
+    // Existence validation - check if the ZIP code actually exists
+    const zipCodeExists = await isValidZipCode(zipCode);
+    if (!zipCodeExists) {
       return NextResponse.json(
-        { error: 'Invalid ZIP code' },
+        { error: 'This ZIP code does not appear to be valid' },
         { status: 400 }
       );
     }

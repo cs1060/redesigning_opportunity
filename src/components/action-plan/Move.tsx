@@ -4,6 +4,7 @@ import { School, Home } from 'lucide-react'
 import { useAssessment, type AssessData } from '../AssessProvider'
 import { MapOnly } from '../OpportunityMap'
 import { useTranslations } from 'next-intl'
+import { geocodeNeighborhood, isValidZipCode } from '../../utils/geocodingUtils'
 
 // Define types for the recommendations data
 type TownData = {
@@ -795,11 +796,27 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
     ? recommendations.neighborhoodData.topNeighborhoods 
     : defaultRecommendations.neighborhoodData.topNeighborhoods;
 
-  const handleZipCodeSubmit = () => {
-    if (validateZipCode(zipCode)) {
+  const handleZipCodeSubmit = async () => {
+    // First check the format
+    if (!validateZipCode(zipCode)) {
+      setZipCodeError('Invalid ZIP code format. Please enter a 5-digit or 5+4 ZIP code.');
+      return;
+    }
+    
+    // Set loading state while we check if the ZIP code exists
+    setLoading(true);
+    
+    // Check if the ZIP code actually exists
+    const isValid = await isValidZipCode(zipCode);
+    
+    if (isValid) {
+      // ZIP code exists, proceed with fetching data
+      setZipCodeError(null);
       setShouldFetchData(true);
     } else {
-      setZipCodeError('Invalid ZIP code format. Please enter a 5-digit or 5+4 ZIP code.');
+      // ZIP code doesn't exist
+      setZipCodeError('This ZIP code does not appear to be valid. Please enter a valid US ZIP code.');
+      setLoading(false);
     }
   };
 
