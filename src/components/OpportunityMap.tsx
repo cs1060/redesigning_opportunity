@@ -665,8 +665,29 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
         console.log('Geocoding address:', address);
         setLoadingAddress(true);
         
-        // Geocode the address to get coordinates
-        const coordinates = await geocodeAddress(address);
+        // Parse the address to check if it contains a neighborhood and ZIP code
+        // Format expected from Move component: "Neighborhood, Town, ZIP"
+        const addressParts = address.split(',').map(part => part.trim());
+        let coordinates = null;
+        
+        // Check if we have a neighborhood address format (at least 2 parts with the last being a ZIP code)
+        if (addressParts.length >= 2 && /^\d{5}(-\d{4})?$/.test(addressParts[addressParts.length - 1])) {
+          console.log('Detected neighborhood address format');
+          
+          // Try geocoding with the full address first
+          coordinates = await geocodeAddress(address);
+          
+          // If that fails, try with just the town and ZIP
+          if (!coordinates && addressParts.length >= 3) {
+            const townAndZip = `${addressParts[1]}, ${addressParts[addressParts.length - 1]}`;
+            console.log('Trying with town and ZIP:', townAndZip);
+            coordinates = await geocodeAddress(townAndZip);
+          }
+        } else {
+          // Regular geocoding for other address formats
+          coordinates = await geocodeAddress(address);
+        }
+        
         if (!coordinates) {
           console.error('Failed to geocode address:', address);
           setLoadingAddress(false);
