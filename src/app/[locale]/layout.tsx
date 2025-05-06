@@ -7,12 +7,15 @@ export function generateStaticParams() {
 }
 
 // Simple layout component that delegates internationalization to the client component
-export default function LocaleLayout({
+export default async function LocaleLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  // Next.js LayoutProps expects `params` to be a Promise (typed in next-types-plugin)
+  params: Promise<{ locale: string }>;
 }) {
-  return <LocaleWrapper locale={params.locale}>{children}</LocaleWrapper>;
+  // Await the promise to get the actual locale value
+  const { locale } = await params;
+  return <LocaleWrapper locale={locale}>{children}</LocaleWrapper>;
 }
