@@ -619,12 +619,10 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             // Process the data we received
             const filteredSchools = filterSchoolsByChildAge(errorData.schoolData, userData);
             const filteredPrograms = filterCommunityPrograms(errorData.communityProgramData || [], userData);
-            const ratedHousingOptions = filterHousingOptions(errorData.housingOptions || [], userData);
             
             // Update state with the data from the error response
             setFilteredSchools(filteredSchools);
             setFilteredPrograms(filteredPrograms);
-            setFilteredHousingOptions(ratedHousingOptions);
             setRecommendations(errorData);
             
             // Show a warning but don't treat it as a full error
@@ -641,12 +639,10 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
         // Apply filtering to fallback recommendations
         const filteredDefaultSchools = filterSchoolsByChildAge(fallbackRecommendations.schoolData, userData);
         const filteredDefaultPrograms = filterCommunityPrograms(fallbackRecommendations.communityProgramData, userData);
-        const ratedDefaultHousingOptions = filterHousingOptions(fallbackRecommendations.housingOptions, userData);
         
         // Update state with fallback data
         setFilteredSchools(filteredDefaultSchools);
         setFilteredPrograms(filteredDefaultPrograms);
-        setFilteredHousingOptions(ratedDefaultHousingOptions);
         setRecommendations(fallbackRecommendations);
         setError(`Using default recommendations. API error: ${errorMessage}`);
         setLoading(false);
@@ -664,12 +660,10 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
         // Apply filtering to fallback recommendations
         const filteredDefaultSchools = filterSchoolsByChildAge(fallbackRecommendations.schoolData, userData);
         const filteredDefaultPrograms = filterCommunityPrograms(fallbackRecommendations.communityProgramData, userData);
-        const ratedDefaultHousingOptions = filterHousingOptions(fallbackRecommendations.housingOptions, userData);
         
         // Update state with fallback data
         setFilteredSchools(filteredDefaultSchools);
         setFilteredPrograms(filteredDefaultPrograms);
-        setFilteredHousingOptions(ratedDefaultHousingOptions);
         setRecommendations(fallbackRecommendations);
         setError('Could not parse API response. Using default recommendations instead.');
         setLoading(false);
@@ -703,13 +697,10 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
       // Apply filters based on user data
       const filteredSchoolData = filterSchoolsByChildAge(validatedData.schoolData, userData);
       const filteredProgramData = filterCommunityPrograms(validatedData.communityProgramData, userData);
-      const ratedHousingOptions = filterHousingOptions(validatedData.housingOptions, userData);
-      
-      // Update state
-      setRecommendations(validatedData);
       setFilteredSchools(filteredSchoolData);
       setFilteredPrograms(filteredProgramData);
-      setFilteredHousingOptions(ratedHousingOptions);
+      setRecommendations(validatedData);
+      setFilteredHousingOptions(filterHousingOptions(validatedData.housingOptions, userData));
       
     } catch (err) {
       console.error('Error fetching move recommendations:', err);
@@ -718,7 +709,6 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
       // Use fallback recommendations but apply filtering
       const filteredDefaultSchools = filterSchoolsByChildAge(fallbackRecommendations.schoolData, userData);
       const filteredDefaultPrograms = filterCommunityPrograms(fallbackRecommendations.communityProgramData, userData);
-      const ratedDefaultHousingOptions = filterHousingOptions(fallbackRecommendations.housingOptions, userData);
       
       setFilteredSchools(filteredDefaultSchools);
       setFilteredPrograms(filteredDefaultPrograms);
@@ -909,7 +899,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                 {/* Neighborhoods List - Takes up right half on desktop */}
                 <div className="w-full lg:w-1/2">
                   <h3 className="text-2xl font-semibold mb-4">Top Neighborhoods in {zipCode}</h3>
-                  <p className="mb-4">Select a neighborhood you&apos;re interested in:</p>
+                  <p className="mb-4 text-center">{t('selectNeighborhood')}</p>
                   
                   <div className="space-y-4">
                     {neighborhoods.map((neighborhood) => (
@@ -1109,7 +1099,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                               {[...Array(5)].map((_, i) => (
                                 <div key={i} className={`mx-0.5 ${i < Math.ceil(group.percentage / 20) ? iconColor : "text-gray-200"}`}>
                                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                                    <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                                    <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" clipRule="evenodd" />
                                   </svg>
                                 </div>
                               ))}
@@ -1130,7 +1120,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
               {/* Religious Composition */}
               {Array.isArray(recommendations.communityDemographics.religiousComposition) && (
                 <div className="mt-8 mb-10">
-                  <h4 className="text-xl font-semibold mb-6 text-center">Religious Composition</h4>
+                  <h4 className="text-xl font-semibold mb-4 text-center">Religious Composition</h4>
                   
                   <div className="flex flex-wrap justify-center gap-4 mb-6">
                     {recommendations.communityDemographics.religiousComposition
@@ -1249,7 +1239,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             </div>
           )}
 
-          {/* Housing Options - UPDATED WITH SELECTION */}
+          {/* Housing Options */}
           {!loading && filteredHousingOptions.length > 0 && (
             <div className="bg-white shadow-md rounded-lg p-6">
               <h3 className="text-2xl font-semibold mb-6 text-center">{t('housingOptions')}</h3>

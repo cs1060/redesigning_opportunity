@@ -7,8 +7,9 @@ const nextConfig = {
   /* config options here */
   // Disable Turbopack for now as it may be causing the buildId/deploymentId errors
   experimental: {
-    // Set to false to disable Turbopack
-    turbo: false
+    turbo: {
+      enabled: false
+    }
   }
 };
 
