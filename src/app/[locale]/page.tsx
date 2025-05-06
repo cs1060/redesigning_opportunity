@@ -8,6 +8,7 @@ import TakeAction from '@/components/action-plan/ActionPlan'
 import NextSteps from '../../components/NextSteps'
 import { PersonalizationProvider, usePersonalization } from '../../components/AssessProvider'
 import CommunityConnections from '../../components/CommunityConnections'
+import AdditionalResources from '../../components/AdditionalResources'
 import FadeIn from '@/components/FadeIn'
 
 interface SavedChoices {
@@ -129,6 +130,14 @@ function HomeContent({
 
       <section className="bg-gray-100 w-full">
         <FadeIn threshold={0.15} delay={500}>
+          <div className="container mx-auto">
+            <AdditionalResources />
+          </div>
+        </FadeIn>
+      </section>
+
+      <section className="bg-white w-full">
+        <FadeIn threshold={0.15} delay={600}>
           <div className="container mx-auto">
             <CommunityConnections />
           </div>
