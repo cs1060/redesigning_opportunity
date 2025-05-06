@@ -52,6 +52,44 @@ const MAX_HISTORY_MESSAGES = 10; // Maximum number of history messages to includ
 const MAX_TOKENS = 500; // Maximum tokens for the response
 
 /**
+ * Check if the user's message is related to the website's purpose
+ * This helps prevent users from using the chatbot for unrelated topics
+ */
+function isRelevantTopic(message: string): boolean {
+  // Convert message to lowercase for case-insensitive matching
+  const lowerMessage = message.toLowerCase();
+  
+  // Define keywords and topics relevant to the application
+  const relevantKeywords = [
+    // Family and children related
+    'child', 'children', 'family', 'kid', 'kids', 'parent', 'parents', 'parenting',
+    
+    // Education related
+    'school', 'education', 'college', 'university', 'teacher', 'learning', 'student', 
+    'classroom', 'grades', 'academic', 'study', 'scholarship', 'tuition', 'degree',
+    
+    // Housing and location related
+    'neighborhood', 'community', 'city', 'town', 'area', 'location', 'move', 'moving', 
+    'relocate', 'house', 'housing', 'apartment', 'rent', 'mortgage', 'home', 'property',
+    
+    // Economic mobility related
+    'opportunity', 'opportunities', 'income', 'job', 'career', 'salary', 'wage', 'money', 
+    'cost', 'finance', 'financial', 'expense', 'economic', 'poverty', 'wealth',
+    
+    // Services and programs
+    'program', 'service', 'resource', 'support', 'assistance', 'help', 'benefit', 'aid',
+    'community program', 'public service', 'government', 'grant', 'nonprofit',
+    
+    // Questions about the platform
+    'how to', 'website', 'tool', 'data', 'map', 'information', 'advice', 'recommendation',
+    'guide', 'plan', 'mobility', 'future', 'opportunity', 'decision', 'option'
+  ];
+  
+  // Check if any relevant keyword is in the message
+  return relevantKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+/**
  * Sanitize input to prevent injection attacks
  * This doesn't modify the input but ensures it's treated as plain text
  */
@@ -95,6 +133,16 @@ export async function POST(request: NextRequest) {
     // Sanitize and optimize the user message
     const sanitizedMessage = sanitizeInput(message);
     const optimizedMessage = optimizeTokenUsage(sanitizedMessage);
+
+    // Check if the message is relevant to the website's purpose
+    const isRelevant = isRelevantTopic(optimizedMessage);
+    
+    // If message is not relevant, return a polite but firm message redirecting to platform topics
+    if (!isRelevant) {
+      return NextResponse.json({ 
+        message: "I'm focused on helping families improve opportunities for their children through education, housing, and community resources. I can help you with questions about schools, neighborhoods, family planning, economic mobility, and using our platform's tools. What specific information about your family's opportunities can I assist you with?"
+      });
+    }
 
     // Build the messages array for the API call
     const messages: Message[] = [
