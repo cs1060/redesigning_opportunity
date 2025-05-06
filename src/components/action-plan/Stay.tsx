@@ -103,7 +103,7 @@ interface StayProps {
 }
 
 // Helper function to determine appropriate school type based on child's age
-const getSchoolTypeForAge = (age: number): 'elementary' | 'middle' | 'high' => {
+export const getSchoolTypeForAge = (age: number): 'elementary' | 'middle' | 'high' => {
   if (age >= 5 && age <= 10) return 'elementary';
   if (age >= 11 && age <= 13) return 'middle';
   if (age >= 14) return 'high';
@@ -111,7 +111,7 @@ const getSchoolTypeForAge = (age: number): 'elementary' | 'middle' | 'high' => {
 };
 
 // Helper function to filter schools based on children's ages
-const filterSchoolsByChildAge = (schools: SchoolData[], assessmentData: AssessData | undefined): SchoolData[] => {
+export const filterSchoolsByChildAge = (schools: SchoolData[], assessmentData: AssessData | undefined): SchoolData[] => {
   // If no children data is available, return all schools
   if (!assessmentData || !assessmentData.children || assessmentData.children.length === 0) {
     return schools;
@@ -137,7 +137,7 @@ const filterSchoolsByChildAge = (schools: SchoolData[], assessmentData: AssessDa
 };
 
 // Helper function to filter community programs based on children's profiles
-const filterCommunityPrograms = (
+export const filterCommunityPrograms = (
   programs: CommunityProgramData[], 
   assessmentData: AssessData | undefined
 ): CommunityProgramData[] => {
@@ -186,7 +186,7 @@ const filterCommunityPrograms = (
 };
 
 // Helper to infer school type if not provided
-const inferSchoolType = (school: SchoolData): SchoolData => {
+export const inferSchoolType = (school: SchoolData): SchoolData => {
   if (school.schoolType) return school;
   
   const name = school.name.toLowerCase();
@@ -204,7 +204,7 @@ const inferSchoolType = (school: SchoolData): SchoolData => {
 };
 
 // Helper to get school level message
-const getSchoolLevelMessage = (assessmentData: AssessData | undefined): string => {
+export const getSchoolLevelMessage = (assessmentData: AssessData | undefined): string => {
   if (!assessmentData || !assessmentData.children || assessmentData.children.length === 0) {
     return 'Showing all schools in the area';
   }
@@ -229,7 +229,7 @@ const getSchoolLevelMessage = (assessmentData: AssessData | undefined): string =
 };
 
 // Generate personalized advice based on the user's specific situation
-const generatePersonalizedAdvice = (assessmentData: AssessData | undefined): string => {
+export const generatePersonalizedAdvice = (assessmentData: AssessData | undefined): string => {
   if (!assessmentData) return '';
   
   const advice = [];
