@@ -7,28 +7,26 @@ export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'es' }, { locale: 'fr' }]; // All supported locales
 }
 
-// Helper function to load messages
-async function loadMessages(locale: string) {
+// Main layout component
+export default function LocaleLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: { locale: string };
+}) {
+  // Get the locale from the params
+  const { locale } = params;
+  
+  // Use a synchronous approach to avoid type issues with async/await
+  let messages;
   try {
-    return (await import(`../../messages/${locale}.json`)).default;
+    // Use a synchronous approach with require instead of dynamic import
+    messages = require(`../../messages/${locale}.json`);
   } catch (error) {
     console.error(`Failed to load messages for locale: ${locale}`, error);
-    return (await import('../../messages/en.json')).default;
+    messages = require('../../messages/en.json');
   }
-}
-
-type LocaleLayoutProps = {
-  children: React.ReactNode;
-  params: {
-    locale: string;
-  };
-}
-
-// Main layout component (Server Component)
-export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
-  const { locale } = params;
-  // Load messages dynamically using the helper function
-  const messages = await loadMessages(locale);
   
   return (
     <IntlProvider locale={locale} messages={messages}>
