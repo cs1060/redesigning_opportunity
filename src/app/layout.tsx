@@ -1,36 +1,38 @@
-import type { Metadata } from 'next'
-import { Nunito } from 'next/font/google'
-import './globals.css'
-import ChatWidget from '@/components/ChatWidget'
+import type { Metadata } from 'next';
+import { Nunito } from 'next/font/google';
+import './globals.css';
+import ChatWidget from '@/components/ChatWidget';
 
 // Initialize the Nunito font
-const nunito = Nunito({ 
+const nunito = Nunito({
   subsets: ['latin'],
   weight: ['400', '600', '700', '800'],
   variable: '--font-nunito',
-})
+});
 
 export const metadata: Metadata = {
   title: 'Opportunity AI',
   description: 'A friendly guide to creating opportunities for your family',
-}
+};
 
-export default function RootLayout({
+// Next.js 15: `params` is delivered as a Promise
+type LayoutParams = { locale?: string };
+
+export default async function RootLayout({
   children,
-  params
+  params,
 }: {
   children: React.ReactNode;
-  params?: { locale?: string };
+  params: Promise<LayoutParams>;
 }) {
-  // Default to 'en' if locale is not available
-  const locale = params?.locale || 'en';
-  
+  const { locale = 'en' } = await params;
+
   return (
     <html lang={locale} className={nunito.variable}>
-      <body className="font-nunito" suppressHydrationWarning={true}>
+      <body className="font-nunito" suppressHydrationWarning>
         {children}
         <ChatWidget />
       </body>
     </html>
-  )
+  );
 }
