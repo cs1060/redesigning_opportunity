@@ -1,4 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Redesigning Opportunity
+
+A Next.js application that helps users explore and understand economic mobility opportunities in their communities. This interactive tool allows users to assess their current situation, visualize opportunity maps, and create personalized action plans for improving economic mobility.
+
+## Features
+
+- **Personalization Quiz**: Collect user information to provide tailored recommendations
+- **Opportunity Mapping**: Interactive maps showing economic mobility data across neighborhoods
+- **Neighborhood Analysis**: Detailed insights about schools, safety, healthcare, and more
+- **Action Planning**: Tools to help users decide whether to stay in their current location or move
+- **Next Steps Checklist**: Personalized action items based on user choices
+- **Community Connections**: Resources to connect with local support networks
+- **Multilingual Support**: Internationalization with next-intl
+
+## Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org) 15.x with React 19
+- **Styling**: [Tailwind CSS](https://tailwindcss.com)
+- **Maps**: Mapbox GL JS and React Map GL
+- **Data Visualization**: Chart.js and D3.js
+- **PDF Generation**: jsPDF and html2canvas
+- **Testing**: Jest and React Testing Library
+- **API Integration**: OpenAI API for neighborhood insights
 
 ## Getting Started
 
@@ -16,21 +38,39 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Testing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses Jest and React Testing Library for testing. See [TESTING.md](./TESTING.md) for detailed testing guidelines.
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+## Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```
+MAPBOX_ACCESS_TOKEN=your_mapbox_token
+OPENAI_API_KEY=your_openai_key
+```
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+To learn more about the technologies used in this project:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Documentation](https://react.dev)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [Mapbox GL JS Documentation](https://docs.mapbox.com/mapbox-gl-js)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The application can be deployed on [Vercel](https://vercel.com) or any other Next.js-compatible hosting platform.
