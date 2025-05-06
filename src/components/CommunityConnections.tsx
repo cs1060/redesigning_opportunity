@@ -1,9 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { FaStar, FaQuoteLeft, FaQuoteRight, FaMapMarkerAlt, FaUser, FaComment } from 'react-icons/fa'
+import { FaStar, FaQuoteLeft, FaQuoteRight, FaMapMarkerAlt, FaComment } from 'react-icons/fa'
 import { useTranslations } from 'next-intl'
-import Image from 'next/image'
 
 interface Testimonial {
   id: string;
