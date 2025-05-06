@@ -1,37 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Opportunity AI: Redesigning Opportunity
 
+An AI-powered data visualization tool designed to help low-income minority parents understand socioeconomic mobility through interactive visual storytelling. This tool translates complex economic data into actionable insights to guide decision-making about location and educational opportunities for children.
+
+## Project Overview
+
+Opportunity AI bridges the information gap for families by providing accessible, personalized guidance on:
+- Neighborhood mobility analysis based on census tract data
+- Educational opportunity assessment and recommendations
+- Community program connections
+- Action planning tools for families (Stay vs Move decisions)
+- Interactive data visualizations using Mapbox
+
+## Key Features
+
+- **Interactive Opportunity Map**: Visualize socioeconomic mobility by neighborhood
+- **Personalized Assessment**: Enter family information to receive tailored recommendations
+- **Community Connection Tools**: Find resources based on family composition and needs
+- **Action Planning**: Compare options for improving opportunities (staying vs. moving)
+- **Multilingual Support**: Available in English, Spanish, and Chinese
+- **Mobile-Responsive Design**: Works across devices
+- **Printable Action Plans**: Generate and save personalized guidance
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: TailwindCSS
+- **Maps & Visualization**: Mapbox GL, D3.js, Chart.js
+- **Internationalization**: next-intl
+- **PDF Generation**: jsPDF, html2canvas
+- **AI Integration**: OpenAI API
+- **Testing**: Jest, React Testing Library
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js (v18+ recommended)
+- npm or yarn
+- MapBox API key
+- OpenAI API key (for AI features)
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/your-organization/redesigning_opportunity.git
+cd redesigning_opportunity
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+# or
+yarn
+```
+
+3. Create a `.env.local` file in the root directory with your API keys:
+
+```
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/src/app`: Main application routes and API endpoints
+- `/src/components`: React components organized by feature
+- `/src/utils`: Utility functions for geocoding, data processing, etc.
+- `/src/hooks`: Custom React hooks
+- `/src/messages`: Internationalization message files
+- `/public`: Static assets
 
-## Learn More
+## Testing
 
-To learn more about Next.js, take a look at the following resources:
+Run the test suite with:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run test
+# or for coverage report
+npm run test:coverage
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+The application is designed to be deployed on Vercel or any platform supporting Next.js:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run build
+npm run start
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgements
+
+- This project leverages data from the Opportunity Atlas, census data, and other public datasets on economic mobility
+- Built with support from educational institutions and community partners
