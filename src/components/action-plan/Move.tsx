@@ -641,12 +641,12 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
         // Apply filtering to fallback recommendations
         const filteredDefaultSchools = filterSchoolsByChildAge(fallbackRecommendations.schoolData, userData);
         const filteredDefaultPrograms = filterCommunityPrograms(fallbackRecommendations.communityProgramData, userData);
-        const ratedDefaultHousingOptions = filterHousingOptions(fallbackRecommendations.housingOptions, userData);
+        const filteredHousingOptions = filterHousingOptions(fallbackRecommendations.housingOptions, userData);
         
         // Update state with fallback data
         setFilteredSchools(filteredDefaultSchools);
         setFilteredPrograms(filteredDefaultPrograms);
-        setFilteredHousingOptions(ratedDefaultHousingOptions);
+        setFilteredHousingOptions(filteredHousingOptions);
         setRecommendations(fallbackRecommendations);
         setError(`Using default recommendations. API error: ${errorMessage}`);
         setLoading(false);
@@ -664,12 +664,12 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
         // Apply filtering to fallback recommendations
         const filteredDefaultSchools = filterSchoolsByChildAge(fallbackRecommendations.schoolData, userData);
         const filteredDefaultPrograms = filterCommunityPrograms(fallbackRecommendations.communityProgramData, userData);
-        const ratedDefaultHousingOptions = filterHousingOptions(fallbackRecommendations.housingOptions, userData);
+        const filteredHousingOptions = filterHousingOptions(fallbackRecommendations.housingOptions, userData);
         
         // Update state with fallback data
         setFilteredSchools(filteredDefaultSchools);
         setFilteredPrograms(filteredDefaultPrograms);
-        setFilteredHousingOptions(ratedDefaultHousingOptions);
+        setFilteredHousingOptions(filteredHousingOptions);
         setRecommendations(fallbackRecommendations);
         setError('Could not parse API response. Using default recommendations instead.');
         setLoading(false);
@@ -718,10 +718,11 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
       // Use fallback recommendations but apply filtering
       const filteredDefaultSchools = filterSchoolsByChildAge(fallbackRecommendations.schoolData, userData);
       const filteredDefaultPrograms = filterCommunityPrograms(fallbackRecommendations.communityProgramData, userData);
-      const ratedDefaultHousingOptions = filterHousingOptions(fallbackRecommendations.housingOptions, userData);
+      const filteredHousingOptions = filterHousingOptions(fallbackRecommendations.housingOptions, userData);
       
       setFilteredSchools(filteredDefaultSchools);
       setFilteredPrograms(filteredDefaultPrograms);
+      setFilteredHousingOptions(filteredHousingOptions);
       
       // Use fallback recommendations
       setRecommendations(fallbackRecommendations);
@@ -1109,7 +1110,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                               {[...Array(5)].map((_, i) => (
                                 <div key={i} className={`mx-0.5 ${i < Math.ceil(group.percentage / 20) ? iconColor : "text-gray-200"}`}>
                                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                                    <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                                    <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" clipRule="evenodd" />
                                   </svg>
                                 </div>
                               ))}
@@ -1307,7 +1308,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                 >
                   <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
                     </svg>
                   </div>
                   <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Redfin</span>
@@ -1333,7 +1334,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                 >
                   <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
                     </svg>
                   </div>
                   <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Affordable Housing</span>
@@ -1473,7 +1474,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                 >
                   <div className="w-12 h-12 mb-3 flex items-center justify-center rounded-full bg-[#6CD9CA] bg-opacity-20 text-[#6CD9CA] group-hover:bg-opacity-30 transition-all duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h2a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3" />
                     </svg>
                   </div>
                   <span className="font-medium group-hover:text-[#6CD9CA] transition-colors duration-300">Glassdoor</span>

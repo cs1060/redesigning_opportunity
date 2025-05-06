@@ -73,8 +73,8 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
       return;
     }
     
-    // Get the checklist content
-    const checklistContent = checklistRef.current.innerHTML;
+    // Get the checklist content for printing
+    const printContent = checklistRef.current.innerHTML;
     
     // Create a styled document with only the checklist content
     printWindow.document.write(`
@@ -86,69 +86,38 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
             body {
               font-family: Arial, sans-serif;
               padding: 20px;
-              max-width: 800px;
-              margin: 0 auto;
+              line-height: 1.5;
             }
-            h1 {
-              font-size: 24px;
-              margin-bottom: 16px;
-              text-align: center;
-            }
-            h2 {
-              font-size: 20px;
-              margin-bottom: 12px;
+            h1, h2 {
+              color: #333;
             }
             .task {
-              margin-bottom: 16px;
-              padding-bottom: 16px;
+              margin-bottom: 15px;
               border-bottom: 1px solid #eee;
-            }
-            .task:last-child {
-              border-bottom: none;
+              padding-bottom: 10px;
             }
             .task-header {
               display: flex;
-              align-items: flex-start;
-              margin-bottom: 8px;
+              align-items: center;
+              margin-bottom: 5px;
             }
             .task-title {
+              margin-left: 10px;
               font-weight: bold;
-              margin-left: 8px;
+            }
+            .completed {
+              text-decoration: line-through;
+              color: #888;
             }
             .task-details {
-              margin-left: 24px;
+              margin-left: 25px;
               color: #555;
             }
-            .task-explanation {
-              margin-top: 8px;
-              margin-left: 24px;
-              padding: 8px;
-              background-color: #f5f5f5;
-              border-radius: 4px;
-            }
-            .task-link {
-              margin-top: 8px;
-              margin-left: 24px;
-              color: #0070f3;
-            }
-            .progress-bar {
-              width: 100%;
-              height: 20px;
-              background-color: #eee;
-              border-radius: 10px;
-              margin-bottom: 8px;
-              overflow: hidden;
-            }
-            .progress-fill {
-              height: 100%;
-              background-color: #0070f3;
-              border-radius: 10px;
-            }
-            @media print {
-              body {
-                print-color-adjust: exact;
-                -webkit-print-color-adjust: exact;
-              }
+            .progress-container {
+              margin: 20px 0;
+              border: 1px solid #ddd;
+              padding: 10px;
+              background: #f9f9f9;
             }
           </style>
         </head>
@@ -164,34 +133,15 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
             ${selectedAction === 'move' && savedChoices.selectedHousingType ? 
               `<p><strong>Housing Type:</strong> ${savedChoices.selectedHousingType}</p>` : ''}
           </div>
-          
-          <div id="progress">
-            <h2>Your Progress</h2>
+          <div class="progress-container">
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${Math.round((completedTasks.length / tasks.length) * 100)}%"></div>
             </div>
             <p>${completedTasks.length} of ${tasks.length} tasks completed (${Math.round((completedTasks.length / tasks.length) * 100)}%)</p>
           </div>
-          
           <div id="checklist">
             <h2>Your To-Do List</h2>
-            ${tasks.map((task, index) => `
-              <div class="task">
-                <div class="task-header">
-                  <span>${completedTasks.includes(task.id) ? '✓' : '□'}</span>
-                  <span class="task-title ${completedTasks.includes(task.id) ? 'completed' : ''}">${task.text}</span>
-                </div>
-                <div class="task-details">${task.details}</div>
-                ${expandedTasks.includes(task.id) ? 
-                  `<div class="task-explanation">
-                    <strong>Why this matters:</strong> ${task.explanation}
-                  </div>` : ''}
-                ${task.link ? 
-                  `<div class="task-link">
-                    <a href="${task.link.url}" target="_blank">${task.link.label}</a>
-                  </div>` : ''}
-              </div>
-            `).join('')}
+            <div>${printContent}</div>
           </div>
         </body>
       </html>
@@ -232,9 +182,9 @@ const NextSteps: React.FC<NextStepsProps> = ({ selectedAction, savedChoices }) =
     
     // Add tasks
     const tasks = generateTasks();
-    tasks.forEach((task, index) => {
+    tasks.forEach((task) => {
       const status = completedTasks.includes(task.id) ? '✓' : '□';
-      body += encodeURIComponent(`${status} ${index + 1}. ${task.text}\n   ${task.details}\n\n`);
+      body += encodeURIComponent(`${status} ${task.text}\n   ${task.details}\n\n`);
     });
     
     // Add progress

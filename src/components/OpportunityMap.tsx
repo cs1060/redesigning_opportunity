@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { geocodeAddress } from '../utils/geocodingUtils';
@@ -159,13 +159,15 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
   const [selectedTract, setSelectedTract] = useState<TractData | null>(null);
   const [mapStyleLoaded, setMapStyleLoaded] = useState(false);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
-  const [userTractId, setUserTractId] = useState<string | null>(null);
-  const [userTractGeometry, setUserTractGeometry] = useState<Geometry | null>(null);
+  // Remove unused state variables but keep the setters for future use
+  const [, setUserTractId] = useState<string | null>(null);
+  const [, setUserTractGeometry] = useState<Geometry | null>(null);
   const [insightsData, setInsightsData] = useState<NeighborhoodData | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(true);
   const [loadingAddress, setLoadingAddress] = useState(false);
 
   useEffect(() => {
+    // Initialize map when component mounts
     if (map.current) return; // initialize map only once
     if (!mapContainer.current) return;
 
@@ -236,10 +238,9 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
             console.error('Error updating text styles:', error);
           }
           
-          // Add layers
-          addMapLayers('ct_tract_kfr_rP_gP_p25-8tx22d');
+          // Layers will be added in a separate useEffect hook
         } catch (error) {
-          console.error('Error setting up map on load:', error);
+          console.error('Error adding sources:', error);
         }
       }
     });
@@ -253,8 +254,83 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
     };
   }, []);
 
+  // Function to add event handlers to the map layers
+  const addEventHandlers = useCallback(() => {
+    if (!map.current) return;
+    
+    // Function to handle feature click
+    const handleFeatureClick = (e: mapboxgl.MapLayerMouseEvent) => {
+      if (e.features && e.features.length > 0) {
+        const feature = e.features[0];
+        const properties = feature.properties || {};
+        console.log('Clicked feature properties:', properties);
+        setSelectedTract(properties);
+        
+        // Update the hover layer to highlight the selected tract
+        if (map.current?.getLayer('census-tracts-hover')) {
+          // Check if GEOID exists and is a valid value before using it
+          const geoid = properties.GEOID || properties.GEO_ID || '';
+          if (geoid) {
+            map.current.setFilter('census-tracts-hover', ['==', 'GEOID', geoid]);
+            
+            // Update the user's tract geometry to the newly clicked tract
+            if (map.current.getSource('user-tract-source') && feature.geometry) {
+              // Update the userTractGeometry state with the new geometry
+              setUserTractGeometry(feature.geometry);
+              setUserTractId(geoid);
+              
+              // Update the user tract source with the new geometry
+              (map.current.getSource('user-tract-source') as mapboxgl.GeoJSONSource).setData({
+                type: 'Feature',
+                geometry: feature.geometry,
+                properties: {}
+              });
+            }
+          } else {
+            // Reset filter if no valid GEOID is found
+            map.current.setFilter('census-tracts-hover', ['==', 'GEOID', '']);
+          }
+        }
+        
+        // Log properties to help debug
+        console.log('Feature properties for popup:', properties);
+        
+        // Calculate opportunity score and update context
+        if (properties.Household_Income_at_Age_35_rP_gP_p25) {
+          const income = properties.Household_Income_at_Age_35_rP_gP_p25;
+          const opportunityScore = calculateOpportunityScore(income).toString();
+          
+          // Share the opportunity score with other components through context
+          // This ensures the Learn component gets updated when a new tract is clicked
+          updateData({
+            opportunityScore: parseInt(opportunityScore),
+            income: income.toString()
+          });
+        }
+        
+        // Remove any existing popup
+        if (popupRef.current) {
+          popupRef.current.remove();
+          popupRef.current = null;
+        }
+      }
+    };
+    
+    // Add click events for the layers
+    map.current.on('click', 'census-tracts-layer', handleFeatureClick);
+    
+    // Setup cursor behavior for the layer
+    map.current.on('mouseenter', 'census-tracts-layer', () => {
+      if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+    });
+    
+    map.current.on('mouseleave', 'census-tracts-layer', () => {
+      if (map.current) map.current.getCanvas().style.cursor = '';
+    });
+  }, [updateData, setSelectedTract, setUserTractGeometry, setUserTractId]);
+
   // Function to add map layers with the correct source layer
-  const addMapLayers = (sourceLayer: string) => {
+  const addMapLayers = useCallback((sourceLayer: string) => {
     if (!map.current) return;
     
     try {
@@ -467,83 +543,18 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
     } catch (error) {
       console.error('Error adding map layers:', error);
     }
-  };
-  
-  // Function to add event handlers to the map layers
-  const addEventHandlers = () => {
-    if (!map.current) return;
     
-    // Function to handle feature click
-    const handleFeatureClick = (e: mapboxgl.MapLayerMouseEvent) => {
-      if (e.features && e.features.length > 0) {
-        const feature = e.features[0];
-        const properties = feature.properties || {};
-        console.log('Clicked feature properties:', properties);
-        setSelectedTract(properties);
-        
-        // Update the hover layer to highlight the selected tract
-        if (map.current?.getLayer('census-tracts-hover')) {
-          // Check if GEOID exists and is a valid value before using it
-          const geoid = properties.GEOID || properties.GEO_ID || '';
-          if (geoid) {
-            map.current.setFilter('census-tracts-hover', ['==', 'GEOID', geoid]);
-            
-            // Update the user's tract geometry to the newly clicked tract
-            if (map.current.getSource('user-tract-source') && feature.geometry) {
-              // Update the userTractGeometry state with the new geometry
-              setUserTractGeometry(feature.geometry);
-              setUserTractId(geoid);
-              
-              // Update the user tract source with the new geometry
-              (map.current.getSource('user-tract-source') as mapboxgl.GeoJSONSource).setData({
-                type: 'Feature',
-                geometry: feature.geometry,
-                properties: {}
-              });
-            }
-          } else {
-            // Reset filter if no valid GEOID is found
-            map.current.setFilter('census-tracts-hover', ['==', 'GEOID', '']);
-          }
-        }
-        
-        // Log properties to help debug
-        console.log('Feature properties for popup:', properties);
-        
-        // Calculate opportunity score and update context
-        if (properties.Household_Income_at_Age_35_rP_gP_p25) {
-          const income = properties.Household_Income_at_Age_35_rP_gP_p25;
-          const opportunityScore = calculateOpportunityScore(income).toString();
-          
-          // Share the opportunity score with other components through context
-          // This ensures the Learn component gets updated when a new tract is clicked
-          updateData({
-            opportunityScore: parseInt(opportunityScore),
-            income: income.toString()
-          });
-        }
-        
-        // Remove any existing popup
-        if (popupRef.current) {
-          popupRef.current.remove();
-          popupRef.current = null;
-        }
-      }
-    };
-    
-    // Add click events for the layers
-    map.current.on('click', 'census-tracts-layer', handleFeatureClick);
-    
-    // Setup cursor behavior for the layer
-    map.current.on('mouseenter', 'census-tracts-layer', () => {
-      if (map.current) map.current.getCanvas().style.cursor = 'pointer';
-    });
-    
-    map.current.on('mouseleave', 'census-tracts-layer', () => {
-      if (map.current) map.current.getCanvas().style.cursor = '';
-    });
-  };
-  
+    // Add event handlers after adding layers
+    addEventHandlers();
+  }, [mapView, addEventHandlers]);
+
+  // Effect to add map layers when the map style is loaded
+  useEffect(() => {
+    if (mapStyleLoaded) {
+      addMapLayers('census_tracts');
+    }
+  }, [mapStyleLoaded, addMapLayers, mapView]);
+
   // Update layer visibility when mapView changes
   useEffect(() => {
     if (!map.current || !mapStyleLoaded) return;
@@ -635,7 +646,7 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
       setSelectedTract(null);
       if (popupRef.current) popupRef.current.remove();
     }
-  }, [mapView, mapStyleLoaded]);
+  }, [mapView, mapStyleLoaded, addMapLayers]);
 
   // Effect to load neighborhood insights data when address changes
   useEffect(() => {
@@ -772,7 +783,7 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
     };
     
     zoomToAddress();
-  }, [address, mapStyleLoaded]);
+  }, [address, mapStyleLoaded, updateData]);
 
   // Render only the map container if showWrapper is false
   if (!showWrapper) {
