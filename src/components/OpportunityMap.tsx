@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { geocodeAddress } from '../utils/geocodingUtils';
+import { geocodeAddress, geocodeZipCode, geocodeNeighborhood } from '../utils/geocodingUtils';
 import { usePersonalization } from './AssessProvider';
 import NeighborhoodAnalysis, { NeighborhoodData } from './NeighborhoodAnalysis';
 import { useTranslations } from 'next-intl';
@@ -665,8 +665,48 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
         console.log('Geocoding address:', address);
         setLoadingAddress(true);
         
-        // Geocode the address to get coordinates
-        const coordinates = await geocodeAddress(address);
+        // Parse the address to check if it contains a neighborhood and ZIP code
+        // Format expected from Move component: "Neighborhood, Town, ZIP"
+        const addressParts = address.split(',').map(part => part.trim());
+        let coordinates = null;
+        
+        // Check if we have a neighborhood address format (at least 2 parts with the last being a ZIP code)
+        if (addressParts.length >= 2 && /^\d{5}(-\d{4})?$/.test(addressParts[addressParts.length - 1])) {
+          console.log('Detected neighborhood address format');
+          const zipCode = addressParts[addressParts.length - 1];
+          const neighborhood = addressParts[0];
+          
+          // First, get the state information from the ZIP code
+          const zipInfo = await geocodeZipCode(zipCode);
+          
+          if (zipInfo && zipInfo.stateCode) {
+            console.log(`ZIP code ${zipCode} is in state ${zipInfo.state} (${zipInfo.stateCode})`);
+            
+            // Try geocoding the neighborhood within the state context
+            coordinates = await geocodeNeighborhood(neighborhood, zipInfo.stateCode);
+            
+            if (coordinates) {
+              console.log(`Successfully geocoded ${neighborhood} in ${zipInfo.stateCode}`);
+            } else {
+              // If neighborhood geocoding fails, try with the town and state
+              if (addressParts.length >= 3) {
+                const town = addressParts[1];
+                console.log(`Trying to geocode with town and state: ${town}, ${zipInfo.stateCode}`);
+                coordinates = await geocodeNeighborhood(town, zipInfo.stateCode);
+              }
+            }
+          }
+          
+          // If all state-specific geocoding attempts fail, fall back to regular geocoding
+          if (!coordinates) {
+            console.log('State-specific geocoding failed, falling back to regular geocoding');
+            coordinates = await geocodeAddress(address);
+          }
+        } else {
+          // Regular geocoding for other address formats
+          coordinates = await geocodeAddress(address);
+        }
+        
         if (!coordinates) {
           console.error('Failed to geocode address:', address);
           setLoadingAddress(false);
