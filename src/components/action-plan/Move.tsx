@@ -927,7 +927,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
 
                   {selectedNeighborhood && (
                     <p className="mt-4 text-lg font-semibold">
-                      You selected {selectedNeighborhood}
+                      {t('neighborhoodSelected', { neighborhood: selectedNeighborhood })}
                     </p>
                   )}
                 </div>
@@ -938,7 +938,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           {/* Local Schools */}
           {!loading && filteredSchools.length > 0 && (
             <div className="bg-white shadow-md rounded-lg p-6">
-              <h3 className="text-2xl font-semibold mb-4">Local Schools</h3>
+              <h3 className="text-2xl font-semibold mb-4">{t('localSchools')}</h3>
               <p className="mb-1">Select a school to learn more:</p>
               <p className="mb-4 text-sm text-gray-600">{getSchoolLevelMessage(userData)}</p>
               
@@ -1059,13 +1059,17 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           {/* Community Demographics */}
           {!loading && recommendations?.communityDemographics && (
             <div className="bg-white shadow-md rounded-lg p-6">
-              <h3 className="text-2xl font-semibold mb-6 text-center">Community Demographics</h3>
+              <h3 className="text-2xl font-semibold mb-6 text-center">{t('communityDemographics')}</h3>
               
               {/* ZIP Code Header */}
-              {zipCode && (
+              {zipCode && recommendations?.communityDemographics?.ethnicComposition && recommendations.communityDemographics.ethnicComposition.length > 0 && (
                 <h4 className="text-xl text-center mb-8">
-                In ZIP code {zipCode}, the community is characterized by:
-              </h4>
+                  {t('inZipCode', { 
+                    zipCode, 
+                    group: recommendations.communityDemographics.ethnicComposition[0].group, 
+                    percentage: recommendations.communityDemographics.ethnicComposition[0].percentage 
+                  })}
+                </h4>
               )}
               
               {/* Ethnic Composition Visual */}
@@ -1238,7 +1242,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           {/* Housing Options */}
           {!loading && filteredHousingOptions.length > 0 && (
             <div className="bg-white shadow-md rounded-lg p-6">
-              <h3 className="text-2xl font-semibold mb-6 text-center">Housing Options</h3>
+              <h3 className="text-2xl font-semibold mb-6 text-center">{t('housingOptions')}</h3>
               <p className="mb-4 text-center">Select a housing type that suits your family&apos;s needs:</p>
               
               <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -1549,4 +1553,5 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
   );
 };
 
+export { getSchoolTypeForAge };
 export default Move;
