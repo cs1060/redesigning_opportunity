@@ -32,7 +32,57 @@ function validateZipCode(zipCode: string): boolean {
  * @param zipCode - The ZIP code for context
  * @returns The recommendations with fact-checking results added
  */
-async function factCheckRecommendations(recommendations: Record<string, any>, zipCode: string) {
+// Define the structure of the recommendations object to avoid using 'any'
+interface MoveRecommendations {
+  townData: {
+    name: string;
+    website: string;
+    description: string;
+    verified?: boolean;
+    verificationConfidence?: number;
+    warning?: string;
+    websiteVerified?: boolean;
+    websiteWarning?: string;
+  };
+  neighborhoodData: {
+    topNeighborhoods: Array<{
+      name: string;
+      score: number;
+      description: string;
+      verified?: boolean;
+      verificationConfidence?: number;
+      warning?: string;
+    }>;
+  };
+  schoolData: Array<{
+    name: string;
+    rating: number;
+    description: string;
+    website: string;
+    schoolType?: string;
+    verified?: boolean;
+    verificationConfidence?: number;
+    warning?: string;
+    websiteVerified?: boolean;
+    websiteWarning?: string;
+  }>;
+  communityProgramData: Array<{
+    name: string;
+    description: string;
+    website: string;
+    ageRanges?: string[];
+    genderFocus?: string;
+    tags?: string[];
+    verified?: boolean;
+    verificationConfidence?: number;
+    warning?: string;
+    websiteVerified?: boolean;
+    websiteWarning?: string;
+  }>;
+  [key: string]: unknown;  // Allow for other properties
+}
+
+async function factCheckRecommendations(recommendations: MoveRecommendations, zipCode: string) {
   // Get state information for the ZIP code to provide context
   const zipInfo = await geocodeZipCode(zipCode);
   
