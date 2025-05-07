@@ -4,6 +4,7 @@ import { School, Home } from 'lucide-react'
 import { useAssessment, type AssessData } from '../AssessProvider'
 import { MapOnly } from '../OpportunityMap'
 import { useTranslations } from 'next-intl'
+import { geocodeNeighborhood, geocodeZipCode } from '../../utils/geocodingUtils'
 
 // Define types for the recommendations data
 type TownData = {
@@ -522,11 +523,18 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
   const [mapAddress, setMapAddress] = useState<string>('');
   const [shouldFetchData, setShouldFetchData] = useState(false);
   const [personalizedCareerAdvice, setPersonalizedCareerAdvice] = useState<CareerAdvice | null>(null);
+  const [zipCodeError, setZipCodeError] = useState<string | null>(null);
   
   // Get assessment data from context if not provided as prop
   const assessmentContext = useAssessment();
   const contextData = assessmentContext?.data;
   const userData = assessmentData || contextData;
+
+  const validateZipCode = (zip: string): boolean => {
+    // Check if the ZIP code is a valid US ZIP code format (5 digits or 5+4 format)
+    const zipRegex = /^\d{5}(-\d{4})?$/;
+    return zipRegex.test(zip);
+  };
 
   const handleSchoolSelect = (schoolName: string) => {
     setSelectedSchool(schoolName);
@@ -540,11 +548,28 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
     );
   };
 
-  const handleNeighborhoodSelect = (neighborhoodName: string) => {
+  const handleNeighborhoodSelect = async (neighborhoodName: string) => {
     setSelectedNeighborhood(neighborhoodName);
     
     // Update map address when neighborhood is selected
     if (zipCode) {
+      try {
+        // Get state information from ZIP code first
+        const stateInfo = await geocodeZipCode(zipCode);
+        if (stateInfo) {
+          // Use geocodeNeighborhood to ensure we find the neighborhood within the correct state
+          const geocodedAddress = await geocodeNeighborhood(neighborhoodName, stateInfo.state);
+          if (geocodedAddress) {
+            // Format the address as a string that includes the neighborhood and state
+            setMapAddress(`${neighborhoodName}, ${stateInfo.city}, ${stateInfo.stateCode}`);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error geocoding neighborhood:', error);
+      }
+      
+      // Fallback to simple concatenation if geocoding fails
       setMapAddress(`${neighborhoodName}, ${zipCode}`);
     }
   };
@@ -568,10 +593,26 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
   const fetchRecommendations = useCallback(async () => {
     if (!zipCode || zipCode.length < 5) return;
     
+    // Validate ZIP code format first
+    if (!validateZipCode(zipCode)) {
+      setZipCodeError('Please enter a valid ZIP code (5 digits or 5+4 format)');
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
+    setZipCodeError(null);
     
     try {
+      // Get state information from ZIP code to ensure we search within the correct state
+      const stateInfo = await geocodeZipCode(zipCode);
+      if (!stateInfo) {
+        setZipCodeError('Could not find this ZIP code. Please check and try again.');
+        setLoading(false);
+        return;
+      }
+      
       const data = userData || {};
       const address = data.address || '';
       const income = data.income || '<25k';
@@ -789,10 +830,13 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
               value={zipCode}
               onChange={handleZipCodeChange}
               placeholder="e.g. 22204"
-              className="border-2 border-[#6CD9CA] rounded-md px-4 py-2 text-lg w-40"
+              className={`border-2 ${zipCodeError ? 'border-red-500' : 'border-[#6CD9CA]'} rounded-md px-4 py-2 text-lg w-40`}
               disabled={loading}
             />
-            {loading && zipCode && (
+            {zipCodeError && (
+              <div className="text-red-500 text-sm mt-1">{zipCodeError}</div>
+            )}
+            {loading && zipCode && !zipCodeError && (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#6CD9CA]"></div>
               </div>

@@ -163,6 +163,7 @@
     "selectHousingType": "Select a housing type you're interested in:",
     "localSchools": "Local Schools",
     "selectSchool": "Select a school that would be a good option:",
+    "selectNeighborhood": "Select a neighborhood to view on the map",
     "opportunityScore": "Opportunity Score",
     "neighborhoodSelected": "{neighborhood} looks like a great neighborhood for your family!",
     "localResources": "Local Resources",
