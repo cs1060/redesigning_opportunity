@@ -449,6 +449,16 @@ const AssessYourCommunity = () => {
               <div className="flex-grow ml-4 h-px bg-gray-200"></div>
             </div>
             
+            {/* Data Collection Disclaimer */}
+            <div className="bg-gray-100 border border-gray-200 rounded-md p-4 mb-4">
+              <p className="text-sm text-gray-600">
+                <strong>{t('disclaimer', { fallback: 'Note' })}: </strong>
+                {t('childDataDisclaimer', { 
+                  fallback: 'Information about your child (name, age, ethnicity, and gender) is collected only to provide personalized recommendations and is not stored or saved after your session ends.'
+                })}
+              </p>
+            </div>
+            
             {/* Modified to remove child numbering and only use the first child */}
             <div className="space-y-6">
               <div className="space-y-2">

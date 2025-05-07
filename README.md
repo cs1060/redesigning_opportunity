@@ -2,7 +2,6 @@
 
 An AI-powered data visualization tool designed to help low-income minority parents understand socioeconomic mobility through interactive visual storytelling. This tool translates complex economic data into actionable insights to guide decision-making about location and educational opportunities for children.
 
-
 ## Project Overview
 
 Opportunity AI bridges the information gap for families by providing accessible, personalized guidance on:
