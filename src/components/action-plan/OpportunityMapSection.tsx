@@ -11,7 +11,6 @@ interface OpportunityMapSectionProps {
   neighborhoods: Neighborhood[];
   selectedNeighborhood: string | null;
   handleNeighborhoodSelect: (neighborhoodName: string) => void;
-  loading: boolean;
 }
 
 const OpportunityMapSection: React.FC<OpportunityMapSectionProps> = ({
@@ -19,8 +18,7 @@ const OpportunityMapSection: React.FC<OpportunityMapSectionProps> = ({
   zipCode,
   neighborhoods,
   selectedNeighborhood,
-  handleNeighborhoodSelect,
-  loading
+  handleNeighborhoodSelect
 }) => {
   const t = useTranslations('move');
 

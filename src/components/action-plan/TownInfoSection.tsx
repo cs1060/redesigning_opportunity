@@ -3,7 +3,7 @@ import React from 'react';
 import { TownData } from './types';
 
 interface TownInfoSectionProps {
-  townData: TownData;
+  townData: TownData | null;
   loading: boolean;
 }
 

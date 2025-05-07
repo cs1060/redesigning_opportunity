@@ -94,10 +94,13 @@ export type MoveRecommendations = {
 };
 
 // Helper functions
-export const getSchoolTypeForAge = (age: number): 'elementary' | 'middle' | 'high' => {
-  if (age < 11) {
+export const getSchoolTypeForAge = (age: string | number): 'elementary' | 'middle' | 'high' => {
+  // Convert age to number if it's a string
+  const ageNum = typeof age === 'string' ? parseInt(age, 10) : age;
+  
+  if (ageNum < 11) {
     return 'elementary';
-  } else if (age < 15) {
+  } else if (ageNum < 15) {
     return 'middle';
   } else {
     return 'high';
@@ -133,10 +136,13 @@ export const filterCommunityPrograms = (
 
   // Determine age ranges and genders of children
   const childAgeRanges = assessmentData.children.map(child => {
-    if (child.age < 5) return 'preschool';
-    if (child.age < 11) return 'elementary';
-    if (child.age < 15) return 'middle';
-    return 'high';
+    // Convert age to number if it's a string
+    const age = typeof child.age === 'string' ? parseInt(child.age, 10) : child.age;
+    
+    if (age < 5) return 'preschool' as const;
+    if (age < 11) return 'elementary' as const;
+    if (age < 15) return 'middle' as const;
+    return 'high' as const;
   });
   
   const hasGirls = assessmentData.children.some(child => child.gender === 'female');
@@ -147,7 +153,10 @@ export const filterCommunityPrograms = (
     // Age range filter
     const ageMatch = !program.ageRanges || 
                      program.ageRanges.includes('all') || 
-                     program.ageRanges.some(range => childAgeRanges.includes(range));
+                     program.ageRanges.some(range => 
+                       // Exclude 'all' from the check since it's handled above
+                       range !== 'all' && childAgeRanges.includes(range as 'preschool' | 'elementary' | 'middle' | 'high')
+                     );
     
     // Gender filter
     let genderMatch = true;
@@ -167,8 +176,7 @@ export const filterHousingOptions = (
   }
 
   // Calculate family size
-  const familySize = (assessmentData.children?.length || 0) + 
-                     (assessmentData.adults?.length || 0);
+  const familySize = (assessmentData.children?.length || 0) + 1; // Add 1 for the parent
   
   // Calculate housing suitability based on family characteristics
   return options.map(option => {
@@ -186,8 +194,11 @@ export const filterHousingOptions = (
     }
     
     // Adjust based on income
-    const income = assessmentData.income || '';
+    const income = assessmentData.income;
     if (income === '<25k' && option.type === 'Single Family Home') {
+      suitability -= 2; // Less affordable
+    }
+    if (income === '25k-50k' && option.type === 'Single Family Home') {
       suitability -= 1; // May be less affordable
     }
     if (income === '>100k' && option.type === 'Single Family Home') {
@@ -233,7 +244,7 @@ export const getSchoolLevelMessage = (assessmentData: AssessData | undefined): s
   const highCount = schoolTypes.filter(type => type === 'high').length;
   
   // Create a message based on the school types needed
-  let message = "Showing schools relevant for your ";
+  const message = "Showing schools relevant for your ";
   const schoolTypeMessages = [];
   
   if (elementaryCount > 0) {
@@ -321,8 +332,14 @@ export const generatePersonalizedAdvice = (assessmentData: AssessData | undefine
   
   // Generate personalized advice based on family composition
   const childrenCount = assessmentData.children?.length || 0;
-  const hasYoungChildren = assessmentData.children?.some(child => child.age < 10) || false;
-  const hasTeenagers = assessmentData.children?.some(child => child.age >= 13) || false;
+  const hasYoungChildren = assessmentData.children?.some(child => {
+    const age = typeof child.age === 'string' ? parseInt(child.age, 10) : child.age;
+    return age < 10;
+  }) || false;
+  const hasTeenagers = assessmentData.children?.some(child => {
+    const age = typeof child.age === 'string' ? parseInt(child.age, 10) : child.age;
+    return age >= 13;
+  }) || false;
   
   let advice = "Based on your family profile, ";
   

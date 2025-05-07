@@ -13,6 +13,10 @@ import JobOpportunitiesSection from './JobOpportunitiesSection'
 import TownInfoSection from './TownInfoSection'
 import { 
   MoveRecommendations, 
+  SchoolData,
+  CommunityProgramData,
+  HousingOption,
+  CareerAdvice,
   defaultRecommendations, 
   filterSchoolsByChildAge, 
   filterCommunityPrograms, 
@@ -30,9 +34,9 @@ interface MoveProps {
     selectedNeighborhood?: string;
     selectedHousingType?: string;
   }) => void;
-  town: string;
-  selectedSchool: string | null;
-  selectedCommunityPrograms: string[];
+  town?: string;
+  selectedSchool?: string | null;
+  selectedCommunityPrograms?: string[];
   selectedNeighborhood?: string;
   selectedHousingType?: string;
   assessmentData?: AssessData;
@@ -431,7 +435,6 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
               neighborhoods={neighborhoods}
               selectedNeighborhood={selectedNeighborhood}
               handleNeighborhoodSelect={handleNeighborhoodSelect}
-              loading={loading}
             />
           )}
 
