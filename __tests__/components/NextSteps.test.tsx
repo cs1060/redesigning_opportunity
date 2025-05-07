@@ -32,6 +32,33 @@ jest.mock('next-intl', () => ({
   }
 }));
 
+// Mock the AssessProvider context
+jest.mock('../../src/components/AssessProvider', () => ({
+  useAssessment: () => ({
+    data: {
+      children: [{
+        name: 'Test Child',
+        gender: 'Female',
+        age: '8',
+        ethnicity: 'Mixed'
+      }],
+      income: '50000',
+      street: '123 Test St',
+      city: 'Test City',
+      state: 'Test State',
+      address: '123 Test St, Test City, Test State',
+      country: 'USA',
+      isEmployed: true,
+      opportunityScore: 65
+    },
+    updateData: jest.fn(),
+    setFullData: jest.fn()
+  }),
+  // Export the aliases as well to prevent import errors
+  usePersonalization: jest.fn(),
+  AssessProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>
+}));
+
 // Mock the jspdf and html2canvas dependencies
 jest.mock('jspdf', () => {
   return jest.fn().mockImplementation(() => ({
