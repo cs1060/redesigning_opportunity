@@ -27,50 +27,12 @@ const LocalSchoolsSection: React.FC<LocalSchoolsSectionProps> = ({
     return null;
   }
   
-  // Fallback schools to ensure we always have at least 3 options
-  const fallbackSchools: SchoolData[] = [
-    {
-      name: "Blacksburg High School",
-      rating: 9.2,
-      description: "A top-rated public high school known for strong academic programs, diverse extracurricular activities, and excellent college preparation.",
-      website: "https://bhs.mcps.org/",
-      schoolType: "high",
-      city: "Blacksburg",
-      state: "VA",
-      studentSize: 1250,
-      completionRate: 0.95
-    },
-    {
-      name: "Gilbert Linkous Elementary",
-      rating: 8.9,
-      description: "Highly regarded elementary school with innovative teaching methods, strong parent involvement, and comprehensive support programs.",
-      website: "https://gle.mcps.org/",
-      schoolType: "elementary",
-      city: "Blacksburg",
-      state: "VA",
-      studentSize: 450,
-      completionRate: 0.98
-    },
-    {
-      name: "Blacksburg Middle School",
-      rating: 8.7,
-      description: "Well-established middle school offering a balanced curriculum with strong emphasis on STEM education and character development.",
-      website: "https://bms.mcps.org/",
-      schoolType: "middle",
-      city: "Blacksburg",
-      state: "VA",
-      studentSize: 850,
-      completionRate: 0.96
-    }
-  ];
+  // Use the schools provided by the API
+  // Sort schools by rating (highest first) to ensure we show the best schools first
+  const sortedSchools = [...schools].sort((a, b) => b.rating - a.rating);
   
-  // Combine API schools with fallback schools if needed
-  const displaySchools = schools.length >= 3 ? schools : [
-    ...schools,
-    ...fallbackSchools.filter(fallbackSchool => 
-      !schools.some(school => school.name === fallbackSchool.name)
-    )
-  ].slice(0, Math.max(3, schools.length));
+  // Take the top schools (up to 10)
+  const displaySchools = sortedSchools.slice(0, 10);
   
   if (displaySchools.length === 0) {
     return null;

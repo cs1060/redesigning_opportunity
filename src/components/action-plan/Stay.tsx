@@ -1,18 +1,19 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react'
+
+import React, { useState, useEffect } from 'react'
 import { useAssessment, type AssessData } from '../AssessProvider'
 import { useTranslations } from 'next-intl'
 import ActionReminder from '../ActionReminder'
 import LocalSchoolsSection from './LocalSchoolsSection'
 import CommunityProgramsSection from './CommunityProgramsSection'
-import TownInfoSection from './TownInfoSection'
 import { 
   SchoolData,
   CommunityProgramData,
-  TownData,
   defaultRecommendations, 
   filterSchoolsByChildAge, 
   filterCommunityPrograms,
+  inferSchoolType,
+  generatePersonalizedAdvice
 } from './types'
 
 interface StayProps {
@@ -21,302 +22,212 @@ interface StayProps {
     selectedSchool: string | null;
     selectedCommunityPrograms: string[];
   }) => void;
-  selectedSchool?: string | null;
-  selectedCommunityPrograms?: string[];
   assessmentData?: AssessData;
 }
 
 const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
-  const t = useTranslations('stay');
-  const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
-  const [selectedCommunityPrograms, setSelectedCommunityPrograms] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filteredSchools, setFilteredSchools] = useState<SchoolData[]>([]);
-  const [filteredPrograms, setFilteredPrograms] = useState<CommunityProgramData[]>([]);
-  const [townData, setTownData] = useState<TownData | null>(null);
-  const [zipCode, setZipCode] = useState<string | null>(null);
+  const t = useTranslations('stay')
+  const [selectedSchool, setSelectedSchool] = useState<string | null>(null)
+  const [selectedCommunityPrograms, setSelectedCommunityPrograms] = useState<string[]>([])
+  const [recommendations, setRecommendations] = useState(defaultRecommendations)
+  const [filteredSchools, setFilteredSchools] = useState<SchoolData[]>(defaultRecommendations.schoolData)
+  const [filteredPrograms, setFilteredPrograms] = useState<CommunityProgramData[]>(defaultRecommendations.communityProgramData)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
   
   // Get assessment data from context if not provided as prop
-  const assessmentContext = useAssessment();
-  const contextData = assessmentContext?.data;
-  const userData = assessmentData || contextData;
+  const assessmentContext = useAssessment()
+  const userData = assessmentData || assessmentContext.data
 
   const handleSchoolSelect = (schoolName: string) => {
-    setSelectedSchool(schoolName);
-  };
+    setSelectedSchool(schoolName)
+  }
 
   const handleCommunityProgramToggle = (programName: string) => {
     setSelectedCommunityPrograms(prev => 
       prev.includes(programName)
         ? prev.filter(p => p !== programName)
         : [...prev, programName]
-    );
-  };
+    )
+  }
 
-  // Get ZIP code from city name
-  const getZipCodeFromCity = useCallback(async (city: string): Promise<string | null> => {
-    try {
-      const response = await fetch(`/api/city-to-zip?city=${encodeURIComponent(city)}`);
-      
-      if (!response.ok) {
-        console.error(`Failed to get ZIP code for ${city}: ${response.status}`);
-        return null;
-      }
-      
-      const data = await response.json();
-      return data.zipCode || null;
-    } catch (error) {
-      console.error('Error getting ZIP code:', error);
-      return null;
-    }
-  }, []);
-
-  // Fetch real school data from NCES API
-  const fetchRealSchoolData = useCallback(async (zipCode: string): Promise<SchoolData[]> => {
-    try {
-      console.log('Fetching real school data from NCES API for ZIP code:', zipCode);
-      const response = await fetch(`/api/nces-schools?zipCode=${zipCode}&distance=15`);
-      
-      if (!response.ok) {
-        console.error(`Failed to fetch schools from NCES API: ${response.status}`);
-        return [];
-      }
-      
-      const data = await response.json();
-      
-      if (data.schools && data.schools.length > 0) {
-        console.log(`Found ${data.schools.length} real schools from NCES API`);
-        return data.schools;
-      } else {
-        console.log('No schools found from NCES API');
-        return [];
-      }
-    } catch (error) {
-      console.error('Error fetching schools from NCES API:', error);
-      return [];
-    }
-  }, []);
-
-  // Fetch local recommendations from OpenAI API
-  const fetchLocalRecommendations = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Get user location data from the assessment
-      if (!userData) {
-        throw new Error('User data is not available');
-      }
-      
-      // Prepare data for API call
-      const city = userData.city || '';
-      const income = userData.income || '<25k';
-      const children = userData.children || [];
-      
-      // Get ZIP code for the city
-      let cityZipCode = zipCode;
-      if (!cityZipCode) {
-        cityZipCode = await getZipCodeFromCity(city);
-        if (cityZipCode) {
-          setZipCode(cityZipCode);
-          console.log(`Found ZIP code for ${city}: ${cityZipCode}`);
-        } else {
-          console.warn(`Could not find ZIP code for ${city}`);
-        }
-      }
-      
-      // Call the OpenAI API to get personalized recommendations
-      const response = await fetch('/api/openai-stay', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          address: city, // Using city as the address
-          income,
-          children
-        })
-      });
-      
-      let recommendationsData;
-      
-      if (!response.ok) {
-        const errorMessage = `API returned status code ${response.status}: ${response.statusText}`;
-        console.error(`API error: ${errorMessage}`);
-        
-        try {
-          // Try to get more detailed error information from the response
-          const errorData = await response.json();
-          console.error('Error details:', errorData);
-          
-          // If we have valid JSON data in the error response that looks like recommendations,
-          // we can use it instead of falling back to default data
-          if (errorData.townData && errorData.schoolData) {
-            console.log('Found valid recommendation data in error response, using it');
-            recommendationsData = errorData;
-          } else {
-            // Use default recommendations
-            recommendationsData = defaultRecommendations;
-            setError(`Using default recommendations. API error: ${errorMessage}`);
-          }
-        } catch (e) {
-          console.error('Could not parse error response:', e);
-          recommendationsData = defaultRecommendations;
-          setError(`Using default recommendations. API error: ${errorMessage}`);
-        }
-      } else {
-        recommendationsData = await response.json();
-      }
-      
-      // Try to fetch real school data if we have a ZIP code
-      if (cityZipCode) {
-        const realSchools = await fetchRealSchoolData(cityZipCode);
-        
-        if (realSchools.length > 0) {
-          // Replace the OpenAI-generated school data with real data
-          recommendationsData.schoolData = realSchools;
-        }
-      }
-      
-      // Process the data
-      const townInfo: TownData = recommendationsData.townData || defaultRecommendations.townData;
-      const schools: SchoolData[] = recommendationsData.schoolData || defaultRecommendations.schoolData;
-      const programs: CommunityProgramData[] = recommendationsData.communityProgramData || defaultRecommendations.communityProgramData;
-      
-      // Filter schools and programs based on user data
-      const filteredSchools = filterSchoolsByChildAge(schools, userData);
-      const filteredPrograms = filterCommunityPrograms(programs, userData);
-      
-      // Update state with the filtered data
-      setTownData(townInfo);
-      setFilteredSchools(filteredSchools);
-      setFilteredPrograms(filteredPrograms);
-      
-    } catch (error) {
-      console.error('Error fetching local recommendations:', error);
-      setError('Failed to fetch recommendations. Please try again later.');
-      
-      // Use default recommendations
-      const defaultSchools = filterSchoolsByChildAge(defaultRecommendations.schoolData, userData);
-      const defaultPrograms = filterCommunityPrograms(defaultRecommendations.communityProgramData, userData);
-      
-      setTownData(defaultRecommendations.townData);
-      setFilteredSchools(defaultSchools);
-      setFilteredPrograms(defaultPrograms);
-    } finally {
-      setLoading(false);
-    }
-  }, [userData, zipCode, getZipCodeFromCity, fetchRealSchoolData]);
-  
-  // Fetch recommendations on component mount
+  // Fetch recommendations from OpenAI API and NCES API
   useEffect(() => {
-    fetchLocalRecommendations();
-  }, [fetchLocalRecommendations]);
+    const fetchRecommendations = async () => {
+      // Skip if no address is available
+      if (!userData?.address) {
+        setError('No address provided. Please complete the assessment form first.')
+        return
+      }
+      
+      setIsLoading(true)
+      setError(null)
+      
+      try {
+        // First, get general recommendations from OpenAI API
+        const response = await fetch('/api/openai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            address: userData.address,
+            income: userData.income,
+            children: userData.children
+          })
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.details || 
+            `Failed to fetch recommendations: ${response.status} ${response.statusText}`
+          );
+        }
+        
+        const data = await response.json();
+        
+        // Extract ZIP code from the user's address
+        let zipCode = '';
+        if (userData.address) {
+          // Simple regex to extract ZIP code from address
+          const zipMatch = userData.address.match(/\b(\d{5})(?:-\d{4})?\b/);
+          if (zipMatch && zipMatch[1]) {
+            zipCode = zipMatch[1];
+          }
+        }
+        
+        // If we have a ZIP code, fetch real schools from NCES API
+        let schoolData = data.schoolData || [];
+        if (zipCode) {
+          try {
+            console.log(`Fetching real schools for ZIP code: ${zipCode}`);
+            const ncesResponse = await fetch(`/api/nces-schools?zipCode=${zipCode}&distance=15`);
+            
+            if (ncesResponse.ok) {
+              const ncesData = await ncesResponse.json();
+              if (ncesData.schools && ncesData.schools.length > 0) {
+                console.log(`Found ${ncesData.schools.length} real schools from NCES API`);
+                // Replace the OpenAI-generated schools with real schools from NCES
+                schoolData = ncesData.schools;
+              }
+            }
+          } catch (ncesError) {
+            console.error('Error fetching schools from NCES API:', ncesError);
+            // Continue with OpenAI schools if NCES API fails
+          }
+        }
+        
+        // Ensure schoolType is present or infer it
+        const processedSchoolData = schoolData.map(inferSchoolType);
+        
+        // Apply filters based on child's age
+        const filteredSchoolData = filterSchoolsByChildAge(processedSchoolData, userData);
+        const filteredProgramData = filterCommunityPrograms(data.communityProgramData, userData);
+        
+        // Store both the complete and filtered data
+        setRecommendations({
+          ...data,
+          schoolData: processedSchoolData
+        });
+        
+        setFilteredSchools(filteredSchoolData);
+        setFilteredPrograms(filteredProgramData);
+      } catch (err) {
+        console.error('Error fetching recommendations:', err)
+        setError(`Failed to load personalized recommendations: ${err instanceof Error ? err.message : String(err)}. Using default data instead.`)
+        
+        // Fall back to default recommendations but apply filtering
+        const filteredDefaultSchools = filterSchoolsByChildAge(defaultRecommendations.schoolData, userData);
+        const filteredDefaultPrograms = filterCommunityPrograms(defaultRecommendations.communityProgramData, userData);
+        
+        setFilteredSchools(filteredDefaultSchools);
+        setFilteredPrograms(filteredDefaultPrograms);
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchRecommendations()
+  }, [userData])
   
-  // Determine if the user has made all required selections
-  const hasRequiredSelections = selectedSchool !== null && selectedCommunityPrograms.length > 0;
-  
-  // Handle saving user choices
   const handleSaveChoices = () => {
-    if (onSaveChoices && selectedSchool && selectedCommunityPrograms.length > 0 && townData) {
+    if (onSaveChoices && selectedSchool && selectedCommunityPrograms.length > 0) {
       const choices = {
-        town: townData.name,
+        town: recommendations.townData.name,
         selectedSchool,
         selectedCommunityPrograms
-      };
-      onSaveChoices(choices);
+      }
+      onSaveChoices(choices)
     }
-  };
+  }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      <h2 className="text-3xl font-bold mb-6 text-center">{t('title')}</h2>
-      <p className="text-lg mb-8 text-center">{t('subtitle')}</p>
-      
-      {/* Loading State */}
-      {loading && (
-        <div className="bg-white shadow-md rounded-lg p-6 text-center">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="h-8 w-64 bg-gray-200 rounded mb-4"></div>
-            <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
-            <div className="h-4 w-5/6 bg-gray-200 rounded mb-2"></div>
-            <div className="h-4 w-4/6 bg-gray-200 rounded"></div>
+    <div className="space-y-12 mt-16">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6CD9CA]"></div>
+          <p className="mt-4 text-lg">Loading personalized recommendations based on your address...</p>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-600">{error}</p>
+          <p className="mt-2">Please make sure you&apos;ve completed the assessment form with your address.</p>
+        </div>
+      ) : (
+        <>
+          {/* Personalized Advice */}
+          {userData && (
+            <div className="bg-[#6CD9CA] bg-opacity-10 p-6 rounded-lg">
+              <h3 className="text-xl font-semibold mb-2">Personalized Advice</h3>
+              <p>{generatePersonalizedAdvice(userData)}</p>
+            </div>
+          )}
+
+          {/* Town Information */}
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h3 className="text-2xl font-semibold mb-4 text-left">Township Information</h3>
+            <div className="text-left space-y-2">
+              <p><strong>Town Name:</strong> {recommendations.townData.name}</p>
+              <p>
+                <strong>Township Website:</strong>{' '}
+                <a 
+                  href={recommendations.townData.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-[#6CD9CA] hover:underline"
+                >
+                  {recommendations.townData.website}
+                </a>{' '}
+                <span className="text-sm text-gray-600">
+                  {t('clickToLearnMore')}
+                </span>
+              </p>
+              <p><strong>{t('description')}:</strong> {recommendations.townData.description}</p>
+            </div>
           </div>
-          <p className="mt-4 text-gray-600">Fetching local recommendations...</p>
-        </div>
-      )}
-      
-      {/* Error State */}
-      {error && !loading && (
-        <div className="bg-white shadow-md rounded-lg p-6 border-l-4 border-red-500">
-          <h3 className="text-2xl font-semibold mb-4 text-left">Notice</h3>
-          <p className="text-red-600 mb-4">{error}</p>
-          <p className="mb-4">We&apos;re showing you our default recommendations instead.</p>
-          <button 
-            onClick={fetchLocalRecommendations}
-            className="bg-[#6CD9CA] hover:bg-opacity-90 text-white py-2 px-4 rounded-md text-sm transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      )}
-      
-      {/* Refresh Button */}
-      {!loading && !error && (
-        <div className="flex justify-end mb-4">
-          <button 
-            onClick={fetchLocalRecommendations}
-            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md text-sm transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Refresh Recommendations
-          </button>
-        </div>
-      )}
-      
-      {/* Town Information */}
-      <TownInfoSection 
-        townData={townData} 
-        loading={loading} 
-      />
-      
-      {/* Current Location Overview */}
-      {!loading && (
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h3 className="text-2xl font-semibold mb-4">Your Current Location</h3>
-          <p className="mb-4">
-            Staying in your current location has many advantages. You&#39;re already familiar with the area, 
-            have established connections, and don&#39;t need to deal with the stress of moving.
-          </p>
-          <p>
-            Let&#39;s explore how you can make the most of your current community by finding the best schools 
-            and programs for your children.
-          </p>
-        </div>
-      )}
 
-      {/* Local Schools */}
-      <LocalSchoolsSection
-        schools={filteredSchools}
-        selectedSchool={selectedSchool}
-        handleSchoolSelect={handleSchoolSelect}
-        userData={userData}
-        loading={loading}
-      />
+          {/* Local Schools */}
+          <LocalSchoolsSection
+            schools={filteredSchools}
+            selectedSchool={selectedSchool}
+            handleSchoolSelect={handleSchoolSelect}
+            userData={userData}
+            loading={isLoading}
+          />
 
-      {/* Community Programs */}
-      <CommunityProgramsSection
-        programs={filteredPrograms}
-        selectedPrograms={selectedCommunityPrograms}
-        handleProgramToggle={handleCommunityProgramToggle}
-        loading={loading}
-      />
+          {/* Community Programs */}
+          <CommunityProgramsSection
+            programs={filteredPrograms}
+            selectedPrograms={selectedCommunityPrograms}
+            handleProgramToggle={handleCommunityProgramToggle}
+            loading={isLoading}
+          />
+        </>
+      )}
 
       {/* Save Choices Button */}
-      {hasRequiredSelections ? (
+      {selectedSchool && selectedCommunityPrograms.length > 0 && (
         <div className="text-center">
           <button 
             onClick={handleSaveChoices}
@@ -325,18 +236,17 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
             Save My Choices
           </button>
         </div>
-      ) : (
-        <div className="text-center text-gray-600">
-          <p>Please select a school and at least one community program to continue</p>
-          
-          <ActionReminder 
-            message={t('completeSelectionsReminder', { fallback: "Complete all selections above to save your choices and proceed to the next steps" })} 
-            isVisible={true} 
-          />
-        </div>
+      )}
+      
+      {/* Reminder to complete selections to save */}
+      {!(selectedSchool && selectedCommunityPrograms.length > 0) && !isLoading && !error && (
+        <ActionReminder 
+          message={t('completeSelectionsReminder', { fallback: "Complete all selections above to save your choices and proceed to the next steps" })} 
+          isVisible={true} 
+        />
       )}
     </div>
-  );
+  )
 };
 
-export default Stay;
+export default Stay
