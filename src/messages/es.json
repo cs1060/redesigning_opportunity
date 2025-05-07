@@ -128,7 +128,10 @@
     "selectSchool": "Selecciona una escuela que sería una buena alternativa:",
     "clickToLearnMore": "(¡Haz clic para obtener más información sobre oportunidades locales!)",
     "description": "Descripción",
-    "rating": "Calificación"
+    "rating": "Calificación",
+    "selectSchoolReminder": "Consejo: Selecciona una escuela para continuar con tu plan de acción",
+    "selectProgramsReminder": "Consejo: Selecciona al menos un programa comunitario para continuar",
+    "completeSelectionsReminder": "Completa todas las selecciones anteriores para guardar tus elecciones y proceder a los siguientes pasos"
   },
   "move": {
     "title": "Mudarse a una Nueva Ubicación",
@@ -196,7 +199,13 @@
     "bachelorsOrHigher": "Licenciatura o Superior",
     "someCollege": "Algo de Universidad",
     "highSchool": "Escuela Secundaria",
-    "lessThanHighSchool": "Menos que Secundaria"
+    "lessThanHighSchool": "Menos que Secundaria",
+    "enterZipReminder": "Ingresa un código postal para ver recomendaciones y continuar con tu plan",
+    "selectNeighborhoodReminder": "Consejo: Selecciona un vecindario para verlo en el mapa y continuar con tu plan",
+    "selectSchoolReminder": "Consejo: Selecciona una escuela que sería adecuada para tu hijo",
+    "selectProgramsReminder": "Consejo: Selecciona al menos un programa comunitario que interese a tu hijo",
+    "selectHousingReminder": "Consejo: Selecciona un tipo de vivienda que se adapte a las necesidades de tu familia",
+    "completeSelectionsReminder": "Completa todas las selecciones anteriores para guardar tus elecciones y proceder a los siguientes pasos"
   },
   "nextSteps": {
     "title": "Próximos Pasos",

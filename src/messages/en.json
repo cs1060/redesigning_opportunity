@@ -128,7 +128,10 @@
     "selectSchool": "Select a school that would be a good alternative:",
     "clickToLearnMore": "(Click to learn more about local opportunities!)",
     "description": "Description",
-    "rating": "Rating"
+    "rating": "Rating",
+    "selectSchoolReminder": "Tip: Select a school to continue with your action plan",
+    "selectProgramsReminder": "Tip: Select at least one community program to continue",
+    "completeSelectionsReminder": "Complete all selections above to save your choices and proceed to the next steps"
   },
   "move": {
     "title": "Moving to a New Location",
@@ -174,7 +177,14 @@
     "neighborhoodSelected": "{neighborhood} looks like a great neighborhood for your family!",
     "localResources": "Local Resources",
     "connectWithCommunity": "Connect with community services in your area",
-    "saveMyChoices": "Save My Choices"
+    "saveMyChoices": "Save My Choices",
+    "enterZipReminder": "Enter a ZIP code to view recommendations and continue your plan",
+    "selectNeighborhoodReminder": "Tip: Select a neighborhood to see it on the map and continue your plan",
+    "selectSchoolReminder": "Tip: Select a school that would be a good match for your child",
+    "selectProgramsReminder": "Tip: Select at least one community program that interests your child",
+    "selectHousingReminder": "Tip: Select a housing type that suits your family's needs",
+    "completeSelectionsReminder": "Complete all selections above to save your choices and proceed to the next steps",
+    "housingFit": "{type} seems like a good fit for your family!"
   },
   "nextSteps": {
     "title": "Next Steps",
