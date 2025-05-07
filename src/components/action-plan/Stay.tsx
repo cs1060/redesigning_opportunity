@@ -35,6 +35,7 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
   const [filteredSchools, setFilteredSchools] = useState<SchoolData[]>([]);
   const [filteredPrograms, setFilteredPrograms] = useState<CommunityProgramData[]>([]);
   const [townData, setTownData] = useState<TownData | null>(null);
+  const [zipCode, setZipCode] = useState<string | null>(null);
   
   // Get assessment data from context if not provided as prop
   const assessmentContext = useAssessment();
@@ -53,6 +54,50 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
     );
   };
 
+  // Get ZIP code from city name
+  const getZipCodeFromCity = useCallback(async (city: string): Promise<string | null> => {
+    try {
+      const response = await fetch(`/api/city-to-zip?city=${encodeURIComponent(city)}`);
+      
+      if (!response.ok) {
+        console.error(`Failed to get ZIP code for ${city}: ${response.status}`);
+        return null;
+      }
+      
+      const data = await response.json();
+      return data.zipCode || null;
+    } catch (error) {
+      console.error('Error getting ZIP code:', error);
+      return null;
+    }
+  }, []);
+
+  // Fetch real school data from NCES API
+  const fetchRealSchoolData = useCallback(async (zipCode: string): Promise<SchoolData[]> => {
+    try {
+      console.log('Fetching real school data from NCES API for ZIP code:', zipCode);
+      const response = await fetch(`/api/nces-schools?zipCode=${zipCode}&distance=15`);
+      
+      if (!response.ok) {
+        console.error(`Failed to fetch schools from NCES API: ${response.status}`);
+        return [];
+      }
+      
+      const data = await response.json();
+      
+      if (data.schools && data.schools.length > 0) {
+        console.log(`Found ${data.schools.length} real schools from NCES API`);
+        return data.schools;
+      } else {
+        console.log('No schools found from NCES API');
+        return [];
+      }
+    } catch (error) {
+      console.error('Error fetching schools from NCES API:', error);
+      return [];
+    }
+  }, []);
+
   // Fetch local recommendations from OpenAI API
   const fetchLocalRecommendations = useCallback(async () => {
     setLoading(true);
@@ -69,6 +114,18 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
       const income = userData.income || '<25k';
       const children = userData.children || [];
       
+      // Get ZIP code for the city
+      let cityZipCode = zipCode;
+      if (!cityZipCode) {
+        cityZipCode = await getZipCodeFromCity(city);
+        if (cityZipCode) {
+          setZipCode(cityZipCode);
+          console.log(`Found ZIP code for ${city}: ${cityZipCode}`);
+        } else {
+          console.warn(`Could not find ZIP code for ${city}`);
+        }
+      }
+      
       // Call the OpenAI API to get personalized recommendations
       const response = await fetch('/api/openai-stay', {
         method: 'POST',
@@ -76,11 +133,13 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          city,
+          address: city, // Using city as the address
           income,
           children
         })
       });
+      
+      let recommendationsData;
       
       if (!response.ok) {
         const errorMessage = `API returned status code ${response.status}: ${response.statusText}`;
@@ -91,96 +150,78 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
           const errorData = await response.json();
           console.error('Error details:', errorData);
           
-          if (errorData.details) {
-            console.error('API error details:', errorData.details);
-          }
-          
-          if (errorData.rawResponse) {
-            console.error('Raw API response:', errorData.rawResponse);
-          }
-          
           // If we have valid JSON data in the error response that looks like recommendations,
           // we can use it instead of falling back to default data
           if (errorData.townData && errorData.schoolData) {
             console.log('Found valid recommendation data in error response, using it');
-            
-            // Process the data we received
-            const filteredSchools = filterSchoolsByChildAge(errorData.schoolData, userData);
-            const filteredPrograms = filterCommunityPrograms(errorData.communityProgramData || [], userData);
-            
-            // Update state with the data from the error response
-            setFilteredSchools(filteredSchools);
-            setFilteredPrograms(filteredPrograms);
-            setTownData(errorData.townData);
-            
-            // Show a warning but don't treat it as a full error
-            setError(`Using recommendations from response despite API error: ${errorMessage}`);
-            setLoading(false);
-            
-            // Exit early from the function
-            return;
+            recommendationsData = errorData;
+          } else {
+            // Use default recommendations
+            recommendationsData = defaultRecommendations;
+            setError(`Using default recommendations. API error: ${errorMessage}`);
           }
         } catch (e) {
           console.error('Could not parse error response:', e);
+          recommendationsData = defaultRecommendations;
+          setError(`Using default recommendations. API error: ${errorMessage}`);
         }
-        
-        throw new Error(`API error: ${errorMessage}`);
-      }
-      
-      let recommendationsData;
-      try {
+      } else {
         recommendationsData = await response.json();
-      } catch (jsonError) {
-        console.error('Error parsing API response as JSON:', jsonError);
-        throw new Error('Could not parse API response as JSON');
       }
       
-      // Ensure the response has the expected structure
-      if (!recommendationsData.townData || !recommendationsData.schoolData) {
-        throw new Error('API response missing required data');
+      // Try to fetch real school data if we have a ZIP code
+      if (cityZipCode) {
+        const realSchools = await fetchRealSchoolData(cityZipCode);
+        
+        if (realSchools.length > 0) {
+          // Replace the OpenAI-generated school data with real data
+          recommendationsData.schoolData = realSchools;
+        }
       }
       
-      // Apply filters based on user data
-      const filteredSchoolData = filterSchoolsByChildAge(recommendationsData.schoolData, userData);
-      const filteredProgramData = filterCommunityPrograms(recommendationsData.communityProgramData, userData);
+      // Process the data
+      const townInfo: TownData = recommendationsData.townData || defaultRecommendations.townData;
+      const schools: SchoolData[] = recommendationsData.schoolData || defaultRecommendations.schoolData;
+      const programs: CommunityProgramData[] = recommendationsData.communityProgramData || defaultRecommendations.communityProgramData;
       
-      setFilteredSchools(filteredSchoolData);
-      setFilteredPrograms(filteredProgramData);
-      setTownData(recommendationsData.townData);
+      // Filter schools and programs based on user data
+      const filteredSchools = filterSchoolsByChildAge(schools, userData);
+      const filteredPrograms = filterCommunityPrograms(programs, userData);
       
-    } catch (err) {
-      console.error('Error fetching local recommendations:', err);
-      setError(`Failed to fetch local recommendations: ${err instanceof Error ? err.message : String(err)}`);
+      // Update state with the filtered data
+      setTownData(townInfo);
+      setFilteredSchools(filteredSchools);
+      setFilteredPrograms(filteredPrograms);
       
-      // Use fallback recommendations but apply filtering
-      const filteredDefaultSchools = filterSchoolsByChildAge(defaultRecommendations.schoolData, userData);
-      const filteredDefaultPrograms = filterCommunityPrograms(defaultRecommendations.communityProgramData, userData);
+    } catch (error) {
+      console.error('Error fetching local recommendations:', error);
+      setError('Failed to fetch recommendations. Please try again later.');
       
-      // Create a fallback town data based on the user's location if available
-      const fallbackTownData: TownData = {
-        name: userData?.city || 'Your Current Location',
-        website: `https://www.google.com/search?q=${encodeURIComponent(userData?.city || '')}`,
-        description: `${userData?.city || 'Your current location'} is where you currently reside. This section will help you explore opportunities in your area.`
-      };
+      // Use default recommendations
+      const defaultSchools = filterSchoolsByChildAge(defaultRecommendations.schoolData, userData);
+      const defaultPrograms = filterCommunityPrograms(defaultRecommendations.communityProgramData, userData);
       
-      setFilteredSchools(filteredDefaultSchools);
-      setFilteredPrograms(filteredDefaultPrograms);
-      setTownData(fallbackTownData);
+      setTownData(defaultRecommendations.townData);
+      setFilteredSchools(defaultSchools);
+      setFilteredPrograms(defaultPrograms);
     } finally {
       setLoading(false);
     }
-  }, [userData]);
+  }, [userData, zipCode, getZipCodeFromCity, fetchRealSchoolData]);
   
-  // Fetch data on component mount
-  // Trigger the API call when the component mounts
+  // Fetch recommendations on component mount
   useEffect(() => {
     fetchLocalRecommendations();
   }, [fetchLocalRecommendations]);
-
+  
+  // Determine if the user has made all required selections
+  const hasRequiredSelections = selectedSchool !== null && selectedCommunityPrograms.length > 0;
+  
+  // Handle saving user choices
   const handleSaveChoices = () => {
-    if (onSaveChoices) {
+    if (onSaveChoices && selectedSchool && selectedCommunityPrograms.length > 0 && townData) {
       const choices = {
-        town: townData?.name || userData?.city || 'Current Location',
+        town: townData.name,
         selectedSchool,
         selectedCommunityPrograms
       };
@@ -188,17 +229,11 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
     }
   };
 
-  const hasRequiredSelections = 
-    selectedSchool && 
-    selectedCommunityPrograms.length > 0;
-
   return (
-    <div className="space-y-12 mt-16">
-      <div className="bg-white shadow-md rounded-lg p-6 text-center">
-        <h2 className="text-3xl font-bold mb-4">Staying in Your Current Location</h2>
-        <p className="text-xl mb-6">Let&apos;s explore opportunities in your current area</p>
-      </div>
-
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <h2 className="text-3xl font-bold mb-6 text-center">{t('title')}</h2>
+      <p className="text-lg mb-8 text-center">{t('subtitle')}</p>
+      
       {/* Loading State */}
       {loading && (
         <div className="bg-white shadow-md rounded-lg p-6 text-center">

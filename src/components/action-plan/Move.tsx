@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAssessment, type AssessData } from '../AssessProvider'
 import { useTranslations } from 'next-intl'
 import { geocodeNeighborhood, geocodeZipCode } from '../../utils/geocodingUtils'
@@ -121,33 +121,22 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
     }
   };
   
-  // Fallback data in case the API call fails
-  const fallbackRecommendations = defaultRecommendations;
-
-  // Fetch personalized recommendations from OpenAI API
-  const fetchRecommendations = useCallback(async () => {
-    if (!zipCode || zipCode.length < 5) return;
-    
-    // Validate ZIP code format first
-    if (!validateZipCode(zipCode)) {
-      setZipCodeError('Please enter a valid ZIP code (5 digits or 5+4 format)');
-      setLoading(false);
-      return;
+  // Effect to fetch recommendations when ZIP code changes
+  useEffect(() => {
+    if (shouldFetchData && zipCode && validateZipCode(zipCode)) {
+      fetchRecommendations();
+      setShouldFetchData(false);
     }
-    
+  }, [shouldFetchData, zipCode]);
+
+  // Function to fetch recommendations from the API
+  const fetchRecommendations = async () => {
     setLoading(true);
     setError(null);
     setZipCodeError(null);
     
     try {
-      // Get state information from ZIP code to ensure we search within the correct state
-      const stateInfo = await geocodeZipCode(zipCode);
-      if (!stateInfo) {
-        setZipCodeError('Could not find this ZIP code. Please check and try again.');
-        setLoading(false);
-        return;
-      }
-      
+      // Get user data for the API request
       const data = userData || {};
       const address = data.address || '';
       const income = data.income || '<25k';
@@ -156,7 +145,16 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
       // Update map address when zip code changes
       setMapAddress(zipCode);
       
-      const response = await fetch('/api/openai-move', {
+      // Get state information from ZIP code to ensure we search within the correct state
+      const stateInfo = await geocodeZipCode(zipCode);
+      if (!stateInfo) {
+        setZipCodeError('Could not find this ZIP code. Please check and try again.');
+        setLoading(false);
+        return;
+      }
+      
+      // Fetch recommendations from OpenAI API
+      const openaiResponse = await fetch('/api/openai-move', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -170,80 +168,57 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
         })
       });
       
-      if (!response.ok) {
-        const errorMessage = `API returned status code ${response.status}: ${response.statusText}`;
-        console.error(`API error: ${errorMessage}`);
+      let recommendationsData: MoveRecommendations;
+      
+      if (!openaiResponse.ok) {
+        const errorText = `API returned status code ${openaiResponse.status}`;
+        console.error(errorText);
         
+        // Try to get more detailed error information
         try {
-          // Try to get more detailed error information from the response
-          const errorData = await response.json();
+          const errorData = await openaiResponse.json();
           console.error('Error details:', errorData);
-          
-          if (errorData.details) {
-            console.error('API error details:', errorData.details);
-          }
-          
-          if (errorData.rawResponse) {
-            console.error('Raw API response:', errorData.rawResponse);
-          }
           
           // If we have valid JSON data in the error response that looks like recommendations,
           // we can use it instead of falling back to default data
           if (errorData.townData && errorData.schoolData) {
             console.log('Found valid recommendation data in error response, using it');
-            
-            // Process the data we received
-            const filteredSchools = filterSchoolsByChildAge(errorData.schoolData, userData);
-            const filteredPrograms = filterCommunityPrograms(errorData.communityProgramData || [], userData);
-            
-            // Update state with the data from the error response
-            setFilteredSchools(filteredSchools);
-            setFilteredPrograms(filteredPrograms);
-            setRecommendations(errorData);
-            
-            // Show a warning but don't treat it as a full error
-            setError(`Using recommendations from response despite API error: ${errorMessage}`);
-            setLoading(false);
-            
-            // Exit early from the function
-            return;
+            recommendationsData = errorData as MoveRecommendations;
+          } else {
+            setError(errorText);
+            recommendationsData = defaultRecommendations;
           }
         } catch (e) {
           console.error('Could not parse error response:', e);
+          setError(errorText);
+          recommendationsData = defaultRecommendations;
         }
-        
-        // Apply filtering to fallback recommendations
-        const filteredDefaultSchools = filterSchoolsByChildAge(fallbackRecommendations.schoolData, userData);
-        const filteredDefaultPrograms = filterCommunityPrograms(fallbackRecommendations.communityProgramData, userData);
-        
-        // Update state with fallback data
-        setFilteredSchools(filteredDefaultSchools);
-        setFilteredPrograms(filteredDefaultPrograms);
-        setRecommendations(fallbackRecommendations);
-        setError(`Using default recommendations. API error: ${errorMessage}`);
-        setLoading(false);
-        
-        // Exit early from the function
-        return;
+      } else {
+        // Successfully got data from OpenAI API
+        recommendationsData = await openaiResponse.json();
       }
       
-      let recommendationsData;
+      // Try to fetch real school data from NCES API
       try {
-        recommendationsData = await response.json();
-      } catch (jsonError) {
-        console.error('Error parsing API response as JSON:', jsonError);
+        console.log('Fetching real school data from NCES API for ZIP code:', zipCode);
+        const schoolsResponse = await fetch(`/api/nces-schools?zipCode=${zipCode}&distance=15`);
         
-        // Apply filtering to fallback recommendations
-        const filteredDefaultSchools = filterSchoolsByChildAge(fallbackRecommendations.schoolData, userData);
-        const filteredDefaultPrograms = filterCommunityPrograms(fallbackRecommendations.communityProgramData, userData);
-        
-        // Update state with fallback data
-        setFilteredSchools(filteredDefaultSchools);
-        setFilteredPrograms(filteredDefaultPrograms);
-        setRecommendations(fallbackRecommendations);
-        setError('Could not parse API response. Using default recommendations instead.');
-        setLoading(false);
-        return;
+        if (schoolsResponse.ok) {
+          const schoolsData = await schoolsResponse.json();
+          
+          // If we have real school data, use it instead of the OpenAI-generated data
+          if (schoolsData.schools && schoolsData.schools.length > 0) {
+            console.log('Using real school data from NCES API:', schoolsData.schools.length, 'schools found');
+            recommendationsData.schoolData = schoolsData.schools;
+          } else {
+            console.log('No schools found from NCES API, using OpenAI-generated data');
+          }
+        } else {
+          console.error('Failed to fetch schools from NCES API:', await schoolsResponse.text());
+        }
+      } catch (schoolError) {
+        console.error('Error fetching schools from NCES API:', schoolError);
+        // Continue with OpenAI data if NCES API fails
       }
       
       // Ensure the response has the expected structure
@@ -255,7 +230,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             : defaultRecommendations.neighborhoodData.topNeighborhoods
         },
         schoolData: Array.isArray(recommendationsData.schoolData) 
-          ? recommendationsData.schoolData.map(inferSchoolType)
+          ? recommendationsData.schoolData.map(inferSchoolType) 
           : defaultRecommendations.schoolData,
         communityProgramData: Array.isArray(recommendationsData.communityProgramData) 
           ? recommendationsData.communityProgramData 
@@ -264,54 +239,57 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
         housingOptions: Array.isArray(recommendationsData.housingOptions) 
           ? recommendationsData.housingOptions 
           : defaultRecommendations.housingOptions,
-        jobSectors: Array.isArray(recommendationsData.jobSectors) 
-          ? recommendationsData.jobSectors 
+        jobSectors: Array.isArray(recommendationsData.jobSectors)
+          ? recommendationsData.jobSectors
           : defaultRecommendations.jobSectors,
         careerAdvice: recommendationsData.careerAdvice || defaultRecommendations.careerAdvice
       };
       
-      // Apply filters based on user data
-      const filteredSchoolData = filterSchoolsByChildAge(validatedData.schoolData, userData);
-      const filteredProgramData = filterCommunityPrograms(validatedData.communityProgramData, userData);
-      setFilteredSchools(filteredSchoolData);
-      setFilteredPrograms(filteredProgramData);
+      // Apply filtering based on user data
+      const filteredSchools = filterSchoolsByChildAge(validatedData.schoolData, userData);
+      const filteredPrograms = filterCommunityPrograms(validatedData.communityProgramData, userData);
+      const filteredHousingOptions = filterHousingOptions(validatedData.housingOptions, userData);
+      
+      // Generate personalized career advice if not provided in the API response
+      const personalizedAdvice = validatedData.careerAdvice || generatePersonalizedCareerAdvice(userData);
+      
+      // Update state with the filtered data
+      setFilteredSchools(filteredSchools);
+      setFilteredPrograms(filteredPrograms);
+      setFilteredHousingOptions(filteredHousingOptions);
       setRecommendations(validatedData);
-      setFilteredHousingOptions(filterHousingOptions(validatedData.housingOptions, userData));
+      setPersonalizedCareerAdvice(personalizedAdvice);
       
-    } catch (err) {
-      console.error('Error fetching move recommendations:', err);
-      setError(`Failed to fetch personalized recommendations: ${err instanceof Error ? err.message : String(err)}. Using default data instead.`);
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      setError('Failed to fetch recommendations. Please try again later.');
       
-      // Use fallback recommendations but apply filtering
-      const filteredDefaultSchools = filterSchoolsByChildAge(fallbackRecommendations.schoolData, userData);
-      const filteredDefaultPrograms = filterCommunityPrograms(fallbackRecommendations.communityProgramData, userData);
+      // Apply filtering to fallback recommendations
+      const filteredDefaultSchools = filterSchoolsByChildAge(defaultRecommendations.schoolData, userData);
+      const filteredDefaultPrograms = filterCommunityPrograms(defaultRecommendations.communityProgramData, userData);
+      const filteredDefaultHousingOptions = filterHousingOptions(defaultRecommendations.housingOptions, userData);
       
+      // Update state with fallback data
       setFilteredSchools(filteredDefaultSchools);
       setFilteredPrograms(filteredDefaultPrograms);
-      
-      // Use fallback recommendations
-      setRecommendations(fallbackRecommendations);
+      setFilteredHousingOptions(filteredDefaultHousingOptions);
+      setRecommendations(defaultRecommendations);
+      setPersonalizedCareerAdvice(generatePersonalizedCareerAdvice(userData));
     } finally {
       setLoading(false);
-      // Reset the flag after fetching
-      setShouldFetchData(false);
     }
-  }, [zipCode, userData, fallbackRecommendations]);
+  };
   
-  // Trigger the API call when shouldFetchData is true
-  useEffect(() => {
-    if (shouldFetchData) {
-      fetchRecommendations();
-    }
-  }, [shouldFetchData, fetchRecommendations]);
-
-  useEffect(() => {
-    if (userData) {
-      const advice = generatePersonalizedCareerAdvice(userData);
-      setPersonalizedCareerAdvice(advice);
-    }
-  }, [userData]);
-
+  // Determine if the user has made all required selections
+  const hasRequiredSelections = selectedSchool !== null && 
+    selectedCommunityPrograms.length > 0 && 
+    selectedNeighborhood !== null && 
+    selectedHousingType !== null;
+  
+  // Extract neighborhoods from recommendations
+  const neighborhoods = recommendations.neighborhoodData?.topNeighborhoods || [];
+  
+  // Handle saving user choices
   const handleSaveChoices = () => {
     if (onSaveChoices && selectedSchool && selectedCommunityPrograms.length > 0) {
       const choices = {
@@ -325,73 +303,49 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
     }
   };
 
-  const hasRequiredSelections = 
-    selectedSchool && 
-    selectedCommunityPrograms.length > 0 && 
-    zipCode && 
-    selectedNeighborhood && 
-    selectedHousingType;
-
-  // Ensure neighborhoods data is valid
-  const neighborhoods = Array.isArray(recommendations?.neighborhoodData?.topNeighborhoods) 
-    ? recommendations.neighborhoodData.topNeighborhoods 
-    : defaultRecommendations.neighborhoodData.topNeighborhoods;
-
   return (
-    <div className="space-y-12 mt-16">
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <h2 className="text-3xl font-bold mb-6 text-center">{t('title')}</h2>
+      <p className="text-lg mb-8 text-center">{t('subtitle')}</p>
+      
       {/* ZIP Code Input */}
-      <div className="bg-white shadow-md rounded-lg p-6 text-center">
-        <h2 className="text-3xl font-bold mb-4">Where Would You Like to Move?</h2>
-        <p className="text-xl mb-6">Do you know where you want to live next?</p>
-        <div className="flex justify-center items-center">
-          <label htmlFor="zipCode" className="mr-4 text-lg">Enter ZIP Code:</label>
-          <div className="relative">
-            <input 
-              type="text" 
-              id="zipCode"
-              value={zipCode}
-              onChange={handleZipCodeChange}
-              placeholder="e.g. 22204"
-              className={`border-2 ${zipCodeError ? 'border-red-500' : 'border-[#6CD9CA]'} rounded-md px-4 py-2 text-lg w-40`}
-              disabled={loading}
-            />
-            {zipCodeError && (
-              <div className="text-red-500 text-sm mt-1">{zipCodeError}</div>
-            )}
-            {loading && zipCode && !zipCodeError && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#6CD9CA]"></div>
-              </div>
-            )}
-          </div>
-          {zipCode && !loading && (
-            <button 
-              onClick={() => setShouldFetchData(true)}
-              className="ml-2 bg-[#6CD9CA] hover:bg-opacity-90 text-white py-2 px-4 rounded-md text-sm transition-colors"
-            >
-              Update
-            </button>
-          )}
+      <div className="bg-white shadow-md rounded-lg p-6 mb-8">
+        <h3 className="text-2xl font-semibold mb-4">{t('enterZipCode')}</h3>
+        <p className="mb-4">{t('zipCodeInstructions')}</p>
+        
+        <div className="flex items-center">
+          <input
+            type="text"
+            value={zipCode}
+            onChange={handleZipCodeChange}
+            placeholder="Enter ZIP code"
+            className="border rounded-l-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#6CD9CA]"
+            maxLength={10}
+          />
+          <button 
+            onClick={() => setShouldFetchData(true)}
+            disabled={!validateZipCode(zipCode) || loading}
+            className={`
+              bg-[#6CD9CA] text-white px-4 py-2 rounded-r-lg
+              ${(!validateZipCode(zipCode) || loading) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-opacity-90'}
+            `}
+          >
+            {loading ? 'Loading...' : 'Search'}
+          </button>
         </div>
         
-        <ActionReminder 
-          message={t('enterZipReminder', { fallback: "Enter a ZIP code to view recommendations and continue your plan" })} 
-          isVisible={!zipCode && !loading} 
-        />
+        {zipCodeError && (
+          <p className="text-red-500 mt-2">{zipCodeError}</p>
+        )}
       </div>
-
-      {/* Render following sections only when ZIP code is entered */}
-      {zipCode && (
+      
+      {/* Main Content */}
+      {zipCode ? (
         <>
           {/* Loading State */}
           {loading && (
             <div className="bg-white shadow-md rounded-lg p-6 text-center">
-              <div className="animate-pulse flex flex-col items-center">
-                <div className="h-8 w-64 bg-gray-200 rounded mb-4"></div>
-                <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 w-5/6 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 w-4/6 bg-gray-200 rounded"></div>
-              </div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6CD9CA] mx-auto mb-4"></div>
               <p className="mt-4 text-gray-600">Fetching personalized recommendations for {zipCode}...</p>
             </div>
           )}
@@ -499,6 +453,10 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             </div>
           )}
         </>
+      ) : (
+        <div className="bg-white shadow-md rounded-lg p-6 text-center">
+          <p className="text-gray-600">Enter a ZIP code above to get personalized recommendations</p>
+        </div>
       )}
     </div>
   );

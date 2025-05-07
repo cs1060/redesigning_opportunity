@@ -23,6 +23,28 @@ export type SchoolData = {
   description: string;
   website: string;
   schoolType?: 'elementary' | 'middle' | 'high' | 'all';
+  // Additional data for enhanced functionality
+  city?: string;
+  state?: string;
+  zip?: string;
+  studentSize?: number;
+  admissionRate?: number;
+  completionRate?: number;
+  avgNetPrice?: number;
+  demographics?: {
+    race_ethnicity?: {
+      white?: number;
+      black?: number;
+      hispanic?: number;
+      asian?: number;
+      aian?: number; // American Indian/Alaska Native
+      nhpi?: number; // Native Hawaiian/Pacific Islander
+      two_or_more?: number;
+      non_resident_alien?: number;
+      [key: string]: number | undefined;
+    };
+  };
+  qualityScore?: number; // Raw quality score for sorting
 };
 
 export type CommunityProgramData = {
