@@ -1,8 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FaStar, FaQuoteLeft, FaQuoteRight, FaMapMarkerAlt, FaComment } from 'react-icons/fa'
 import { useTranslations } from 'next-intl'
+import { db } from '../utils/firebase'
+import { collection, addDoc, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore'
 
 interface Testimonial {
   id: string;
@@ -24,45 +26,130 @@ const CommunityConnections: React.FC = () => {
     text: '',
   })
   
-  // Sample testimonials data
-  const testimonials: Testimonial[] = [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      location: 'Brookline, MA',
-      rating: 5,
-      text: 'Moving to a higher opportunity neighborhood completely changed our lives. My children now attend excellent schools, and we\'ve connected with supportive community programs. This website guided us through the entire process!',
-      date: 'March 2, 2025',
-      avatar: '/avatars/sarah.svg'
-    },
-    {
-      id: '2',
-      name: 'Marcus Williams',
-      location: 'Cambridge, MA',
-      rating: 4,
-      text: 'As a single father, I was overwhelmed by the prospect of moving to provide better opportunities for my kids. The resources and step-by-step guidance here made it manageable. We\'ve been in our new community for 6 months, and my children are thriving.',
-      date: 'February 15, 2025',
-      avatar: '/avatars/marcus.svg'
-    },
-    {
-      id: '3',
-      name: 'Elena Rodriguez',
-      location: 'Somerville, MA',
-      rating: 5,
-      text: 'Instead of moving, we decided to stay and advocate for better resources in our community. The action plan helped us connect with local organizations and other parents. We\'ve already seen improvements in our neighborhood schools!',
-      date: 'January 28, 2025',
-      avatar: '/avatars/elena.svg'
-    },
-    {
-      id: '4',
-      name: 'David Chen',
-      location: 'Newton, MA',
-      rating: 5,
-      text: 'The opportunity map was eye-opening. We had no idea how much variation existed between neighborhoods so close to each other. We made an informed decision to move, and now my daughter has access to amazing STEM programs she loves.',
-      date: 'January 10, 2025',
-      avatar: '/avatars/david.svg'
-    },
-  ]
+  // State for testimonials data
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [submitStatus, setSubmitStatus] = useState<{success?: boolean; message?: string} | null>(null)
+  
+  // Fetch testimonials from Firestore
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setIsLoading(true)
+        const testimonialsCollection = collection(db, 'testimonials')
+        const testimonialsQuery = query(testimonialsCollection, orderBy('createdAt', 'desc'))
+        const querySnapshot = await getDocs(testimonialsQuery)
+        
+        const fetchedTestimonials: Testimonial[] = []
+        querySnapshot.forEach((doc) => {
+          const data = doc.data()
+          fetchedTestimonials.push({
+            id: doc.id,
+            name: data.name,
+            location: data.location,
+            rating: data.rating,
+            text: data.text,
+            date: data.date,
+            avatar: data.avatar || undefined
+          })
+        })
+        
+        // Sample testimonials data to use as fallback
+        const sampleTestimonials: Testimonial[] = [
+          {
+            id: '1',
+            name: 'Sarah Johnson',
+            location: 'Brookline, MA',
+            rating: 5,
+            text: 'Moving to a higher opportunity neighborhood completely changed our lives. My children now attend excellent schools, and we\'ve connected with supportive community programs. This website guided us through the entire process!',
+            date: 'March 2, 2025',
+            avatar: '/avatars/sarah.svg'
+          },
+          {
+            id: '2',
+            name: 'Marcus Williams',
+            location: 'Cambridge, MA',
+            rating: 4,
+            text: 'As a single father, I was overwhelmed by the prospect of moving to provide better opportunities for my kids. The resources and step-by-step guidance here made it manageable. We\'ve been in our new community for 6 months, and my children are thriving.',
+            date: 'February 15, 2025',
+            avatar: '/avatars/marcus.svg'
+          },
+          {
+            id: '3',
+            name: 'Elena Rodriguez',
+            location: 'Somerville, MA',
+            rating: 5,
+            text: 'Instead of moving, we decided to stay and advocate for better resources in our community. The action plan helped us connect with local organizations and other parents. We\'ve already seen improvements in our neighborhood schools!',
+            date: 'January 28, 2025',
+            avatar: '/avatars/elena.svg'
+          },
+          {
+            id: '4',
+            name: 'David Chen',
+            location: 'Newton, MA',
+            rating: 5,
+            text: 'The opportunity map was eye-opening. We had no idea how much variation existed between neighborhoods so close to each other. We made an informed decision to move, and now my daughter has access to amazing STEM programs she loves.',
+            date: 'January 10, 2025',
+            avatar: '/avatars/david.svg'
+          },
+        ]
+        
+        // Combine fetched testimonials with sample testimonials
+        // Only use sample testimonials if we don't have any from Firebase
+        if (fetchedTestimonials.length > 0) {
+          setTestimonials(fetchedTestimonials)
+        } else {
+          setTestimonials(sampleTestimonials)
+        }
+      } catch (error) {
+        console.error('Error fetching testimonials:', error)
+        // If there's an error fetching from Firebase, use sample data as fallback
+        const sampleTestimonials: Testimonial[] = [
+          {
+            id: '1',
+            name: 'Sarah Johnson',
+            location: 'Brookline, MA',
+            rating: 5,
+            text: 'Moving to a higher opportunity neighborhood completely changed our lives. My children now attend excellent schools, and we\'ve connected with supportive community programs. This website guided us through the entire process!',
+            date: 'March 2, 2025',
+            avatar: '/avatars/sarah.svg'
+          },
+          {
+            id: '2',
+            name: 'Marcus Williams',
+            location: 'Cambridge, MA',
+            rating: 4,
+            text: 'As a single father, I was overwhelmed by the prospect of moving to provide better opportunities for my kids. The resources and step-by-step guidance here made it manageable. We\'ve been in our new community for 6 months, and my children are thriving.',
+            date: 'February 15, 2025',
+            avatar: '/avatars/marcus.svg'
+          },
+          {
+            id: '3',
+            name: 'Elena Rodriguez',
+            location: 'Somerville, MA',
+            rating: 5,
+            text: 'Instead of moving, we decided to stay and advocate for better resources in our community. The action plan helped us connect with local organizations and other parents. We\'ve already seen improvements in our neighborhood schools!',
+            date: 'January 28, 2025',
+            avatar: '/avatars/elena.svg'
+          },
+          {
+            id: '4',
+            name: 'David Chen',
+            location: 'Newton, MA',
+            rating: 5,
+            text: 'The opportunity map was eye-opening. We had no idea how much variation existed between neighborhoods so close to each other. We made an informed decision to move, and now my daughter has access to amazing STEM programs she loves.',
+            date: 'January 10, 2025',
+            avatar: '/avatars/david.svg'
+          },
+        ]
+        setTestimonials(sampleTestimonials)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchTestimonials()
+  }, [])
   
 
   
@@ -81,16 +168,58 @@ const CommunityConnections: React.FC = () => {
     })
   }
   
-  const handleSubmitTestimonial = (e: React.FormEvent) => {
+  const handleSubmitTestimonial = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real application, this would submit the testimonial to a backend
-    alert(t('testimonialSubmitMessage'))
-    setNewTestimonialForm({
-      name: '',
-      location: '',
-      rating: 5,
-      text: '',
-    })
+    
+    try {
+      setSubmitStatus({ message: 'Submitting your story...' })
+      
+      // Format the current date
+      const currentDate = new Date()
+      const formattedDate = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getDate()}, ${currentDate.getFullYear()}`
+      
+      // Add the testimonial to Firestore
+      const testimonialsCollection = collection(db, 'testimonials')
+      const newTestimonial = {
+        name: newTestimonialForm.name,
+        location: newTestimonialForm.location,
+        rating: newTestimonialForm.rating,
+        text: newTestimonialForm.text,
+        date: formattedDate,
+        createdAt: serverTimestamp() // For sorting by date added
+      }
+      
+      const docRef = await addDoc(testimonialsCollection, newTestimonial)
+      
+      // Add the new testimonial to the state with the generated ID
+      setTestimonials(prevTestimonials => [
+        {
+          id: docRef.id,
+          ...newTestimonial,
+          date: formattedDate // Use the formatted date string
+        } as Testimonial,
+        ...prevTestimonials
+      ])
+      
+      // Reset the form
+      setNewTestimonialForm({
+        name: '',
+        location: '',
+        rating: 5,
+        text: '',
+      })
+      
+      // Show success message
+      setSubmitStatus({ success: true, message: t('testimonialSubmitMessage') })
+      
+      // Clear the success message after 5 seconds
+      setTimeout(() => {
+        setSubmitStatus(null)
+      }, 5000)
+    } catch (error) {
+      console.error('Error adding testimonial:', error)
+      setSubmitStatus({ success: false, message: 'An error occurred while submitting your story. Please try again.' })
+    }
   }
   
   const renderStars = (rating: number) => {
@@ -166,8 +295,24 @@ const CommunityConnections: React.FC = () => {
       
       {/* Testimonials Tab */}
       {activeTab === 'testimonials' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {testimonials.map((testimonial) => (
+        <>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) : testimonials.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">No stories have been shared yet. Be the first to share your journey!</p>
+              <button
+                onClick={() => setActiveTab('share')}
+                className="mt-4 px-5 py-2 bg-primary text-white font-medium rounded-lg hover:bg-opacity-90"
+              >
+                Share Your Story
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {testimonials.map((testimonial) => (
             <div key={testimonial.id} className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-start mb-4">
                 <div className="flex-shrink-0 mr-4">
@@ -194,7 +339,9 @@ const CommunityConnections: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
+            </div>
+          )}
+        </>
       )}
       
 
@@ -268,13 +415,37 @@ const CommunityConnections: React.FC = () => {
               />
             </div>
             
+            {/* Submission status message */}
+            {submitStatus && (
+              <div className={`mb-4 p-4 rounded-lg ${
+                submitStatus.success === undefined ? 'bg-blue-50 text-blue-700' :
+                submitStatus.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+              }`}>
+                {submitStatus.message}
+              </div>
+            )}
+            
             <div className="flex justify-end">
               <button
                 type="submit"
-                className="inline-flex items-center px-5 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-opacity-90"
+                disabled={!!submitStatus && submitStatus.success === undefined}
+                className={`inline-flex items-center px-5 py-2.5 ${
+                  submitStatus && submitStatus.success === undefined 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-primary hover:bg-opacity-90'
+                } text-white font-medium rounded-lg`}
               >
-                <FaComment className="mr-2" />
-                Submit Your Story
+                {submitStatus && submitStatus.success === undefined ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <FaComment className="mr-2" />
+                    Submit Your Story
+                  </>
+                )}
               </button>
             </div>
           </form>
