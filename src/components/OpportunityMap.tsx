@@ -62,7 +62,47 @@ const fetchNeighborhoodData = async (address: string): Promise<NeighborhoodData>
     });
 
     if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
+      // For 500 errors, return a default data structure instead of throwing
+      // This prevents the entire component from crashing
+      if (response.status === 500) {
+        console.error(`API request failed with status 500 for address: ${address}`);
+        // Return default neighborhood data that matches the NeighborhoodData interface
+        return {
+          schoolQuality: {
+            score: 0,
+            description: 'Information unavailable',
+            details: ['Unable to retrieve school information for this neighborhood']
+          },
+          safety: {
+            score: 0,
+            description: 'Information unavailable',
+            details: ['Unable to retrieve safety information for this neighborhood']
+          },
+          healthcare: {
+            score: 0,
+            description: 'Information unavailable',
+            details: ['Unable to retrieve healthcare information for this neighborhood']
+          },
+          amenities: {
+            score: 0,
+            description: 'Information unavailable',
+            details: ['Unable to retrieve amenities information for this neighborhood']
+          },
+          housing: {
+            score: 0,
+            description: 'Information unavailable',
+            details: ['Unable to retrieve housing information for this neighborhood']
+          },
+          transportation: {
+            score: 0,
+            description: 'Information unavailable',
+            details: ['Unable to retrieve transportation information for this neighborhood']
+          }
+        };
+      }
+      
+      // For other errors, still throw but with more information
+      throw new Error(`API request failed with status ${response.status} for address: ${address}`);
     }
 
     const data = await response.json();
@@ -164,6 +204,7 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
   const [insightsData, setInsightsData] = useState<NeighborhoodData | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(true);
   const [loadingAddress, setLoadingAddress] = useState(false);
+  const [geocodingError, setGeocodingError] = useState<string | null>(null);
 
   useEffect(() => {
     if (map.current) return; // initialize map only once
@@ -683,15 +724,24 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
             console.log(`ZIP code ${zipCode} is in state ${zipInfo.state} (${zipInfo.stateCode})`);
             
             // Try geocoding the neighborhood within the state context
-            coordinates = await geocodeNeighborhood(neighborhood, zipInfo.stateCode);
+            // If we have a town name (middle part), include it for better context
+            if (addressParts.length >= 3) {
+              const town = addressParts[1];
+              console.log(`Trying to geocode neighborhood with town context: ${neighborhood}, ${town}, ${zipInfo.stateCode}`);
+              // Try with town name for better context
+              coordinates = await geocodeNeighborhood(`${neighborhood}, ${town}`, zipInfo.stateCode);
+            } else {
+              // Just try with neighborhood and state if no town is provided
+              coordinates = await geocodeNeighborhood(neighborhood, zipInfo.stateCode);
+            }
             
             if (coordinates) {
               console.log(`Successfully geocoded ${neighborhood} in ${zipInfo.stateCode}`);
             } else {
-              // If neighborhood geocoding fails, try with the town and state
+              // If neighborhood geocoding fails, try with the town and state as a fallback
               if (addressParts.length >= 3) {
                 const town = addressParts[1];
-                console.log(`Trying to geocode with town and state: ${town}, ${zipInfo.stateCode}`);
+                console.log(`Falling back to geocoding town: ${town}, ${zipInfo.stateCode}`);
                 coordinates = await geocodeNeighborhood(town, zipInfo.stateCode);
               }
             }
@@ -709,9 +759,13 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
         
         if (!coordinates) {
           console.error('Failed to geocode address:', address);
+          setGeocodingError(`Could not find location: ${address}. Please try a different neighborhood.`);
           setLoadingAddress(false);
           return;
         }
+        
+        // Clear any previous geocoding errors
+        setGeocodingError(null);
         
         console.log('Coordinates:', coordinates);
         
@@ -837,10 +891,24 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-[65%_35%] gap-8 md:grid-flow-col auto-rows-fr">
         {/* Left side - Map Container */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-full animate-fade-in animation-delay-500">
-          <div 
-            ref={mapContainer} 
-            className="map-container h-[600px] flex-grow relative"
-          />
+          <div className="relative">
+            <div 
+              ref={mapContainer} 
+              className="map-container h-[600px] flex-grow relative"
+            />
+            
+            {/* Error message overlay */}
+            {geocodingError && (
+              <div className="absolute top-4 left-0 right-0 mx-auto w-max bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-md z-10">
+                <div className="flex items-center">
+                  <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <span>{geocodingError}</span>
+                </div>
+              </div>
+            )}
+          </div>
           
           {/* Map Legend below the map */}
           <div className="border-t border-gray-100 py-2">
