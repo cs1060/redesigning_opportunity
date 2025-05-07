@@ -292,7 +292,8 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
         map.current = null;
       }
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);  // We intentionally exclude addMapLayers to avoid re-initializing the map
 
   // Function to add map layers with the correct source layer
   const addMapLayers = (sourceLayer: string) => {
@@ -676,7 +677,8 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
       setSelectedTract(null);
       if (popupRef.current) popupRef.current.remove();
     }
-  }, [mapView, mapStyleLoaded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapView, mapStyleLoaded]);  // We intentionally exclude addMapLayers to avoid re-rendering issues
 
   // Effect to load neighborhood insights data when address changes
   useEffect(() => {
@@ -866,7 +868,8 @@ const OpportunityMap: React.FC<OpportunityMapProps> = ({
     };
     
     zoomToAddress();
-  }, [address, mapStyleLoaded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, mapStyleLoaded]);  // We intentionally exclude updateData to avoid unnecessary re-renders
 
   // Render only the map container if showWrapper is false
   if (!showWrapper) {
