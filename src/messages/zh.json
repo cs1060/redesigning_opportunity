@@ -47,6 +47,8 @@
     "yes": "是",
     "no": "否",
     "childInfo": "孩子信息",
+    "disclaimer": "注意",
+    "childDataDisclaimer": "关于您孩子的信息（姓名、年龄、种族和性别）仅用于提供个性化建议，不会在会话结束后保存或存储。",
     "child": "孩子",
     "childName": "姓名",
     "childNamePlaceholder": "输入孩子的姓名",

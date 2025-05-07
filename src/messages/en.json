@@ -47,6 +47,8 @@
     "yes": "Yes",
     "no": "No",
     "childInfo": "Child Information",
+    "disclaimer": "Note",
+    "childDataDisclaimer": "Information about your child (name, age, ethnicity, and gender) is collected only to provide personalized recommendations and is not stored or saved after your session ends.",
     "child": "Child",
     "childName": "Name",
     "childNamePlaceholder": "Enter child's name",

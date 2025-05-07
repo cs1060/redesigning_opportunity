@@ -47,6 +47,8 @@
     "yes": "Sí",
     "no": "No",
     "childInfo": "Información del Niño",
+    "disclaimer": "Nota",
+    "childDataDisclaimer": "La información sobre tu hijo (nombre, edad, etnia y género) se recopila únicamente para proporcionar recomendaciones personalizadas y no se almacena ni guarda después de que finaliza tu sesión.",
     "child": "Niño",
     "childName": "Nombre",
     "childNamePlaceholder": "Ingresa el nombre del niño",
