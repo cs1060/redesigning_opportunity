@@ -349,6 +349,18 @@
     "chinese": "Chinese"
   },
 
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Have questions or feedback? We'd love to hear from you.",
+    "yourName": "Your Name",
+    "yourEmail": "Your Email",
+    "subject": "Subject",
+    "yourMessage": "Your Message",
+    "sendMessage": "Send Message",
+    "sending": "Sending...",
+    "messageSent": "Your message has been sent successfully!",
+    "messageError": "Failed to send message. Please try again."
+  },
   "chat": {
     "chatWithMe": "Chat with me! ",
     "assistant": "Opportunity AI Assistant",
