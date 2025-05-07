@@ -12,16 +12,16 @@ import { useTranslations } from 'next-intl';
 const calculateOpportunityScore = (income: number): number => {
   // Convert income to a score from 1-10 based on the map colors
   // This matches the fill-color scale used in the map layer
-  if (income <= 10000) return 1;
-  if (income <= 25000) return 2;
-  if (income <= 28000) return 3;
-  if (income <= 30000) return 4;
-  if (income <= 32000) return 5;
-  if (income <= 34000) return 6;
-  if (income <= 36000) return 7;
-  if (income <= 38000) return 8;
-  if (income <= 41000) return 9;
-  if (income <= 45000) return 10;
+  if (income <= 10000) return 0;
+  if (income <= 25000) return 1;
+  if (income <= 28000) return 2;
+  if (income <= 30000) return 3;
+  if (income <= 32000) return 4;
+  if (income <= 34000) return 5;
+  if (income <= 36000) return 6;
+  if (income <= 38000) return 7;
+  if (income <= 41000) return 8;
+  if (income <= 45000) return 9;
   return 10;
 };
 
