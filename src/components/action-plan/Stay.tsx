@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { School } from 'lucide-react'
 import { useAssessment, type AssessData } from '../AssessProvider'
 import { useTranslations } from 'next-intl'
+import ActionReminder from '../ActionReminder'
 
 // Enhanced types for the recommendations data
 type TownData = {
@@ -418,6 +419,11 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
             <p className="mb-1">{t('selectSchool')}</p>
             <p className="mb-4 text-sm text-gray-600">{getSchoolLevelMessage(userData)}</p>
             
+            <ActionReminder 
+              message={t('selectSchoolReminder', { fallback: "Tip: Select a school to continue with your action plan" })} 
+              isVisible={!selectedSchool && filteredSchools.length > 0} 
+            />
+            
             {filteredSchools.length > 0 ? (
               <div className="space-y-4">
                 {filteredSchools.map((school) => (
@@ -476,6 +482,11 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
           <div className="bg-white shadow-md rounded-lg p-6">
             <h3 className="text-2xl font-semibold mb-4">Community Programs</h3>
             <p className="mb-4">Select community programs your child can be part of:</p>
+            
+            <ActionReminder 
+              message={t('selectProgramsReminder', { fallback: "Tip: Select at least one community program to continue" })} 
+              isVisible={selectedCommunityPrograms.length === 0 && filteredPrograms.length > 0} 
+            />
             
             {filteredPrograms.length > 0 ? (
               <div className="space-y-4">
@@ -553,6 +564,14 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
             Save My Choices
           </button>
         </div>
+      )}
+      
+      {/* Reminder to complete selections to save */}
+      {!(selectedSchool && selectedCommunityPrograms.length > 0) && !isLoading && !error && (
+        <ActionReminder 
+          message={t('completeSelectionsReminder', { fallback: "Complete all selections above to save your choices and proceed to the next steps" })} 
+          isVisible={true} 
+        />
       )}
     </div>
   )

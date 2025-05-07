@@ -5,6 +5,7 @@ import { useAssessment, type AssessData } from '../AssessProvider'
 import { MapOnly } from '../OpportunityMap'
 import { useTranslations } from 'next-intl'
 import { geocodeNeighborhood, geocodeZipCode } from '../../utils/geocodingUtils'
+import ActionReminder from '../ActionReminder'
 
 // Define types for the recommendations data
 type TownData = {
@@ -851,6 +852,11 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             </button>
           )}
         </div>
+        
+        <ActionReminder 
+          message={t('enterZipReminder', { fallback: "Enter a ZIP code to view recommendations and continue your plan" })} 
+          isVisible={!zipCode && !loading} 
+        />
       </div>
 
       {/* Render following sections only when ZIP code is entered */}
@@ -948,6 +954,11 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                   <h3 className="text-2xl font-semibold mb-4">Top Neighborhoods in {zipCode}</h3>
                   <p className="mb-4 text-center">{t('selectNeighborhood')}</p>
                   
+                  <ActionReminder 
+                    message={t('selectNeighborhoodReminder', { fallback: "Tip: Select a neighborhood to see it on the map and continue your plan" })} 
+                    isVisible={!selectedNeighborhood && neighborhoods.length > 0} 
+                  />
+                  
                   <div className="space-y-4">
                     {neighborhoods.map((neighborhood) => (
                       <div 
@@ -988,6 +999,11 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
               <h3 className="text-2xl font-semibold mb-4">{t('localSchools')}</h3>
               <p className="mb-1">{t('selectSchool')}</p>
               <p className="mb-4 text-sm text-gray-600">{getSchoolLevelMessage(userData)}</p>
+              
+              <ActionReminder 
+                message={t('selectSchoolReminder', { fallback: "Tip: Select a school that would be a good match for your child" })} 
+                isVisible={!selectedSchool && filteredSchools.length > 0} 
+              />
               
               <div className="space-y-4">
                 {filteredSchools.map((school) => (
@@ -1046,6 +1062,11 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             <div className="bg-white shadow-md rounded-lg p-6">
               <h3 className="text-2xl font-semibold mb-4">Community Programs</h3>
               <p className="mb-4">Select community programs your child can be part of:</p>
+              
+              <ActionReminder 
+                message={t('selectProgramsReminder', { fallback: "Tip: Select at least one community program that interests your child" })} 
+                isVisible={selectedCommunityPrograms.length === 0 && filteredPrograms.length > 0} 
+              />
               
               <div className="space-y-4">
                 {filteredPrograms.map((program) => (
@@ -1295,8 +1316,13 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           {/* Housing Options */}
           {!loading && filteredHousingOptions.length > 0 && (
             <div className="bg-white shadow-md rounded-lg p-6">
-              <h3 className="text-2xl font-semibold mb-6 text-center">{t('housingOptions')}</h3>
-              <p className="mb-4 text-center">{t('selectHousingType')}</p>
+              <h3 className="text-2xl font-semibold mb-4">Housing Options</h3>
+              <p className="mb-4">{t('selectHousingType')}</p>
+              
+              <ActionReminder 
+                message={t('selectHousingReminder', { fallback: "Tip: Select a housing type that suits your family's needs" })} 
+                isVisible={!selectedHousingType && filteredHousingOptions.length > 0} 
+              />
               
               <div className="grid md:grid-cols-3 gap-6 mb-8">
                 {filteredHousingOptions.map((option) => (
@@ -1310,33 +1336,34 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
                     `}
                     onClick={() => handleHousingTypeSelect(option.type)}
                   >
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-xl font-semibold">{option.type}</h4>
-                      <div className="flex items-center">
-                        <Home className="text-[#6CD9CA]" size={20} />
-                        {option.suitability !== undefined && (
-                          <span className={`ml-2 px-2 py-1 rounded-full text-xs
-                            ${option.suitability >= 4 ? 'bg-green-100 text-green-800' : 
-                             option.suitability >= 3 ? 'bg-blue-100 text-blue-800' : 
-                             'bg-gray-100 text-gray-800'}`}>
-                            {option.suitability >= 4 ? 'Highly Suitable' : 
-                             option.suitability >= 3 ? 'Suitable' : 'Less Suitable'}
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex items-center mb-2">
+                      <Home className="mr-2 text-[#6CD9CA]" size={20} />
+                      <h4 className="text-lg font-semibold">{option.type}</h4>
+                      {option.suitability && (
+                        <div className="ml-auto flex">
+                          {[...Array(5)].map((_, i) => (
+                            <svg 
+                              key={i} 
+                              className={`w-4 h-4 ${i < option.suitability! ? 'text-[#6CD9CA]' : 'text-gray-300'}`} 
+                              fill="currentColor" 
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-2 text-gray-700">
-                      <p><strong>Price Range:</strong> {option.priceRange}</p>
-                      <p><strong>Size:</strong> {option.averageSize}</p>
-                      <p>{option.description}</p>
-                    </div>
+                    <p className="text-sm font-medium text-gray-600">Price: {option.priceRange}</p>
+                    <p className="text-sm font-medium text-gray-600">Size: {option.averageSize}</p>
+                    <p className="mt-2 text-sm">{option.description}</p>
                   </div>
                 ))}
               </div>
-              
+
               {selectedHousingType && (
-                <p className="mt-4 mb-6 text-lg font-semibold text-center">
-                  {selectedHousingType} seems like a good fit for your family!
+                <p className="mt-4 text-lg font-semibold text-center">
+                  {t('housingFit', {type: selectedHousingType})}
                 </p>
               )}
               
@@ -1397,7 +1424,7 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
               </div>
             </div>
           )}
-          
+
           {/* Job Resources Section */}
           {!loading && zipCode && (
             <div className="bg-white shadow-md rounded-lg p-8 mt-8">
@@ -1598,6 +1625,11 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
           ) : (
             <div className="text-center text-gray-600">
               <p>Please select a neighborhood, school, housing type, and at least one community program to continue</p>
+              
+              <ActionReminder 
+                message={t('completeSelectionsReminder', { fallback: "Complete all selections above to save your choices and proceed to the next steps" })} 
+                isVisible={true} 
+              />
             </div>
           )}
         </>

@@ -128,7 +128,10 @@
     "selectSchool": "选择一所可能是好的替代选择的学校：",
     "clickToLearnMore": "（点击了解更多关于当地机会的信息！）",
     "description": "描述",
-    "rating": "评分"
+    "rating": "评分",
+    "selectSchoolReminder": "提示：选择一所学校以继续您的行动计划",
+    "selectProgramsReminder": "提示：选择至少一个社区项目以继续",
+    "completeSelectionsReminder": "完成上述所有选择以保存您的选择并进入下一步"
   },
   "move": {
     "title": "搬到新的位置",
@@ -181,7 +184,13 @@
     "selectNeighborhood": "选择您感兴趣的社区：",
     "communityPrograms": "社区项目",
     "selectPrograms": "选择您的孩子可以参加的社区项目：",
-    "housingFit": "{type}似乎是您家庭的不错选择！"
+    "housingFit": "{type}似乎是您家庭的不错选择！",
+    "enterZipReminder": "输入邮政编码以查看推荐并继续您的计划",
+    "selectNeighborhoodReminder": "提示：选择一个社区以在地图上查看并继续您的计划",
+    "selectSchoolReminder": "提示：选择一所适合您孩子的学校",
+    "selectProgramsReminder": "提示：选择至少一个您孩子感兴趣的社区项目",
+    "selectHousingReminder": "提示：选择符合您家庭需求的住房类型",
+    "completeSelectionsReminder": "完成上述所有选择以保存您的选择并进入下一步"
   },
   "nextSteps": {
     "title": "下一步",
