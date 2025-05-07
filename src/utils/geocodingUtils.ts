@@ -135,19 +135,54 @@ export const geocodeNeighborhood = async (
       return null;
     }
 
-    // Format the query to include state context
-    const contextualAddress = `${neighborhood}, ${state}`;
-    console.log(`Geocoding neighborhood with state context: ${contextualAddress}`);
+    // Try multiple approaches to geocode the neighborhood
+    let coordinates = null;
     
-    // Using Mapbox Geocoding API with state context
-    const encodedAddress = encodeURIComponent(contextualAddress);
+    // Approach 1: Try with just neighborhood and state
+    const contextualAddress = `${neighborhood}, ${state}`;
+    console.log(`Geocoding approach 1: ${contextualAddress}`);
+    coordinates = await attemptGeocoding(contextualAddress);
+    if (coordinates) return coordinates;
+    
+    // Approach 2: Try with 'neighborhood' keyword
+    const neighborhoodKeyword = `${neighborhood} neighborhood, ${state}`;
+    console.log(`Geocoding approach 2: ${neighborhoodKeyword}`);
+    coordinates = await attemptGeocoding(neighborhoodKeyword);
+    if (coordinates) return coordinates;
+    
+    // Approach 3: If we know it's in a specific city, try with city name
+    // This is especially useful for neighborhoods in smaller towns
+    const cityContext = await getCityFromState(state);
+    if (cityContext) {
+      const cityAddress = `${neighborhood}, ${cityContext}, ${state}`;
+      console.log(`Geocoding approach 3: ${cityAddress}`);
+      coordinates = await attemptGeocoding(cityAddress);
+      if (coordinates) return coordinates;
+    }
+    
+    // If all approaches fail, return null
+    console.log(`All geocoding approaches failed for ${neighborhood} in ${state}`);
+    return null;
+  } catch (error) {
+    console.error('Error geocoding neighborhood:', error);
+    return null;
+  }
+};
+
+/**
+ * Helper function to attempt geocoding with a specific address format
+ * @param address - The formatted address to geocode
+ * @returns Promise with coordinates or null if geocoding fails
+ */
+async function attemptGeocoding(address: string): Promise<{lng: number, lat: number} | null> {
+  try {
+    const encodedAddress = encodeURIComponent(address);
     const accessToken = 'pk.eyJ1IjoibWFoaWFyIiwiYSI6ImNtNDY1YnlwdDB2Z2IybHEwd2w3MHJvb3cifQ.wJqnzFFTwLFwYhiPG3SWJA';
-    // Add the bbox parameter to restrict the search to the state
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedAddress}.json?access_token=${accessToken}&country=us&limit=1`;
     
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Neighborhood geocoding failed: ${response.statusText}`);
+      throw new Error(`Geocoding failed: ${response.statusText}`);
     }
     
     const data = await response.json();
@@ -159,9 +194,35 @@ export const geocodeNeighborhood = async (
     
     return null;
   } catch (error) {
-    console.error('Error geocoding neighborhood:', error);
+    console.error('Error in attemptGeocoding:', error);
     return null;
   }
+}
+
+/**
+ * Helper function to get a major city in a state to use as context
+ * @param stateCode - The state code (e.g., 'NY')
+ * @returns Promise with city name or null
+ */
+async function getCityFromState(stateCode: string): Promise<string | null> {
+  // Map of states to their major cities that can help with geocoding context
+  const stateCityMap: Record<string, string> = {
+    'NY': 'Albany', // For Niskayuna which is near Albany
+    'NJ': 'Newark',
+    'CA': 'Sacramento',
+    'TX': 'Austin',
+    'FL': 'Tallahassee',
+    'IL': 'Chicago',
+    'PA': 'Philadelphia',
+    'OH': 'Columbus',
+    'GA': 'Atlanta',
+    'NC': 'Raleigh',
+    'MI': 'Detroit',
+    'VA': 'Richmond'
+    // Add more as needed
+  };
+  
+  return stateCityMap[stateCode] || null;
 };
 
 /**
