@@ -1,8 +1,6 @@
 // app/api/openai-move/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { batchVerify } from '../../../utils/factCheckUtils';
-import { geocodeZipCode, isValidZipCode } from '../../../utils/geocodingUtils';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -15,256 +13,6 @@ if (!process.env.OPENAI_API_KEY) {
   console.error('OPENAI_API_KEY is not configured in environment variables');
 }
 
-/**
- * Validates a US ZIP code
- * @param zipCode - The ZIP code to validate
- * @returns boolean indicating if the ZIP code is valid
- */
-function validateZipCode(zipCode: string): boolean {
-  // Check if the ZIP code is a valid US ZIP code format (5 digits or 5+4 format)
-  const zipRegex = /^\d{5}(-\d{4})?$/;
-  return zipRegex.test(zipCode);
-}
-
-/**
- * Fact-checks the AI-generated recommendations
- * @param recommendations - The recommendations object from OpenAI
- * @param zipCode - The ZIP code for context
- * @returns The recommendations with fact-checking results added
- */
-// Define the structure of the recommendations object to avoid using 'any'
-interface MoveRecommendations {
-  townData: {
-    name: string;
-    website: string;
-    description: string;
-    verified?: boolean;
-    verificationConfidence?: number;
-    warning?: string;
-    websiteVerified?: boolean;
-    websiteWarning?: string;
-  };
-  neighborhoodData: {
-    topNeighborhoods: Array<{
-      name: string;
-      score: number;
-      description: string;
-      verified?: boolean;
-      verificationConfidence?: number;
-      warning?: string;
-    }>;
-  };
-  schoolData: Array<{
-    name: string;
-    rating: number;
-    description: string;
-    website: string;
-    schoolType?: string;
-    verified?: boolean;
-    verificationConfidence?: number;
-    warning?: string;
-    websiteVerified?: boolean;
-    websiteWarning?: string;
-  }>;
-  communityProgramData: Array<{
-    name: string;
-    description: string;
-    website: string;
-    ageRanges?: string[];
-    genderFocus?: string;
-    tags?: string[];
-    verified?: boolean;
-    verificationConfidence?: number;
-    warning?: string;
-    websiteVerified?: boolean;
-    websiteWarning?: string;
-  }>;
-  [key: string]: unknown;  // Allow for other properties
-}
-
-async function factCheckRecommendations(recommendations: MoveRecommendations, zipCode: string) {
-  // Get state information for the ZIP code to provide context
-  const zipInfo = await geocodeZipCode(zipCode);
-  
-  // Items to verify
-  const verificationItems = [];
-  
-  // Add town for verification
-  if (recommendations.townData?.name) {
-    verificationItems.push({
-      type: 'place' as const,
-      name: recommendations.townData.name,
-      zipCode
-    });
-  }
-  
-  // Add town website for verification
-  if (recommendations.townData?.website) {
-    verificationItems.push({
-      type: 'website' as const,
-      name: recommendations.townData.website
-    });
-  }
-  
-  // Add neighborhoods for verification
-  if (recommendations.neighborhoodData?.topNeighborhoods) {
-    for (const neighborhood of recommendations.neighborhoodData.topNeighborhoods) {
-      if (neighborhood.name) {
-        verificationItems.push({
-          type: 'place' as const,
-          name: neighborhood.name,
-          context: zipInfo?.state || '',
-          zipCode
-        });
-      }
-    }
-  }
-  
-  // Add schools for verification
-  if (recommendations.schoolData) {
-    for (const school of recommendations.schoolData) {
-      if (school.name) {
-        verificationItems.push({
-          type: 'school' as const,
-          name: school.name,
-          context: zipInfo?.state || ''
-        });
-      }
-      if (school.website) {
-        verificationItems.push({
-          type: 'website' as const,
-          name: school.website
-        });
-      }
-    }
-  }
-  
-  // Add community programs websites for verification
-  if (recommendations.communityProgramData) {
-    for (const program of recommendations.communityProgramData) {
-      if (program.website) {
-        verificationItems.push({
-          type: 'website' as const,
-          name: program.website
-        });
-      }
-    }
-  }
-  
-  // Perform batch verification
-  const verificationResults = await batchVerify(verificationItems);
-  
-  // Process verification results
-  // Create a map of verification items to their results
-  const resultMap = new Map();
-  verificationItems.forEach(item => {
-    const key = `${item.type}:${item.name}`;
-    resultMap.set(item, verificationResults[key]);
-  });
-  
-  // Update town verification
-  if (recommendations.townData?.name) {
-    const townItem = verificationItems.find(item => 
-      item.type === 'place' && item.name === recommendations.townData.name
-    );
-    if (townItem) {
-      const result = resultMap.get(townItem);
-      recommendations.townData.verified = result.exists;
-      recommendations.townData.verificationConfidence = result.confidence || 0;
-      if (!result.exists) {
-        recommendations.townData.warning = `We couldn't verify that ${recommendations.townData.name} is a real town in this ZIP code.`;
-      }
-    }
-  }
-  
-  // Update town website verification
-  if (recommendations.townData?.website) {
-    const websiteItem = verificationItems.find(item => 
-      item.type === 'website' && item.name === recommendations.townData.website
-    );
-    if (websiteItem) {
-      const result = resultMap.get(websiteItem);
-      recommendations.townData.websiteVerified = result.exists;
-      if (!result.exists) {
-        recommendations.townData.websiteWarning = `We couldn't verify the township website.`;
-      }
-    }
-  }
-  
-  // Update neighborhoods verification
-  if (recommendations.neighborhoodData?.topNeighborhoods) {
-    for (const neighborhood of recommendations.neighborhoodData.topNeighborhoods) {
-      if (neighborhood.name) {
-        const neighborhoodItem = verificationItems.find(item => 
-          item.type === 'place' && item.name === neighborhood.name
-        );
-        if (neighborhoodItem) {
-          const result = resultMap.get(neighborhoodItem);
-          neighborhood.verified = result.exists;
-          neighborhood.verificationConfidence = result.confidence || 0;
-          if (!result.exists) {
-            neighborhood.warning = `We couldn't verify that ${neighborhood.name} is a real neighborhood in this area.`;
-          }
-        }
-      }
-    }
-  }
-  
-  // Update schools verification
-  if (recommendations.schoolData) {
-    for (const school of recommendations.schoolData) {
-      if (school.name) {
-        const schoolItem = verificationItems.find(item => 
-          item.type === 'school' && item.name === school.name
-        );
-        if (schoolItem) {
-          const result = resultMap.get(schoolItem);
-          school.verified = result.exists;
-          school.verificationConfidence = result.confidence || 0;
-          if (!result.exists) {
-            school.warning = `We couldn't verify that ${school.name} is a real school in this area.`;
-          }
-        }
-      }
-      if (school.website) {
-        const websiteItem = verificationItems.find(item => 
-          item.type === 'website' && item.name === school.website
-        );
-        if (websiteItem) {
-          const result = resultMap.get(websiteItem);
-          school.websiteVerified = result.exists;
-          if (!result.exists) {
-            school.websiteWarning = `We couldn't verify the school website.`;
-          }
-        }
-      }
-    }
-  }
-  
-  // Update community programs website verification
-  if (recommendations.communityProgramData) {
-    for (const program of recommendations.communityProgramData) {
-      if (program.website) {
-        const websiteItem = verificationItems.find(item => 
-          item.type === 'website' && item.name === program.website
-        );
-        if (websiteItem) {
-          const result = resultMap.get(websiteItem);
-          program.websiteVerified = result.exists;
-          if (!result.exists) {
-            program.websiteWarning = `We couldn't verify this website.`;
-          }
-        }
-      }
-    }
-  }
-  
-  // Add a disclaimer to the recommendations
-  recommendations.aiDisclaimer = "This information is generated by AI and may not be completely accurate. Please verify any important details before making decisions.";
-  
-  return recommendations;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -273,23 +21,6 @@ export async function POST(req: NextRequest) {
     if (!zipCode) {
       return NextResponse.json(
         { error: 'ZIP code is required' },
-        { status: 400 }
-      );
-    }
-
-    // Format validation
-    if (!validateZipCode(zipCode)) {
-      return NextResponse.json(
-        { error: 'Invalid ZIP code format' },
-        { status: 400 }
-      );
-    }
-
-    // Existence validation - check if the ZIP code actually exists
-    const zipCodeExists = await isValidZipCode(zipCode);
-    if (!zipCodeExists) {
-      return NextResponse.json(
-        { error: 'This ZIP code does not appear to be valid' },
         { status: 400 }
       );
     }
@@ -326,8 +57,7 @@ export async function POST(req: NextRequest) {
                     2. neighborhoodData: Object with a topNeighborhoods array listing top 3 neighborhoods with scores (1-10) and descriptions.
                     
                     3. schoolData: Array of school recommendations with:
-                       - name, rating (1-10), description
-                       - For the website field, DO NOT try to provide the exact school website URL. Instead, provide a Google search URL in this format: "https://www.google.com/search?q=school+name+town+state" (replace spaces with +)
+                       - name, rating (1-10), description, website
                        - schoolType: "elementary", "middle", "high", or "all" based on grade levels
                        - Make sure each school is appropriate for the children's ages:
                          * Ages 5-10: elementary schools
@@ -335,8 +65,7 @@ export async function POST(req: NextRequest) {
                          * Ages 14-18: high schools
                     
                     4. communityProgramData: Array of recommendations with:
-                       - name, description
-                       - For the website field, provide a Google search URL in this format: "https://www.google.com/search?q=program+name+town+state" (replace spaces with +)
+                       - name, description, website
                        - ageRanges: Array of ["preschool", "elementary", "middle", "high", "all"]
                        - genderFocus: "all", "boys", or "girls" if applicable
                        - tags: Array of relevant categories like "stem", "arts", "sports", etc.
@@ -394,10 +123,7 @@ export async function POST(req: NextRequest) {
         });
       }
       
-      // Fact-check the recommendations
-      const factCheckedRecommendations = await factCheckRecommendations(recommendations, zipCode);
-      
-      return NextResponse.json(factCheckedRecommendations);
+      return NextResponse.json(recommendations);
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError);
       console.log('Raw response:', responseContent);
