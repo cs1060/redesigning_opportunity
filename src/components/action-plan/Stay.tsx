@@ -12,7 +12,6 @@ import {
   defaultRecommendations, 
   filterSchoolsByChildAge, 
   filterCommunityPrograms,
-  inferSchoolType,
   generatePersonalizedAdvice
 } from './types'
 
@@ -51,7 +50,7 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
     )
   }
 
-  // Fetch recommendations from OpenAI API and NCES API
+  // Fetch recommendations from OpenAI API and SchoolDigger API
   useEffect(() => {
     const fetchRecommendations = async () => {
       // Skip if no address is available
@@ -97,47 +96,62 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
           }
         }
         
-        // If we have a ZIP code, fetch real schools from NCES API
+        // If we have a ZIP code, fetch real schools from SchoolDigger API
         let schoolData = data.schoolData || [];
         if (zipCode) {
           try {
             console.log(`Fetching real schools for ZIP code: ${zipCode}`);
-            const ncesResponse = await fetch(`/api/nces-schools?zipCode=${zipCode}&distance=15`);
+            const schoolDiggerResponse = await fetch(`/api/schooldigger?zipCode=${zipCode}&distance=15`);
             
-            if (ncesResponse.ok) {
-              const ncesData = await ncesResponse.json();
-              if (ncesData.schools && ncesData.schools.length > 0) {
-                console.log(`Found ${ncesData.schools.length} real schools from NCES API`);
-                // Replace the OpenAI-generated schools with real schools from NCES
-                schoolData = ncesData.schools;
+            if (schoolDiggerResponse.ok) {
+              const schoolDiggerData = await schoolDiggerResponse.json();
+              
+              if (!schoolDiggerData.isMockData && schoolDiggerData.schools && schoolDiggerData.schools.length > 0) {
+                console.log(`Found ${schoolDiggerData.schools.length} real schools from SchoolDigger API`);
+                
+                // Replace the OpenAI-generated schools with real schools from SchoolDigger
+                schoolData = schoolDiggerData.schools;
+                
+                // Sort schools by rating (highest first)
+                schoolData.sort((a: SchoolData, b: SchoolData) => (b.rating || 0) - (a.rating || 0));
+                
+                // Limit to top 3 schools
+                schoolData = schoolData.slice(0, 3);
+              } else {
+                console.log('Using mock data from SchoolDigger API');
+                schoolData = schoolDiggerData.schools;
               }
+            } else {
+              console.log('Failed to fetch from SchoolDigger API, using OpenAI-generated schools');
             }
-          } catch (ncesError) {
-            console.error('Error fetching schools from NCES API:', ncesError);
-            // Continue with OpenAI schools if NCES API fails
+          } catch (error) {
+            console.error('Error fetching from SchoolDigger API:', error);
+            console.log('Using OpenAI-generated schools due to SchoolDigger API error');
           }
+        } else {
+          console.log('No ZIP code found in address, using OpenAI-generated schools');
         }
         
-        // Ensure schoolType is present or infer it
-        const processedSchoolData = schoolData.map(inferSchoolType);
-        
-        // Apply filters based on child's age
-        const filteredSchoolData = filterSchoolsByChildAge(processedSchoolData, userData);
-        const filteredProgramData = filterCommunityPrograms(data.communityProgramData, userData);
-        
-        // Store both the complete and filtered data
-        setRecommendations({
+        // Update recommendations with the fetched data
+        const updatedRecommendations = {
+          ...defaultRecommendations,
           ...data,
-          schoolData: processedSchoolData
-        });
+          schoolData
+        };
         
-        setFilteredSchools(filteredSchoolData);
-        setFilteredPrograms(filteredProgramData);
-      } catch (err) {
-        console.error('Error fetching recommendations:', err)
-        setError(`Failed to load personalized recommendations: ${err instanceof Error ? err.message : String(err)}. Using default data instead.`)
+        setRecommendations(updatedRecommendations);
         
-        // Fall back to default recommendations but apply filtering
+        // Filter schools based on children's ages
+        const filteredDefaultSchools = filterSchoolsByChildAge(updatedRecommendations.schoolData, userData);
+        const filteredDefaultPrograms = filterCommunityPrograms(updatedRecommendations.communityProgramData, userData);
+        
+        setFilteredSchools(filteredDefaultSchools);
+        setFilteredPrograms(filteredDefaultPrograms);
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        setError('Failed to fetch recommendations. Please try again later.');
+        
+        // Use default recommendations as fallback
         const filteredDefaultSchools = filterSchoolsByChildAge(defaultRecommendations.schoolData, userData);
         const filteredDefaultPrograms = filterCommunityPrograms(defaultRecommendations.communityProgramData, userData);
         

@@ -1,10 +1,10 @@
 /**
- * Service to interact with the NCES (National Center for Education Statistics) API
+ * Service to interact with the SchoolDigger API
  */
 import { SchoolData } from '../components/action-plan/types';
 
-// Base URL for the NCES API
-const NCES_API_BASE_URL = 'https://api.data.gov/ed/collegescorecard/v1/schools';
+// Base URL for the SchoolDigger API
+const SCHOOLDIGGER_API_BASE_URL = 'https://api.schooldigger.com/v1';
 
 /**
  * Interface for school data returned from the NCES API
@@ -80,55 +80,78 @@ export interface NCESApiResponse {
  */
 export async function searchSchoolsByZipCode(
   zipCode: string,
-  distance: number = 10,
-  schoolTypes: string[] = []
+  distance: number = 10
 ): Promise<NCESSchool[]> {
   try {
-    if (!process.env.NEXT_PUBLIC_NCES_API_KEY) {
-      throw new Error('NCES API key is not configured');
+    // Get the SchoolDigger API key directly from the environment variable
+    // This should match exactly what's in .env.local
+    const apiKey = process.env.SCHOOLDIGGER_API_KEY;
+    console.log('SchoolDigger API key available:', apiKey ? 'Yes (length: ' + apiKey.length + ')' : 'No');
+    
+    if (!apiKey || apiKey.trim() === '') {
+      console.warn('SchoolDigger API key is not configured, using mock data');
+      return getMockSchoolsData(zipCode);
     }
 
-    // Build the query parameters
-    const params = new URLSearchParams({
-      api_key: process.env.NEXT_PUBLIC_NCES_API_KEY,
-      'school.zip': zipCode,
-      distance: distance.toString(),
-      per_page: '50', // Limit results to 50 schools
-      fields: [
-        'id',
-        'school.name',
-        'school.city',
-        'school.state',
-        'school.zip',
-        'school.school_url',
-        'school.price_calculator_url',
-        'latest.student.size',
-        'latest.academics.program_percentage',
-        'latest.admissions.admission_rate.overall',
-        'latest.completion.rate.overall',
-        'latest.cost.avg_net_price.overall',
-        'latest.student.demographics.race_ethnicity'
-      ].join(',')
-    });
+    // Log environment variable names for debugging (without exposing values)
+    console.log('Available environment variables:', Object.keys(process.env)
+      .filter(key => key.includes('SCHOOLDIGGER') || key.includes('API_KEY'))
+      .join(', '));
 
-    // Add school type filter if specified
-    if (schoolTypes.length > 0) {
-      params.append('school.degrees_awarded.predominant', schoolTypes.join(','));
-    }
+    // Build the URL for SchoolDigger API
+    // SchoolDigger API format: /schools?st={state}&zip={zipCode}&distance={distance}&appKey={apiKey}
+    const url = new URL(`${SCHOOLDIGGER_API_BASE_URL}/schools`);
+    
+    // Add query parameters
+    url.searchParams.append('zip', zipCode);
+    url.searchParams.append('distance', distance.toString());
+    url.searchParams.append('perPage', '50'); // Limit results to 50 schools
+    url.searchParams.append('page', '1');
+    url.searchParams.append('appKey', apiKey);
+    
+    // Log the full URL (but mask the API key for security)
+    const maskedUrl = url.toString().replace(apiKey, 'XXXXX');
+    console.log('Fetching schools from SchoolDigger API:', maskedUrl);
 
-    // Make the API request
-    const response = await fetch(`${NCES_API_BASE_URL}?${params.toString()}`);
+    // Make the API request to SchoolDigger
+    console.log('Starting API request...');
+    const response = await fetch(url.toString());
+    console.log('API response received, status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`NCES API error: ${response.status} - ${errorText}`);
+      console.error(`SchoolDigger API error: ${response.status} - ${errorText}`);
+      
+      // If API key is invalid or other error, use mock data instead
+      console.error('Invalid API key or other API error detected, using mock data instead');
+      return getMockSchoolsData(zipCode);
     }
 
-    const data: NCESApiResponse = await response.json();
-    return data.results;
+    // Parse SchoolDigger response
+    console.log('Parsing response body...');
+    const data = await response.json();
+    console.log('SchoolDigger API response structure:', 
+      Object.keys(data), 
+      'Number of schools:', data.schoolList ? data.schoolList.length : 0);
+    
+    // Check if we have actual school data
+    if (data.schoolList && Array.isArray(data.schoolList) && data.schoolList.length > 0) {
+      console.log('Found', data.schoolList.length, 'schools, sample school:', 
+        data.schoolList[0].schoolName, 'in', data.schoolList[0].address?.city);
+      
+      // Convert SchoolDigger format to our internal format
+      const convertedSchools = data.schoolList.map((school: SchoolDiggerSchool) => convertSchoolDiggerToNCES(school));
+      console.log('Successfully converted', convertedSchools.length, 'schools to internal format');
+      return convertedSchools;
+    } else {
+      console.warn('No schools found in API response, using mock data');
+      return getMockSchoolsData(zipCode);
+    }
   } catch (error) {
-    console.error('Error fetching schools from NCES API:', error);
-    throw error;
+    console.error('Error fetching schools from SchoolDigger API:', error);
+    // Return mock data instead of throwing an error
+    console.warn('Falling back to mock school data due to error');
+    return getMockSchoolsData(zipCode);
   }
 }
 
@@ -183,6 +206,274 @@ function calculateSchoolQualityScore(school: NCESSchool): number {
   
   // Default rating if no factors available
   return 7;
+}
+
+/**
+ * Interface for SchoolDigger API school data
+ */
+interface SchoolDiggerSchool {
+  schoolid?: string;
+  schoolName?: string;
+  address?: {
+    latLong?: {
+      latitude?: number;
+      longitude?: number;
+    };
+    city?: string;
+    state?: string;
+    zip?: string;
+    street?: string;
+  };
+  url?: string;
+  level?: string;
+  schoolType?: string;
+  isPrivate?: boolean;
+  isCharterSchool?: boolean;
+  isVirtualSchool?: boolean;
+  numberOfStudents?: number;
+  rankHistory?: Array<{
+    year: number;
+    rank: number;
+    rankOf: number;
+    rankStars: number;
+    rankLevel: string;
+    rankStatewidePercentage: number;
+  }>;
+  rankMovement?: string;
+  schoolYearlyDetails?: Array<{
+    year: number;
+    numberOfStudents?: number;
+    percentFreeDiscLunch?: number;
+    percentofAfricanAmericanStudents?: number;
+    percentofAsianStudents?: number;
+    percentofHispanicStudents?: number;
+    percentofIndianStudents?: number;
+    percentofPacificIslanderStudents?: number;
+    percentofWhiteStudents?: number;
+    percentofTwoOrMoreRaceStudents?: number;
+    percentofUnspecifiedRaceStudents?: number;
+    teachersFulltime?: number;
+    pupilTeacherRatio?: number;
+    gradeLevels?: string;
+  }>;
+  testScores?: Array<{
+    testName?: string;
+    testScore?: number;
+    grade?: string;
+    year?: number;
+    subject?: string;
+  }>;
+}
+
+/**
+ * Convert SchoolDigger school format to our internal NCESSchool format
+ */
+function convertSchoolDiggerToNCES(schoolDiggerSchool: SchoolDiggerSchool): NCESSchool {
+  // Get the most recent yearly details if available
+  const yearlyDetails = schoolDiggerSchool.schoolYearlyDetails && 
+                       schoolDiggerSchool.schoolYearlyDetails.length > 0 ? 
+                       schoolDiggerSchool.schoolYearlyDetails[0] : null;
+  
+  // Get the most recent rank if available
+  const rankInfo = schoolDiggerSchool.rankHistory && 
+                  schoolDiggerSchool.rankHistory.length > 0 ? 
+                  schoolDiggerSchool.rankHistory[0] : null;
+  
+  // Calculate a completion rate based on rank stars if available (approximation)
+  const completionRate = rankInfo ? 
+                        (rankInfo.rankStars / 5) * 0.95 + 0.05 : // Scale 1-5 stars to 0.05-1.0 range
+                        0.85; // Default completion rate if no rank data
+  
+  return {
+    id: schoolDiggerSchool.schoolid || '',
+    school: {
+      name: schoolDiggerSchool.schoolName || '',
+      city: schoolDiggerSchool.address?.city || '',
+      state: schoolDiggerSchool.address?.state || '',
+      zip: schoolDiggerSchool.address?.zip || '',
+      school_url: schoolDiggerSchool.url || '',
+      school_type: determineSchoolType(schoolDiggerSchool.level || '')
+    },
+    latest: {
+      student: {
+        size: yearlyDetails?.numberOfStudents || 0,
+        demographics: {
+          race_ethnicity: {
+            white: yearlyDetails?.percentofWhiteStudents ? yearlyDetails.percentofWhiteStudents / 100 : 0,
+            black: yearlyDetails?.percentofAfricanAmericanStudents ? yearlyDetails.percentofAfricanAmericanStudents / 100 : 0,
+            hispanic: yearlyDetails?.percentofHispanicStudents ? yearlyDetails.percentofHispanicStudents / 100 : 0,
+            asian: yearlyDetails?.percentofAsianStudents ? yearlyDetails.percentofAsianStudents / 100 : 0,
+            aian: yearlyDetails?.percentofIndianStudents ? yearlyDetails.percentofIndianStudents / 100 : 0,
+            nhpi: yearlyDetails?.percentofPacificIslanderStudents ? yearlyDetails.percentofPacificIslanderStudents / 100 : 0,
+            two_or_more: yearlyDetails?.percentofTwoOrMoreRaceStudents ? yearlyDetails.percentofTwoOrMoreRaceStudents / 100 : 0,
+            non_resident_alien: 0 // SchoolDigger doesn't provide this data
+          }
+        }
+      },
+      completion: {
+        rate: {
+          overall: completionRate
+        }
+      },
+      admissions: {
+        admission_rate: {
+          overall: schoolDiggerSchool.isPrivate ? 0.7 : 1.0 // Private schools have selective admission
+        }
+      },
+      cost: {
+        avg_net_price: {
+          overall: schoolDiggerSchool.isPrivate ? 15000 : 0 // Estimate for private schools
+        }
+      }
+    }
+  };
+}
+
+/**
+ * Determine school type from SchoolDigger school level
+ */
+function determineSchoolType(schoolLevel: string): string {
+  if (!schoolLevel) return 'all';
+  
+  const level = schoolLevel.toLowerCase();
+  if (level.includes('elementary')) return 'elementary';
+  if (level.includes('middle') || level.includes('junior')) return 'middle';
+  if (level.includes('high')) return 'high';
+  if (level.includes('primary')) return 'elementary';
+  if (level.includes('secondary')) return 'high';
+  if (level.includes('k-8')) return 'elementary';
+  if (level.includes('k-12')) return 'all';
+  return 'all';
+}
+
+/**
+ * Generate mock school data for a given ZIP code
+ * This is used as a fallback when the SchoolDigger API is unavailable or the API key is invalid
+ */
+function getMockSchoolsData(zipCode: string): NCESSchool[] {
+  console.log('GENERATING MOCK SCHOOL DATA for ZIP:', zipCode);
+  // Create some mock schools with realistic data - clearly labeled as mock data
+  return [
+    {
+      id: 'mock-elem-1',
+      school: {
+        name: `[MOCK DATA] ${zipCode} Elementary School`,
+        city: 'Anytown (Mock)',
+        state: 'CA',
+        zip: zipCode,
+        school_url: 'www.elementaryschool.edu',
+        school_type: 'elementary'
+      },
+      latest: {
+        student: {
+          size: 450,
+          demographics: {
+            race_ethnicity: {
+              white: 0.45,
+              black: 0.15,
+              hispanic: 0.2,
+              asian: 0.1,
+              aian: 0.02,
+              nhpi: 0.01,
+              two_or_more: 0.05,
+              non_resident_alien: 0.02
+            }
+          }
+        },
+        completion: {
+          rate: {
+            overall: 0.92
+          }
+        },
+        cost: {
+          avg_net_price: {
+            overall: 0
+          }
+        }
+      }
+    },
+    {
+      id: 'mock-middle-1',
+      school: {
+        name: `[MOCK DATA] ${zipCode} Middle School`,
+        city: 'Anytown (Mock)',
+        state: 'CA',
+        zip: zipCode,
+        school_url: 'www.middleschool.edu',
+        school_type: 'middle'
+      },
+      latest: {
+        student: {
+          size: 650,
+          demographics: {
+            race_ethnicity: {
+              white: 0.4,
+              black: 0.18,
+              hispanic: 0.22,
+              asian: 0.12,
+              aian: 0.01,
+              nhpi: 0.01,
+              two_or_more: 0.04,
+              non_resident_alien: 0.02
+            }
+          }
+        },
+        completion: {
+          rate: {
+            overall: 0.88
+          }
+        },
+        cost: {
+          avg_net_price: {
+            overall: 0
+          }
+        }
+      }
+    },
+    {
+      id: 'mock-high-1',
+      school: {
+        name: `[MOCK DATA] ${zipCode} High School`,
+        city: 'Anytown (Mock)',
+        state: 'CA',
+        zip: zipCode,
+        school_url: 'www.highschool.edu',
+        school_type: 'high'
+      },
+      latest: {
+        student: {
+          size: 1200,
+          demographics: {
+            race_ethnicity: {
+              white: 0.42,
+              black: 0.16,
+              hispanic: 0.21,
+              asian: 0.13,
+              aian: 0.01,
+              nhpi: 0.01,
+              two_or_more: 0.04,
+              non_resident_alien: 0.02
+            }
+          }
+        },
+        admissions: {
+          admission_rate: {
+            overall: 1.0
+          }
+        },
+        completion: {
+          rate: {
+            overall: 0.85
+          }
+        },
+        cost: {
+          avg_net_price: {
+            overall: 0
+          }
+        }
+      }
+    }
+  ];
 }
 
 export function convertNCESToSchoolData(ncesSchools: NCESSchool[]): SchoolData[] {

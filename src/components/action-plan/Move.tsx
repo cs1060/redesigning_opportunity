@@ -1,8 +1,9 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { School, Home } from 'lucide-react'
 import { useAssessment, type AssessData } from '../AssessProvider'
 import { useTranslations } from 'next-intl'
-import { geocodeNeighborhood, geocodeZipCode } from '../../utils/geocodingUtils'
+import { geocodeNeighborhood, geocodeZipCode, isValidZipCode } from '../../utils/geocodingUtils'
 import ActionReminder from '../ActionReminder'
 import OpportunityMapSection from './OpportunityMapSection'
 import LocalSchoolsSection from './LocalSchoolsSection'
@@ -21,7 +22,6 @@ import {
   filterSchoolsByChildAge, 
   filterCommunityPrograms, 
   filterHousingOptions, 
-  inferSchoolType, 
   generatePersonalizedCareerAdvice, 
   generatePersonalizedAdvice 
 } from './types'
@@ -121,127 +121,90 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
     }
   };
   
-  // Effect to fetch recommendations when ZIP code changes
-  useEffect(() => {
-    if (shouldFetchData && zipCode && validateZipCode(zipCode)) {
-      fetchRecommendations();
-      setShouldFetchData(false);
-    }
-  }, [shouldFetchData, zipCode]);
-
   // Function to fetch recommendations from the API
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = useCallback(async () => {
     setLoading(true);
     setError(null);
     setZipCodeError(null);
     
     try {
       // Get user data for the API request
-      const data = userData || {};
-      const address = data.address || '';
-      const income = data.income || '<25k';
-      const children = data.children || [];
-      
-      // Update map address when zip code changes
-      setMapAddress(zipCode);
-      
-      // Get state information from ZIP code to ensure we search within the correct state
-      const stateInfo = await geocodeZipCode(zipCode);
-      if (!stateInfo) {
-        setZipCodeError('Could not find this ZIP code. Please check and try again.');
-        setLoading(false);
-        return;
-      }
-      
-      // Fetch recommendations from OpenAI API
       const openaiResponse = await fetch('/api/openai-move', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          address,
           zipCode,
-          income,
-          children,
-          includeJobData: true // Add flag to request job data
+          income: userData?.income || '<25k',
+          children: userData?.children || [],
+          includeJobData: true
         })
       });
       
+      // Initialize recommendations data
       let recommendationsData: MoveRecommendations;
       
+      // Check if the OpenAI API request was successful
       if (!openaiResponse.ok) {
-        const errorText = `API returned status code ${openaiResponse.status}`;
+        const errorText = `Failed to fetch recommendations: ${openaiResponse.status} ${openaiResponse.statusText}`;
         console.error(errorText);
-        
-        // Try to get more detailed error information
-        try {
-          const errorData = await openaiResponse.json();
-          console.error('Error details:', errorData);
-          
-          // If we have valid JSON data in the error response that looks like recommendations,
-          // we can use it instead of falling back to default data
-          if (errorData.townData && errorData.schoolData) {
-            console.log('Found valid recommendation data in error response, using it');
-            recommendationsData = errorData as MoveRecommendations;
-          } else {
-            setError(errorText);
-            recommendationsData = defaultRecommendations;
-          }
-        } catch (e) {
-          console.error('Could not parse error response:', e);
-          setError(errorText);
-          recommendationsData = defaultRecommendations;
-        }
+        setError(errorText);
+        recommendationsData = defaultRecommendations;
       } else {
         // Successfully got data from OpenAI API
         recommendationsData = await openaiResponse.json();
       }
       
-      // Try to fetch real school data from NCES API
+      // Now fetch real school data from SchoolDigger API
+      let schoolData: SchoolData[] = recommendationsData.schoolData || [];
       try {
-        console.log('Fetching real school data from NCES API for ZIP code:', zipCode);
-        const schoolsResponse = await fetch(`/api/nces-schools?zipCode=${zipCode}&distance=15`);
+        console.log(`Fetching real schools for ZIP code: ${zipCode}`);
         
-        if (schoolsResponse.ok) {
-          const schoolsData = await schoolsResponse.json();
+        // Call SchoolDigger API with just the ZIP code (same as in Stay.tsx)
+        const schoolDiggerUrl = `/api/schooldigger?zipCode=${zipCode}&distance=15`;
+        console.log('Calling SchoolDigger API with URL:', schoolDiggerUrl);
+        const schoolDiggerResponse = await fetch(schoolDiggerUrl);
+        
+        if (schoolDiggerResponse.ok) {
+          const schoolDiggerData = await schoolDiggerResponse.json();
+          console.log('SchoolDigger API response:', JSON.stringify(schoolDiggerData, null, 2));
+          console.log('Is mock data?', schoolDiggerData.isMockData);
+          console.log('Number of schools:', schoolDiggerData.schools ? schoolDiggerData.schools.length : 0);
+          console.log('Response status:', schoolDiggerResponse.status);
           
-          // If we have real school data, use it instead of the OpenAI-generated data
-          if (schoolsData.schools && schoolsData.schools.length > 0) {
-            console.log('Using real school data from NCES API:', schoolsData.schools.length, 'schools found');
-            recommendationsData.schoolData = schoolsData.schools;
+          if (!schoolDiggerData.isMockData && schoolDiggerData.schools && schoolDiggerData.schools.length > 0) {
+            console.log(`Found ${schoolDiggerData.schools.length} real schools from SchoolDigger API`);
+            
+            // Replace the OpenAI-generated schools with real schools from SchoolDigger
+            schoolData = schoolDiggerData.schools;
+            
+            // Sort schools by rating (highest first)
+            schoolData.sort((a: SchoolData, b: SchoolData) => (b.rating || 0) - (a.rating || 0));
+            
+            // Limit to top 3 schools
+            schoolData = schoolData.slice(0, 3);
           } else {
-            console.log('No schools found from NCES API, using OpenAI-generated data');
+            console.log('Using mock data from SchoolDigger API');
+            schoolData = schoolDiggerData.schools;
           }
         } else {
-          console.error('Failed to fetch schools from NCES API:', await schoolsResponse.text());
+          console.log('Failed to fetch from SchoolDigger API, using OpenAI-generated schools');
         }
       } catch (schoolError) {
-        console.error('Error fetching schools from NCES API:', schoolError);
-        // Continue with OpenAI data if NCES API fails
+        console.error('Error fetching from SchoolDigger API:', schoolError);
+        console.log('Using OpenAI-generated schools due to SchoolDigger API error');
       }
       
-      // Ensure the response has the expected structure
+      // Ensure all required properties are present and update with real school data
       const validatedData: MoveRecommendations = {
         townData: recommendationsData.townData || defaultRecommendations.townData,
-        neighborhoodData: {
-          topNeighborhoods: Array.isArray(recommendationsData.neighborhoodData?.topNeighborhoods) 
-            ? recommendationsData.neighborhoodData.topNeighborhoods 
-            : defaultRecommendations.neighborhoodData.topNeighborhoods
-        },
-        schoolData: Array.isArray(recommendationsData.schoolData) 
-          ? recommendationsData.schoolData.map(inferSchoolType) 
-          : defaultRecommendations.schoolData,
-        communityProgramData: Array.isArray(recommendationsData.communityProgramData) 
-          ? recommendationsData.communityProgramData 
-          : defaultRecommendations.communityProgramData,
+        neighborhoodData: recommendationsData.neighborhoodData || defaultRecommendations.neighborhoodData,
+        schoolData: schoolData, // Use the real school data from SchoolDigger
+        communityProgramData: recommendationsData.communityProgramData || defaultRecommendations.communityProgramData,
         communityDemographics: recommendationsData.communityDemographics || defaultRecommendations.communityDemographics,
-        housingOptions: Array.isArray(recommendationsData.housingOptions) 
-          ? recommendationsData.housingOptions 
-          : defaultRecommendations.housingOptions,
-        jobSectors: Array.isArray(recommendationsData.jobSectors)
-          ? recommendationsData.jobSectors
-          : defaultRecommendations.jobSectors,
+        housingOptions: recommendationsData.housingOptions || defaultRecommendations.housingOptions,
+        jobSectors: recommendationsData.jobSectors || defaultRecommendations.jobSectors,
         careerAdvice: recommendationsData.careerAdvice || defaultRecommendations.careerAdvice
       };
       
@@ -253,32 +216,56 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
       // Generate personalized career advice if not provided in the API response
       const personalizedAdvice = validatedData.careerAdvice || generatePersonalizedCareerAdvice(userData);
       
-      // Update state with the filtered data
+      // Update state with the data
       setFilteredSchools(filteredSchools);
       setFilteredPrograms(filteredPrograms);
       setFilteredHousingOptions(filteredHousingOptions);
       setRecommendations(validatedData);
       setPersonalizedCareerAdvice(personalizedAdvice);
       
+      // Set the map address to the ZIP code initially
+      setMapAddress(`${zipCode}, USA`);
+      
+      // If we have neighborhoods, select the first one by default
+      if (validatedData.neighborhoodData && 
+          validatedData.neighborhoodData.topNeighborhoods && 
+          validatedData.neighborhoodData.topNeighborhoods.length > 0) {
+        const firstNeighborhood = validatedData.neighborhoodData.topNeighborhoods[0].name;
+        setSelectedNeighborhood(firstNeighborhood);
+        
+        // Update map address with the selected neighborhood
+        handleNeighborhoodSelect(firstNeighborhood);
+      }
     } catch (error) {
       console.error('Error fetching recommendations:', error);
-      setError('Failed to fetch recommendations. Please try again later.');
+      setError(error instanceof Error ? error.message : 'An unknown error occurred');
       
-      // Apply filtering to fallback recommendations
-      const filteredDefaultSchools = filterSchoolsByChildAge(defaultRecommendations.schoolData, userData);
-      const filteredDefaultPrograms = filterCommunityPrograms(defaultRecommendations.communityProgramData, userData);
-      const filteredDefaultHousingOptions = filterHousingOptions(defaultRecommendations.housingOptions, userData);
-      
-      // Update state with fallback data
-      setFilteredSchools(filteredDefaultSchools);
-      setFilteredPrograms(filteredDefaultPrograms);
-      setFilteredHousingOptions(filteredDefaultHousingOptions);
+      // Use default recommendations as fallback
       setRecommendations(defaultRecommendations);
+      
+      // Filter default data based on user's needs
+      const filteredSchools = filterSchoolsByChildAge(defaultRecommendations.schoolData, userData);
+      const filteredPrograms = filterCommunityPrograms(defaultRecommendations.communityProgramData, userData);
+      const filteredHousing = filterHousingOptions(defaultRecommendations.housingOptions, userData);
+      
+      setFilteredSchools(filteredSchools);
+      setFilteredPrograms(filteredPrograms);
+      setFilteredHousingOptions(filteredHousing);
+      
+      // Generate personalized career advice
       setPersonalizedCareerAdvice(generatePersonalizedCareerAdvice(userData));
     } finally {
       setLoading(false);
     }
-  };
+  }, [zipCode, userData, validateZipCode, handleNeighborhoodSelect]);
+  
+  // Effect to fetch recommendations when ZIP code changes
+  useEffect(() => {
+    if (shouldFetchData && zipCode && validateZipCode(zipCode)) {
+      fetchRecommendations();
+      setShouldFetchData(false);
+    }
+  }, [shouldFetchData, zipCode, validateZipCode, fetchRecommendations]);
   
   // Determine if the user has made all required selections
   const hasRequiredSelections = selectedSchool !== null && 
@@ -303,49 +290,74 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
     }
   };
 
+  // Safe number formatting function to handle undefined values
+  const formatNumber = (value: number | undefined | null): string => {
+    if (value === undefined || value === null) {
+      return 'N/A';
+    }
+    try {
+      return value.toLocaleString();
+    } catch (error) {
+      console.error('Error formatting number:', error);
+      return String(value || 'N/A');
+    }
+  };
+
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      <h2 className="text-3xl font-bold mb-6 text-center">{t('title')}</h2>
-      <p className="text-lg mb-8 text-center">{t('subtitle')}</p>
-      
+    <div className="space-y-12 mt-16">
       {/* ZIP Code Input */}
-      <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-        <h3 className="text-2xl font-semibold mb-4">{t('enterZipCode')}</h3>
-        <p className="mb-4">{t('zipCodeInstructions')}</p>
-        
-        <div className="flex items-center">
-          <input
-            type="text"
-            value={zipCode}
-            onChange={handleZipCodeChange}
-            placeholder="Enter ZIP code"
-            className="border rounded-l-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#6CD9CA]"
-            maxLength={10}
-          />
-          <button 
-            onClick={() => setShouldFetchData(true)}
-            disabled={!validateZipCode(zipCode) || loading}
-            className={`
-              bg-[#6CD9CA] text-white px-4 py-2 rounded-r-lg
-              ${(!validateZipCode(zipCode) || loading) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-opacity-90'}
-            `}
-          >
-            {loading ? 'Loading...' : 'Search'}
-          </button>
+      <div className="bg-white shadow-md rounded-lg p-6 text-center">
+        <h2 className="text-3xl font-bold mb-4">Where Would You Like to Move?</h2>
+        <p className="text-xl mb-6">Do you know where you want to live next?</p>
+        <div className="flex justify-center items-center">
+          <label htmlFor="zipCode" className="mr-4 text-lg">Enter ZIP Code:</label>
+          <div className="relative">
+            <input 
+              type="text" 
+              id="zipCode"
+              value={zipCode}
+              onChange={handleZipCodeChange}
+              placeholder="e.g. 22204"
+              className={`border-2 ${zipCodeError ? 'border-red-500' : 'border-[#6CD9CA]'} rounded-md px-4 py-2 text-lg w-40`}
+              disabled={loading}
+            />
+            {zipCodeError && (
+              <div className="text-red-500 text-sm mt-1">{zipCodeError}</div>
+            )}
+            {loading && zipCode && !zipCodeError && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#6CD9CA]"></div>
+              </div>
+            )}
+          </div>
+          {zipCode && !loading && (
+            <button 
+              onClick={() => setShouldFetchData(true)}
+              className="ml-2 bg-[#6CD9CA] hover:bg-opacity-90 text-white py-2 px-4 rounded-md text-sm transition-colors"
+            >
+              Update
+            </button>
+          )}
         </div>
         
-        {zipCodeError && (
-          <p className="text-red-500 mt-2">{zipCodeError}</p>
-        )}
+        <ActionReminder 
+          message={t('enterZipReminder', { fallback: "Enter a ZIP code to view recommendations and continue your plan" })} 
+          isVisible={!zipCode && !loading} 
+        />
       </div>
-      
+
       {/* Main Content */}
       {zipCode ? (
         <>
           {/* Loading State */}
           {loading && (
             <div className="bg-white shadow-md rounded-lg p-6 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6CD9CA] mx-auto mb-4"></div>
+              <div className="animate-pulse flex flex-col items-center">
+                <div className="h-8 w-64 bg-gray-200 rounded mb-4"></div>
+                <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 w-5/6 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 w-4/6 bg-gray-200 rounded"></div>
+              </div>
               <p className="mt-4 text-gray-600">Fetching personalized recommendations for {zipCode}...</p>
             </div>
           )}
@@ -378,6 +390,8 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             <TownInfoSection 
               townData={recommendations.townData}
               loading={loading}
+              className="bg-white shadow-md rounded-lg p-6"
+              titleClassName="text-2xl font-semibold mb-4 text-left"
             />
           )}
 
@@ -389,6 +403,15 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
               neighborhoods={neighborhoods}
               selectedNeighborhood={selectedNeighborhood}
               handleNeighborhoodSelect={handleNeighborhoodSelect}
+              className="bg-white shadow-md rounded-lg p-6"
+              titleClassName="text-2xl font-semibold mb-4"
+              neighborhoodItemClassName={(name) => `
+                border rounded-lg p-4 cursor-pointer transition-all duration-300
+                ${selectedNeighborhood === name 
+                  ? 'border-[#6CD9CA] bg-[#6CD9CA] bg-opacity-10' 
+                  : 'border-gray-200 hover:border-[#6CD9CA] hover:bg-[#6CD9CA] hover:bg-opacity-10'}
+              `}
+              mapContainerClassName="h-[500px] rounded-lg overflow-hidden border border-gray-200"
             />
           )}
 
@@ -399,6 +422,15 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             handleSchoolSelect={handleSchoolSelect}
             userData={userData}
             loading={loading}
+            className="bg-white shadow-md rounded-lg p-6"
+            titleClassName="text-2xl font-semibold mb-4"
+            schoolItemClassName={(name) => `
+              border rounded-lg p-4 cursor-pointer transition-all duration-300 flex items-center
+              ${selectedSchool === name 
+                ? 'border-[#6CD9CA] bg-[#6CD9CA] bg-opacity-10' 
+                : 'border-gray-200 hover:border-[#6CD9CA] hover:bg-[#6CD9CA] hover:bg-opacity-10'}
+            `}
+            icon={<School className="mr-4 text-[#6CD9CA]" size={24} />}
           />
 
           {/* Community Programs */}
@@ -407,6 +439,15 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             selectedPrograms={selectedCommunityPrograms}
             handleProgramToggle={handleCommunityProgramToggle}
             loading={loading}
+            className="bg-white shadow-md rounded-lg p-6"
+            titleClassName="text-2xl font-semibold mb-4"
+            programItemClassName={(name) => `
+              border rounded-lg p-4 cursor-pointer transition-all duration-300
+              ${selectedCommunityPrograms.includes(name)
+                ? 'border-[#6CD9CA] bg-[#6CD9CA] bg-opacity-10' 
+                : 'border-gray-200 hover:border-[#6CD9CA] hover:bg-[#6CD9CA] hover:bg-opacity-10'}
+            `}
+            tagClassName="px-2 py-0.5 bg-gray-100 rounded-full text-xs capitalize"
           />
 
           {/* Community Demographics */}
@@ -414,6 +455,36 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             demographics={recommendations.communityDemographics}
             zipCode={zipCode}
             loading={loading}
+            className="bg-white shadow-md rounded-lg p-6"
+            titleClassName="text-2xl font-semibold mb-6 text-center"
+            contentClassName="grid md:grid-cols-2 gap-6"
+            formatNumber={formatNumber}
+            getIconColor={(group) => {
+              if (group && typeof group === 'string') {
+                switch(group.toLowerCase()) {
+                  case "hispanic": return "text-[#d07e59]";
+                  case "white": return "text-[#9dbda9]";
+                  case "black": return "text-[#b65441]";
+                  case "asian": return "text-[#4f7f8b]";
+                  case "other": return "text-[#9b252f]";
+                  default: return "text-[#729d9d]";
+                }
+              }
+              return "text-[#729d9d]";
+            }}
+            getReligionIconColor={(religion) => {
+              if (religion && typeof religion === 'string') {
+                switch(religion.toLowerCase()) {
+                  case "christian": return "text-[#34687e]";
+                  case "jewish": return "text-[#4f7f8b]";
+                  case "muslim": return "text-[#729d9d]";
+                  case "hindu": return "text-[#d07e59]";
+                  case "non-religious": return "text-[#9dbda9]";
+                  default: return "text-[#b65441]";
+                }
+              }
+              return "text-[#b65441]";
+            }}
           />
 
           {/* Housing Options */}
@@ -422,6 +493,16 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             selectedHousingType={selectedHousingType}
             handleHousingTypeSelect={handleHousingTypeSelect}
             loading={loading}
+            className="bg-white shadow-md rounded-lg p-6"
+            titleClassName="text-2xl font-semibold mb-4"
+            housingItemClassName={(type) => `
+              border rounded-lg p-4 cursor-pointer transition-all duration-300
+              ${selectedHousingType === type 
+                ? 'border-[#6CD9CA] bg-[#6CD9CA] bg-opacity-10' 
+                : 'border-gray-200 hover:border-[#6CD9CA] hover:bg-[#6CD9CA] hover:bg-opacity-10'}
+            `}
+            icon={<Home className="mr-2 text-[#6CD9CA]" size={20} />}
+            resourceLinkClassName="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
           />
 
           {/* Job Opportunities */}
@@ -430,6 +511,19 @@ const Move: React.FC<MoveProps> = ({ onSaveChoices, assessmentData }) => {
             personalizedCareerAdvice={personalizedCareerAdvice}
             zipCode={zipCode}
             loading={loading}
+            className="bg-white shadow-md rounded-lg p-8 mt-8"
+            titleClassName="text-3xl font-bold mb-2"
+            sectionClassName="bg-[#6CD9CA] bg-opacity-10 p-6 rounded-lg mb-8"
+            sectionTitleClassName="text-xl font-semibold mb-4"
+            jobSectorClassName="border rounded-lg p-5 hover:border-[#6CD9CA] hover:bg-[#6CD9CA] hover:bg-opacity-5 transition-all duration-300"
+            resourceLinkClassName="group flex flex-col items-center justify-center bg-white hover:bg-[#6CD9CA] hover:bg-opacity-10 border border-gray-200 rounded-xl p-5 shadow-sm transition-all duration-300 hover:shadow-md"
+            adviceLabelClassName="font-medium text-[#6CD9CA]"
+            getDemandLevelClassName={(level) => `
+              px-3 py-1 rounded-full text-sm font-medium
+              ${level === 'high' ? 'bg-green-100 text-green-800' : 
+                level === 'medium' ? 'bg-blue-100 text-blue-800' : 
+                'bg-gray-100 text-gray-800'}
+            `}
           />
 
           {/* Save Choices Button */}
