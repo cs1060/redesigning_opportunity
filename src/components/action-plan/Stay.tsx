@@ -264,21 +264,24 @@ export const generatePersonalizedAdvice = (assessmentData: AssessData | undefine
 };
 
 const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
-  const t = useTranslations('stay');
+  const t = useTranslations('stay')
+  const { data: contextData } = useAssessment()
+  const userData = assessmentData || contextData
+  const [recommendations, setRecommendations] = useState<Recommendations>(defaultRecommendations)
+  const [filteredSchools, setFilteredSchools] = useState<SchoolData[]>([])
+  const [filteredPrograms, setFilteredPrograms] = useState<CommunityProgramData[]>([])
   const [selectedSchool, setSelectedSchool] = useState<string | null>(null)
   const [selectedCommunityPrograms, setSelectedCommunityPrograms] = useState<string[]>([])
-  const [recommendations, setRecommendations] = useState<Recommendations>(defaultRecommendations)
-  const [filteredSchools, setFilteredSchools] = useState<SchoolData[]>(defaultRecommendations.schoolData)
-  const [filteredPrograms, setFilteredPrograms] = useState<CommunityProgramData[]>(defaultRecommendations.communityProgramData)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  
-  // Get assessment data from context if not provided as prop
-  const assessmentContext = useAssessment()
-  const userData = assessmentData || assessmentContext.data
+
+  // Helper function to create Google search URLs
+  const getGoogleSearchUrl = (term: string) => {
+    return `https://www.google.com/search?q=${encodeURIComponent(term)}`;
+  };
 
   const handleSchoolSelect = (schoolName: string) => {
-    setSelectedSchool(schoolName)
+    setSelectedSchool(selectedSchool === schoolName ? null : schoolName)
   }
 
   const handleCommunityProgramToggle = (programName: string) => {
@@ -398,12 +401,15 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
               <p>
                 <strong>Township Website:</strong>{' '}
                 <a 
-                  href={recommendations.townData.website} 
+                  href={getGoogleSearchUrl(recommendations.townData.name + " township")} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-[#6CD9CA] hover:underline"
+                  className="text-[#6CD9CA] hover:underline inline-flex items-center"
                 >
-                  {recommendations.townData.website}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Search Township Website
                 </a>{' '}
                 <span className="text-sm text-gray-600">
                   {t('clickToLearnMore')}
@@ -454,12 +460,15 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
                         <p className="mt-1">{school.description}</p>
                       </div>
                       <a 
-                        href={school.website} 
+                        href={getGoogleSearchUrl(school.name)} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-[#6CD9CA] hover:underline ml-4"
+                        className="text-[#6CD9CA] hover:underline ml-4 flex items-center"
                       >
-                        Website
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Search
                       </a>
                     </div>
                   </div>
@@ -517,12 +526,15 @@ const Stay: React.FC<StayProps> = ({ onSaveChoices, assessmentData }) => {
                           </span>
                         )}
                         <a 
-                          href={program.website} 
+                          href={getGoogleSearchUrl(program.name)} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="text-[#6CD9CA] hover:underline"
+                          className="text-[#6CD9CA] hover:underline flex items-center"
                         >
-                          Website
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                          Search
                         </a>
                       </div>
                     </div>

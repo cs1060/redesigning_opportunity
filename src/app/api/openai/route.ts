@@ -1,12 +1,6 @@
 // app/api/openai/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  dangerouslyAllowBrowser: false
-});
+import { callHarvardOpenAI } from '@/utils/harvardOpenAI';
 
 // Check if API key is configured
 if (!process.env.OPENAI_API_KEY) {
@@ -33,23 +27,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-1106", // Using a more reliable model
-      messages: [
-        {
-          role: "system",
-          content: `You are an AI assistant that provides personalized recommendations for families looking to 
+    const systemMessage = `You are an AI assistant that provides personalized recommendations for families looking to 
                     improve their children's future opportunities in their current location. Format your response as valid JSON. 
                     Your entire response must be valid JSON that can be parsed with JSON.parse().
                     
                     IMPORTANT: You must provide REAL, FACTUAL information about schools and community programs 
                     for the specific location provided. If you're unsure about a particular school or program, 
                     it's better to provide fewer but more accurate recommendations than many potentially inaccurate ones.
-                    DO NOT return "no schools found" unless you are absolutely certain there are no schools in the area.`
-        },
-        {
-          role: "user",
-          content: `Generate detailed, personalized recommendations for a family living at this address: ${address}.
+                    DO NOT return "no schools found" unless you are absolutely certain there are no schools in the area.`;
+
+    const userMessage = `Generate detailed, personalized recommendations for a family living at this address: ${address}.
                     Additional family information:
                     - Annual household income: ${income}
                     - Children: ${JSON.stringify(children)}
@@ -82,16 +69,25 @@ export async function POST(req: NextRequest) {
                     
                     CRITICAL: Be thorough in your research. Nearly every town and city has multiple schools and programs.
                     If you're unsure about specific details, it's better to provide basic information about real schools/programs
-                    than to return "no schools found" or fabricate details.`
-        }
-      ]
-    });
+                    than to return "no schools found" or fabricate details.`;
+
+    // Call the Harvard OpenAI API 
+    const response = await callHarvardOpenAI(
+      systemMessage,
+      userMessage,
+      {
+        model: "gpt-4o-mini",
+        temperature: 0.7,
+        responseFormat: { type: "json_object" }
+      }
+    );
 
     // Extract the response content
-    const responseContent = completion.choices[0].message.content;
+    const responseData = await response.json();
+    const responseContent = responseData.choices[0].message.content;
     
     if (!responseContent) {
-      throw new Error('No content in the OpenAI response');
+      throw new Error('No content in the API response');
     }
 
     try {
@@ -118,12 +114,12 @@ export async function POST(req: NextRequest) {
       const recommendations = JSON.parse(cleanedResponse);
       return NextResponse.json(recommendations);
     } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
+      console.error('Error parsing API response:', parseError);
       console.log('Raw response:', responseContent);
       throw new Error('Failed to parse the AI response as JSON');
     }
   } catch (error) {
-    console.error('Error in OpenAI API call:', error);
+    console.error('Error in API call:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { error: 'Failed to generate recommendations', details: errorMessage },
