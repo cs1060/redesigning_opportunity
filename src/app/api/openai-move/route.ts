@@ -1,6 +1,6 @@
 // app/api/openai-move/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { isValidZipCode } from '../../../utils/geocodingUtils';
+import { isValidZipCode, geocodeZipCode } from '../../../utils/geocodingUtils';
 
 // Harvard custom API endpoint
 const API_URL = 'https://go.apis.huit.harvard.edu/ais-openai-direct-limited-schools/v1/chat/completions';
@@ -19,6 +19,18 @@ function validateZipCode(zipCode: string): boolean {
   // Check if the ZIP code is a valid US ZIP code format (5 digits or 5+4 format)
   const zipRegex = /^\d{5}(-\d{4})?$/;
   return zipRegex.test(zipCode);
+}
+
+/**
+ * Creates a Google search link for the given query
+ * @param query - The search query
+ * @returns A Google search URL for the query
+ */
+function createGoogleSearchLink(query: string): string {
+  // Encode the query for use in a URL
+  const encodedQuery = encodeURIComponent(query);
+  // Return a Google search URL
+  return `https://www.google.com/search?q=${encodedQuery}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -212,6 +224,35 @@ Format everything as valid JSON.`;
         return NextResponse.json({
           ...recommendations,
           warning: 'Response may be missing some required fields'
+        });
+      }
+      
+      // Get state information from ZIP code for more accurate searches
+      const locationInfo = await geocodeZipCode(zipCode);
+      const state = locationInfo?.stateCode || '';
+      
+      // Convert direct website links to Google search links
+      // For town data
+      if (recommendations.townData && recommendations.townData.website) {
+        const townName = recommendations.townData.name || '';
+        recommendations.townData.website = createGoogleSearchLink(`${townName} official website ${state} ${zipCode}`);
+      }
+      
+      // For school data
+      if (recommendations.schoolData && Array.isArray(recommendations.schoolData)) {
+        recommendations.schoolData.forEach((school: { name: string; website: string }) => {
+          if (school.website) {
+            school.website = createGoogleSearchLink(`${school.name} school ${state} ${zipCode}`);
+          }
+        });
+      }
+      
+      // For community program data
+      if (recommendations.communityProgramData && Array.isArray(recommendations.communityProgramData)) {
+        recommendations.communityProgramData.forEach((program: { name: string; website: string }) => {
+          if (program.website) {
+            program.website = createGoogleSearchLink(`${program.name} ${state} ${zipCode}`);
+          }
         });
       }
       
