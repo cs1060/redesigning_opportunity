@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  dangerouslyAllowBrowser: false,
-});
+import { callHarvardOpenAI } from '@/utils/harvardOpenAI';
 
 // Define system prompt with knowledge about the application
 const systemPrompt = `
@@ -49,7 +43,6 @@ interface ChatRequest {
 // Constants for limits
 const MAX_MESSAGE_LENGTH = 8000; // Maximum length for user messages
 const MAX_HISTORY_MESSAGES = 10; // Maximum number of history messages to include
-const MAX_TOKENS = 500; // Maximum tokens for the response
 
 /**
  * Check if the user's message is related to the website's purpose
@@ -144,45 +137,42 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Build the messages array for the API call
-    const messages: Message[] = [
-      {
-        role: "system",
-        content: systemPrompt
-      }
-    ];
+    // Build the full user message including conversation history
+    let fullUserMessage = optimizedMessage;
     
     // Add conversation history if provided (limited to last 10 messages for context)
     if (history && Array.isArray(history)) {
       // Filter out any system messages from the history to prevent prompt injection
       const userAndAssistantMessages = history.filter(
         msg => msg.role === 'user' || msg.role === 'assistant'
-      );
+      ).slice(-MAX_HISTORY_MESSAGES);
       
-      // Get the most recent messages up to the limit
-      const recentHistory = userAndAssistantMessages.slice(-MAX_HISTORY_MESSAGES);
-      
-      // Add the filtered history
-      messages.push(...recentHistory);
+      if (userAndAssistantMessages.length > 0) {
+        // Format the conversation history as a string
+        const historyText = userAndAssistantMessages.map(msg => 
+          `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
+        ).join('\n\n');
+        
+        // Prepend the history to the user message
+        fullUserMessage = `Previous conversation:\n${historyText}\n\nUser's new message: ${optimizedMessage}`;
+      }
     }
+
+    // Call Harvard OpenAI API with safety parameters
+    const response = await callHarvardOpenAI(
+      systemPrompt,
+      fullUserMessage,
+      {
+        model: "gpt-4o-mini",
+        temperature: 0.7
+      }
+    );
     
-    // Add the current user message
-    messages.push({
-      role: "user",
-      content: optimizedMessage
-    });
-
-    // Call OpenAI API with safety parameters
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages,
-      max_tokens: MAX_TOKENS,
-      temperature: 0.7, // Moderate temperature for balanced responses
-      top_p: 0.9, // Slightly constrained to avoid extreme outputs
-    });
-
+    // Parse the response
+    const responseData = await response.json();
+    
     // Extract the content from the response
-    const content = response.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
+    const content = responseData.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
     
     return NextResponse.json({ message: content });
   } catch (error: unknown) {

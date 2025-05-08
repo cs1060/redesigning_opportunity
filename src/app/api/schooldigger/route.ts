@@ -10,11 +10,35 @@ const DEFAULT_APP_ID = process.env.NEXT_PUBLIC_SCHOOLDIGGER_APP_ID;
 const DEFAULT_API_KEY = process.env.NEXT_PUBLIC_SCHOOLDIGGER_API_KEY;
 
 /**
+ * Interface for SchoolDigger API response data
+ */
+interface SchoolDiggerData {
+  schoolid?: string;
+  schoolName?: string;
+  lowGrade?: string;
+  highGrade?: string;
+  rankHistory?: Array<{ rank: number }>;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  };
+  schoolYearlyDetails?: Array<{
+    graduationRate?: number;
+  }>;
+  numberOfStudents?: number;
+  url?: string;
+  phone?: string;
+  distance?: number;
+}
+
+/**
  * Maps SchoolDigger data to our application's format
  * @param schoolDiggerData - Raw data from SchoolDigger API
  * @returns Formatted school data for our application
  */
-function mapSchoolDiggerToAppFormat(schoolDiggerData: any[]) {
+function mapSchoolDiggerToAppFormat(schoolDiggerData: SchoolDiggerData[]) {
   return schoolDiggerData.map(school => {
     // Determine school type based on level, grades, and name
     let type = 'unknown';
@@ -23,7 +47,7 @@ function mapSchoolDiggerToAppFormat(schoolDiggerData: any[]) {
       if (name.includes('elementary') || (school.lowGrade && parseInt(school.lowGrade) <= 5)) {
         type = 'elementary';
       } else if (name.includes('middle') || name.includes('junior high') || 
-                (school.lowGrade && parseInt(school.lowGrade) >= 5 && parseInt(school.highGrade) <= 9)) {
+                (school.lowGrade && school.highGrade && parseInt(school.lowGrade) >= 5 && parseInt(school.highGrade) <= 9)) {
         type = 'middle';
       } else if (name.includes('high') && !name.includes('junior high') || 
                 (school.lowGrade && parseInt(school.lowGrade) >= 9)) {
@@ -206,8 +230,8 @@ export async function GET(req: NextRequest) {
     
     // The SchoolDigger API expects 'appID' and 'appKey' parameters
     // Make sure we're using the correct parameter names and values
-    schoolDiggerUrl.searchParams.append('appID', appId);
-    schoolDiggerUrl.searchParams.append('appKey', apiKey);
+    schoolDiggerUrl.searchParams.append('appID', appId || '');
+    schoolDiggerUrl.searchParams.append('appKey', apiKey || '');
     schoolDiggerUrl.searchParams.append('zip', zipCode);
     
     // Add perPage parameter to get more results

@@ -1,12 +1,6 @@
 // app/api/openai-neighborhood/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  dangerouslyAllowBrowser: false
-});
+import { callHarvardOpenAI } from '@/utils/harvardOpenAI';
 
 // Check if API key is configured
 if (!process.env.OPENAI_API_KEY) {
@@ -25,18 +19,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-1106",
-      messages: [
-        {
-          role: "system",
-          content: `You are an AI assistant that provides detailed neighborhood analysis data. 
+    const systemMessage = `You are an AI assistant that provides detailed neighborhood analysis data. 
                     Format your response as valid JSON. Your entire response must be valid JSON 
-                    that can be parsed with JSON.parse().`
-        },
-        {
-          role: "user",
-          content: `Generate detailed neighborhood analysis data for this address: ${address}.
+                    that can be parsed with JSON.parse().`;
+
+    const userMessage = `Generate detailed neighborhood analysis data for this address: ${address}.
                     
                     Please include the following in your JSON response (your entire response must be valid JSON):
                     
@@ -75,16 +62,25 @@ export async function POST(req: NextRequest) {
                     
                     Each score should be a number between 1 and 10, where 10 is the best.
                     Make the data realistic and specific to the location provided.
-                    Format everything as valid JSON.`
-        }
-      ]
-    });
+                    Format everything as valid JSON.`;
+
+    // Call the Harvard OpenAI API
+    const response = await callHarvardOpenAI(
+      systemMessage,
+      userMessage,
+      {
+        model: "gpt-4o-mini",
+        temperature: 0.7,
+        responseFormat: { type: "json_object" }
+      }
+    );
 
     // Extract the response content
-    const responseContent = completion.choices[0].message.content;
+    const responseData = await response.json();
+    const responseContent = responseData.choices[0].message.content;
     
     if (!responseContent) {
-      throw new Error('No content in the OpenAI response');
+      throw new Error('No content in the API response');
     }
 
     try {
@@ -92,12 +88,12 @@ export async function POST(req: NextRequest) {
       const neighborhoodData = JSON.parse(responseContent);
       return NextResponse.json(neighborhoodData);
     } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
+      console.error('Error parsing API response:', parseError);
       console.log('Raw response:', responseContent);
       throw new Error('Failed to parse the AI response as JSON');
     }
   } catch (error) {
-    console.error('Error in OpenAI API call:', error);
+    console.error('Error in API call:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { error: 'Failed to generate neighborhood data', details: errorMessage },
