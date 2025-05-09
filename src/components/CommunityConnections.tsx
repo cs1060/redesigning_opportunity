@@ -385,13 +385,14 @@ const CommunityConnections: React.FC = () => {
             </div>
             
             <div className="mb-6">
-              <label className="block mb-2 text-sm font-medium text-gray-700">
+              <label htmlFor="rating" className="block mb-2 text-sm font-medium text-gray-700">
                 Rate Your Experience
               </label>
               <div className="flex space-x-2">
                 {Array(5).fill(0).map((_, i) => (
                   <FaStar 
                     key={i} 
+                    data-testid="rating-star"
                     className={`text-2xl cursor-pointer ${i < newTestimonialForm.rating ? 'text-yellow-500' : 'text-gray-300'}`}
                     onClick={() => handleRatingChange(i + 1)}
                   />

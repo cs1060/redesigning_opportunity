@@ -221,24 +221,6 @@ describe('Stay Component', () => {
       expect(advice).toContain('For your younger child');
       expect(advice).toContain('For your teenager');
     });
-
-    test('verifies ZIP code extraction from address', () => {
-      // This test focuses on the ZIP code extraction logic which is a key part of the
-      // SchoolDigger API integration, but doesn't depend on component rendering
-      
-      const addressWithZip = '123 Main St, Anytown, USA 12345';
-      
-      // Verify that the ZIP code extraction works correctly
-      const zipCodeRegex = /\b\d{5}\b/;
-      const zipMatch = addressWithZip.match(zipCodeRegex);
-      const zipCode = zipMatch ? zipMatch[0] : null;
-      expect(zipCode).toBe('12345');
-      
-      // Test with different address formats
-      const addressWithZipAtEnd = '123 Main St, Boston, MA 02115';
-      const match2 = addressWithZipAtEnd.match(zipCodeRegex);
-      expect(match2?.[0]).toBe('02115');
-    });
   });
 
   // Component rendering tests
@@ -473,9 +455,6 @@ describe('Stay Component', () => {
   // Edge cases
   describe('Edge Cases', () => {
     test('handles no address in assessment data', async () => {
-      // Mock the fetch to reject with a specific error
-      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('No address provided'));
-      
       const noAddressData = {
         street: '',
         city: '',
@@ -490,20 +469,24 @@ describe('Stay Component', () => {
         ]
       };
       
-      // Render the component with empty address data
       render(
         <AssessmentProvider>
           <Stay assessmentData={noAddressData} />
         </AssessmentProvider>
       );
       
-      // Just verify the component renders without crashing
-      // This is a minimal test that should pass regardless of the exact error message
-      expect(screen.getByText(/Loading personalized recommendations/i)).toBeInTheDocument();
+      // Wait for the component to process the missing address
+      await waitFor(() => {
+        // Verify that the component shows an error message for missing address
+        expect(screen.getByText(/No address provided/i)).toBeInTheDocument();
+      });
+      
+      // Verify that the component falls back to default data
+      expect(screen.getByText('Township Information')).toBeInTheDocument();
+      expect(screen.getByText('Oakridge Community')).toBeInTheDocument();
     });
 
     test('handles API error and falls back to default data', async () => {
-      // Mock the fetch to reject with an API error
       (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
       
       render(
@@ -512,51 +495,161 @@ describe('Stay Component', () => {
         </AssessmentProvider>
       );
       
-      // Just verify the component renders without crashing
-      // This is a minimal test that should pass regardless of the exact error message
-      expect(screen.getByText(/Loading personalized recommendations/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText(/Failed to load personalized recommendations/i)).toBeInTheDocument();
+      });
+      
+      // Verify that default data is displayed after an API error
+      expect(screen.getByText('Township Information')).toBeInTheDocument();
+      expect(screen.getByText('Oakridge Community')).toBeInTheDocument();
+      
+      // Verify that filtered schools are displayed based on children's ages
+      // Children ages in mockAssessmentData are 8 and 14, so we should see elementary and high schools
+      const elementarySchool = screen.getByText('Oakridge Elementary');
+      const highSchool = screen.getByText('Oakridge High School');
+      expect(elementarySchool).toBeInTheDocument();
+      expect(highSchool).toBeInTheDocument();
     });
 
-    test('correctly filters schools based on children ages', () => {
-      // This test focuses on the pure filtering logic rather than the component rendering
-      // which is more reliable and less dependent on component implementation details
+    test('handles API response with schools and properly filters based on children ages', async () => {
+      // Mock a successful API response with school data
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse
+      });
       
-      // Test the filterSchoolsByChildAge function directly
-      const filteredSchools = filterSchoolsByChildAge(mockSchoolData, mockAssessmentData);
+      render(
+        <AssessmentProvider>
+          <Stay assessmentData={mockAssessmentData} />
+        </AssessmentProvider>
+      );
+      
+      // Wait for loading to complete
+      await waitFor(() => {
+        expect(screen.queryByText(/Loading personalized recommendations/i)).not.toBeInTheDocument();
+      });
+      
+      // Verify that the component displays the filtered school data based on children's ages
+      // Children ages in mockAssessmentData are 8 and 14, so we should see elementary and high schools
+      expect(screen.getByText('Test Elementary School')).toBeInTheDocument();
+      expect(screen.getByText('Test High School')).toBeInTheDocument();
+      
+      // Middle school should not be shown since there's no child in middle school age range
+      expect(screen.queryByText('Test Middle School')).not.toBeInTheDocument();
       
       // Verify that the filtering logic is correctly applied
-      // Children ages in mockAssessmentData are 8 and 14, so we should see elementary and high schools
+      const filteredSchools = filterSchoolsByChildAge(mockSchoolData, mockAssessmentData);
       expect(filteredSchools.length).toBe(2); // Elementary and High schools only
       expect(filteredSchools.map(school => school.name)).toContain('Test Elementary School');
       expect(filteredSchools.map(school => school.name)).toContain('Test High School');
-      expect(filteredSchools.map(school => school.name)).not.toContain('Test Middle School');
     });
     
-    test('verifies ZIP code extraction from address', () => {
-      // This test focuses on the ZIP code extraction logic which is a key part of the
-      // SchoolDigger API integration, but doesn't depend on component rendering
+    test('verifies SchoolDigger API integration', async () => {
+      // Set up a mock for the SchoolDigger API call
+      const schoolDiggerApiMock = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          schoolList: [
+            {
+              schoolName: 'Cambridge Elementary School',
+              rankHistory: [{ rankOf10: 8.5 }],
+              schoolLevel: 'Elementary',
+              url: 'https://www.schooldigger.com/go/MA/schools/0432000245/school.aspx'
+            },
+            {
+              schoolName: 'Cambridge High School',
+              rankHistory: [{ rankOf10: 7.9 }],
+              schoolLevel: 'High',
+              url: 'https://www.schooldigger.com/go/MA/schools/0432000246/school.aspx'
+            }
+          ]
+        })
+      });
+      
+      // Mock fetch to intercept both API calls
+      (global.fetch as jest.Mock).mockImplementation((url) => {
+        if (url.includes('/api/schooldigger')) {
+          return schoolDiggerApiMock();
+        }
+        
+        // For the openai endpoint
+        return Promise.resolve({
+          ok: true,
+          json: async () => mockApiResponse
+        });
+      });
       
       const addressWithZip = '123 Main St, Anytown, USA 12345';
       
-      // Verify that the ZIP code extraction works correctly
-      const zipCodeRegex = /\b\d{5}\b/;
-      const zipMatch = addressWithZip.match(zipCodeRegex);
-      const zipCode = zipMatch ? zipMatch[0] : null;
-      expect(zipCode).toBe('12345');
+      render(
+        <AssessmentProvider>
+          <Stay assessmentData={{
+            ...mockAssessmentData,
+            address: addressWithZip
+          }} />
+        </AssessmentProvider>
+      );
       
-      // Test with different address formats
-      const addressWithZipAtEnd = '123 Main St, Boston, MA 02115';
-      const match2 = addressWithZipAtEnd.match(zipCodeRegex);
-      expect(match2?.[0]).toBe('02115');
+      // Wait for the component to load data
+      await waitFor(() => {
+        expect(screen.queryByText(/Loading personalized recommendations/i)).not.toBeInTheDocument();
+      });
       
-      const addressWithZipAndPlus4 = '123 Main St, Chicago, IL 60601-1234';
-      const match3 = addressWithZipAndPlus4.match(zipCodeRegex);
-      expect(match3?.[0]).toBe('60601');
+      // Verify that the OpenAI API was called with the correct address
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/openai',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining(addressWithZip)
+        })
+      );
       
-      const addressWithoutZip = '123 Main St, Somewhere, State';
-      const match4 = addressWithoutZip.match(zipCodeRegex);
-      expect(match4).toBeNull();
+      // Verify that the township information is displayed
+      expect(screen.getByText('Township Information')).toBeInTheDocument();
+      expect(screen.getByText('Test Town')).toBeInTheDocument();
+      
+      // Verify that the SchoolDigger API integration is working
+      // In a real test, the SchoolDigger API would be called from the API route
+      // Here we're verifying that the component correctly displays the school data
+      expect(screen.getByText('localSchools')).toBeInTheDocument();
+      expect(screen.getByText('Test Elementary School')).toBeInTheDocument();
     });
   });
 });
+      
+    const addressWithZip = '123 Main St, Anytown, USA 12345';
+      
+    render(
+      <AssessmentProvider>
+        <Stay assessmentData={{
+          ...mockAssessmentData,
+          address: addressWithZip
+        }} />
+      </AssessmentProvider>
+    );
+      
+    // Wait for the component to load data
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading personalized recommendations/i)).not.toBeInTheDocument();
+    });
+      
+    // Verify that the OpenAI API was called with the correct address
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/openai',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining(addressWithZip)
+      })
+    );
+      
+    // Verify that the township information is displayed
+    expect(screen.getByText('Township Information')).toBeInTheDocument();
+    expect(screen.getByText('Test Town')).toBeInTheDocument();
+      
+    // Verify that the SchoolDigger API integration is working
+    // In a real test, the SchoolDigger API would be called from the API route
+    // Here we're verifying that the component correctly displays the school data
+    expect(screen.getByText('localSchools')).toBeInTheDocument();
+    expect(screen.getByText('Test Elementary School')).toBeInTheDocument();
+  });
 });
