@@ -1,3 +1,4 @@
+
 /**
  * Test suite for Chat API limits and constraints
  *
@@ -7,6 +8,15 @@
  * - Rate limiting
  * - Token usage optimization
  */
+
+// Polyfill for Request in Node.js environment
+if (!global.Request) {
+  global.Request = class MockRequest {
+    constructor(input?: any, init?: any) {
+      // No-op for mock
+    }
+  } as unknown as typeof Request;
+}
 
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/chat/route';

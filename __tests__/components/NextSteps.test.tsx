@@ -13,6 +13,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NextSteps from '../../src/components/NextSteps';
+import { AssessProvider } from '../../src/components/AssessProvider';
 import '@testing-library/jest-dom';
 
 // Mock the next-intl useTranslations hook
@@ -98,7 +99,9 @@ describe('NextSteps Component', () => {
     it('should not have min-h-screen class when no action or choices are selected', () => {
       // Arrange & Act
       const { container } = render(
-        <NextSteps selectedAction={null} savedChoices={null} />
+        <AssessProvider>
+          <NextSteps selectedAction={null} savedChoices={null} />
+        </AssessProvider>
       );
       
       // Assert
@@ -120,7 +123,9 @@ describe('NextSteps Component', () => {
       
       // Act
       const { container } = render(
-        <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
       );
       
       // Assert
@@ -131,7 +136,11 @@ describe('NextSteps Component', () => {
     
     it('should display the correct heading and message when no action or choices are selected', () => {
       // Arrange & Act
-      render(<NextSteps selectedAction={null} savedChoices={null} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction={null} savedChoices={null} />
+        </AssessProvider>
+      );
       
       // Assert
       expect(screen.getByText('title')).toBeInTheDocument();
@@ -154,7 +163,11 @@ describe('NextSteps Component', () => {
       };
       
       // Act
-      render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Assert
       expect(screen.getByText('yourNextSteps')).toBeInTheDocument();
@@ -175,7 +188,11 @@ describe('NextSteps Component', () => {
       };
       
       // Act
-      render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Assert - Check for stay-specific tasks
       const taskElements = screen.getAllByRole('generic', { hidden: true })
@@ -200,7 +217,11 @@ describe('NextSteps Component', () => {
       };
       
       // Act
-      render(<NextSteps selectedAction="move" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="move" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Assert - Check for move-specific tasks
       const taskElements = screen.getAllByRole('generic', { hidden: true })
@@ -223,7 +244,11 @@ describe('NextSteps Component', () => {
       };
       
       // Act
-      render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Assert - Check that tasks are generated even with missing selections
       const taskElements = screen.getAllByRole('generic', { hidden: true })
@@ -243,7 +268,11 @@ describe('NextSteps Component', () => {
         selectedCommunityPrograms: ['Youth Leadership Academy']
       };
       
-      render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Find the first task checkbox
       const firstTaskCheckbox = screen.getAllByRole('generic', { hidden: true })
@@ -277,7 +306,11 @@ describe('NextSteps Component', () => {
         selectedCommunityPrograms: ['Youth Leadership Academy']
       };
       
-      render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Find the first task info button
       const infoButton = screen.getAllByRole('button', { name: /explanation/i })[0];
@@ -311,7 +344,11 @@ describe('NextSteps Component', () => {
       mockOpen.mockClear();
       mockAlert.mockClear();
       
-      render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Find the print button
       const printButton = screen.getByRole('button', { name: /print/i });
@@ -338,7 +375,11 @@ describe('NextSteps Component', () => {
       mockAlert.mockClear();
       mockOpen.mockReturnValueOnce(null); // Simulate blocked popup
       
-      render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Find the print button
       const printButton = screen.getByRole('button', { name: /print/i });
@@ -359,7 +400,11 @@ describe('NextSteps Component', () => {
         selectedCommunityPrograms: ['Youth Leadership Academy']
       };
       
-      render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Find the email button
       const emailButton = screen.getByRole('button', { name: /email/i });
@@ -385,7 +430,11 @@ describe('NextSteps Component', () => {
       const jsPDFMock = jest.requireMock('jspdf');
       const html2canvasMock = jest.requireMock('html2canvas');
       
-      render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Find the download button
       const downloadButton = screen.getByRole('button', { name: /download/i });
@@ -416,7 +465,11 @@ describe('NextSteps Component', () => {
         selectedCommunityPrograms: ['Youth Leadership Academy']
       };
       
-      render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Initial state - 0%
       const initialProgressText = screen.getByText(/0 of .* tasks completed/i);
@@ -453,7 +506,11 @@ describe('NextSteps Component', () => {
         selectedCommunityPrograms: ['Youth Leadership Academy']
       };
       
-      const { rerender } = render(<NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />);
+      const { rerender } = render(
+        <AssessProvider>
+          <NextSteps selectedAction="stay" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Find a task checkbox and complete it
       const taskCheckbox = screen.getAllByRole('generic', { hidden: true })
@@ -464,7 +521,11 @@ describe('NextSteps Component', () => {
       expect(screen.getByText(/1 of .* tasks completed/i)).toBeInTheDocument();
       
       // Act - Change the selectedAction
-      rerender(<NextSteps selectedAction="move" savedChoices={mockSavedChoices} />);
+      rerender(
+        <AssessProvider>
+          <NextSteps selectedAction="move" savedChoices={mockSavedChoices} />
+        </AssessProvider>
+      );
       
       // Assert - Completed tasks should be reset
       expect(screen.getByText(/0 of .* tasks completed/i)).toBeInTheDocument();
