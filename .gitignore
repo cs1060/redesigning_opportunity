@@ -1,0 +1,62 @@
+node_modules
+.next
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.test
+.env.production
+
+# Test related
+coverage
+.nyc_output
+jest-report
+
+# Build output
+out/
+build/
+dist/
+
+# Firebase
+firebase-debug.log
+firebase-debug.*.log
+firebase-adminsdk*.json
+.firebase/
+firebaserc
+firebase-key.json
+serviceAccountKey.json
+
+# Debug logs
+debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Misc
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.pem
+*.log
+.idea/
+.vscode/
+*.sublime-workspace
+.vercel
+.eslintcache
+.now
+
+# Local Netlify folder
+.netlify
+
+# Turbo
+.turbo
+
+# Cache
+*.tsbuildinfo
