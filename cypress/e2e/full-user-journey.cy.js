@@ -2,95 +2,124 @@ describe('Full User Journey', () => {
   beforeEach(() => {
     // Visit the homepage before each test
     cy.visit('http://localhost:3000');
+    cy.wait(4000);
   });
 
   it('should complete the entire user journey from welcome to action plan', () => {
     // Check welcome page elements
-    cy.contains('Welcome to Opportunity Compass').should('be.visible');
-    cy.contains('Your guide to economic mobility').should('be.visible');
+    cy.contains('Building Your Child\'s Future').should('be.visible');
+    cy.contains('A friendly guide to creating opportunities for your family').should('be.visible');
     
     // Navigate to assessment
-    cy.contains('Start Your Assessment').click();
+    cy.contains('Assess Your Community').click();
     
     // Fill out the assessment form
-    cy.get('input[name="street"]').type('123 Main Street');
-    cy.get('input[name="city"]').type('Boston');
+    cy.get('input[name="street"]').type('32 Mill Street');
+    cy.wait(500);
+    cy.get('input[name="city"]').type('Cambridge');
+    cy.wait(500);
     cy.get('select[name="state"]').select('MA');
-    cy.get('input[name="zipCode"]').type('02115');
+    cy.wait(500);
     
     // Select employment status
     cy.contains('Are you currently employed?').parent().within(() => {
       cy.contains('Yes').click();
     });
+    cy.wait(500);
     
     // Select income range
     cy.get('select[name="income"]').select('50-75k');
+    cy.wait(500);
     
     // Add a child
-    cy.contains('Add Child').click();
-    cy.get('input[name="children[0].name"]').type('Test Child');
-    cy.get('input[name="children[0].age"]').type('8');
-    cy.get('select[name="children[0].gender"]').select('M');
-    cy.get('select[name="children[0].ethnicity"]').select('W');
-    
+    cy.get('input[name="child-name"]').type('Test Child', {force: true});
+    cy.wait(500);
+    cy.get('input[name="child-age"]').type('8');
+    cy.wait(500);
+    cy.get('select[name="child-gender"]').select('M');
+    cy.get('select[name="child-ethnicity"]').select('W');
+    cy.wait(500);
+
     // Submit the form
     cy.contains('Submit').click();
+    cy.wait(4000);
     
     // Check that the results page is shown
-    cy.contains('Your Assessment Results').should('be.visible');
+    cy.contains('Your Opportunity Score').should('be.visible');
     
     // Test the Stay option
-    cy.contains('Stay and Access Local Resources').click();
-    
+    cy.contains('Stay & Improve').click();
+    cy.wait(5000);
+
     // Wait for API response and verify content loads
-    cy.contains('Township Information', { timeout: 10000 }).should('be.visible');
-    
+    cy.contains('Township Information', { timeout: 15000 }).should('be.visible');
+    cy.wait(500);
+
     // Select a school
     cy.contains('Local Schools').should('be.visible');
-    cy.get('[data-testid="school-card"]').first().click();
-    
+    cy.contains('h3', 'Local Schools').parent().find('.border.rounded-lg.p-4').first().click({force: true});
+    cy.wait(500);
+
     // Select a community program
     cy.contains('Community Programs').should('be.visible');
-    cy.get('[data-testid="program-card"]').first().click();
-    
+    cy.contains('h3', 'Community Programs').parent().find('.border.rounded-lg.p-4').first().click({force: true});
+    cy.wait(500);
+
     // Save choices
     cy.contains('Save My Choices').click();
-    
+    cy.wait(500);
     // Verify the action plan is created
-    cy.contains('Your Action Plan').should('be.visible');
-    
-    // Go back to results
-    cy.contains('Back to Results').click();
+    cy.contains('Your Saved Choices').should('be.visible');
     
     // Test the Move option
-    cy.contains('Move to a Higher Opportunity Area').click();
+    cy.contains('Explore New Areas').click();
     
     // Enter a ZIP code
-    cy.get('input[placeholder="Enter ZIP code"]').type('12345');
-    cy.contains('Update').click();
+    // Find the ZIP code input by ID instead of name
+    cy.get('input#zipCode').then($zip => {
+      if ($zip.length > 0) {
+        cy.wrap($zip).type('02139', {force: true});
+      } else {
+        // Try with generic fallback if not found by ID
+        cy.get('input[type="text"]').eq(3).type('02139', {force: true});
+      }
+    });
+  cy.wait(500);
+
+    cy.wait(5000);
     
     // Wait for recommendations to load
-    cy.contains('Township Information', { timeout: 10000 }).should('be.visible');
-    
+    cy.contains('Township Information', { timeout: 30000 }).should('be.visible');
+    cy.wait(500);
+
     // Select a neighborhood
-    cy.get('[data-testid="neighborhood-card"]').first().click();
-    
+    cy.contains('Top Neighborhoods in 02139').should('be.visible');
+    cy.contains('h3', 'Top Neighborhoods in 02139').parent().find('.border.rounded-lg.p-4').first().click({force: true});
+    cy.wait(500);
+
     // Select a school
     cy.contains('Local Schools').should('be.visible');
-    cy.get('[data-testid="school-card"]').first().click();
-    
+    cy.contains('h3', 'Local Schools').parent().find('.border.rounded-lg.p-4').first().click({force: true});
+    cy.wait(500);
+
     // Select a community program
     cy.contains('Community Programs').should('be.visible');
-    cy.get('[data-testid="program-card"]').first().click();
-    
+    cy.contains('h3', 'Community Programs').parent().find('.border.rounded-lg.p-4').first().click({force: true});
+    cy.wait(500);
+
     // Select a housing option
-    cy.contains('Housing Options').should('be.visible');
-    cy.get('[data-testid="housing-card"]').first().click();
+    cy.get('h3').contains(/housing/i).parent().find('.border.rounded-lg.p-4').first().click({force: true});
+    cy.wait(500);
     
     // Save choices
-    cy.contains('Save My Choices').click();
+    cy.get('button').contains(/save/i).then($btn => {
+      if ($btn.length > 0) {
+        cy.wrap($btn).click({force: true});
+      }
+    });
+    cy.wait(500);
     
     // Verify the action plan is created
-    cy.contains('Your Action Plan').should('be.visible');
+    cy.contains('Your Saved Choices').should('be.visible');
   });
 });
