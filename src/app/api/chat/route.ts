@@ -40,14 +40,49 @@ interface ChatRequest {
   history?: Message[];
 }
 
-// Constants for limits
-const MAX_MESSAGE_LENGTH = 8000; // Maximum length for user messages
-const MAX_HISTORY_MESSAGES = 10; // Maximum number of history messages to include
+// Constants
+const MAX_MESSAGE_LENGTH = 8000;
+const MAX_HISTORY_MESSAGES = 10;
 
-/**
- * Check if the user's message is related to the website's purpose
- * This helps prevent users from using the chatbot for unrelated topics
- */
+// Simple in-memory store for rate limiting
+// In production, you would use Redis or another distributed store
+const ipRequestCounts = new Map<string, { count: number, resetTime: number }>();
+
+// Rate limit configuration
+const RATE_LIMIT = 10; // Maximum requests per minute
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+
+// Check rate limit for the given IP
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const ipData = ipRequestCounts.get(ip);
+  
+  if (!ipData) {
+    // First request from this IP
+    ipRequestCounts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  
+  if (now > ipData.resetTime) {
+    // Reset window has passed
+    ipRequestCounts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  
+  if (ipData.count >= RATE_LIMIT) {
+    // Rate limit exceeded
+    console.log('Rate limit exceeded for IP:', ip);
+    return false;
+  }
+  
+  // Increment request count
+  ipData.count += 1;
+  ipRequestCounts.set(ip, ipData);
+  return true;
+}
+
+// Check if the user's message is related to the website's purpose
+// This helps prevent users from using the chatbot for unrelated topics
 function isRelevantTopic(message: string): boolean {
   // Convert message to lowercase for case-insensitive matching
   const lowerMessage = message.toLowerCase();
@@ -82,19 +117,15 @@ function isRelevantTopic(message: string): boolean {
   return relevantKeywords.some(keyword => lowerMessage.includes(keyword));
 }
 
-/**
- * Sanitize input to prevent injection attacks
- * This doesn't modify the input but ensures it's treated as plain text
- */
+// Sanitize input to prevent injection attacks
+// This doesn't modify the input but ensures it's treated as plain text
 function sanitizeInput(input: string): string {
   // For now, we're just returning the input as-is since OpenAI handles it as plain text
   // In a production environment, you might want to implement more robust sanitization
   return input;
 }
 
-/**
- * Optimize token usage by truncating extremely long messages
- */
+// Optimize token usage by truncating extremely long messages
 function optimizeTokenUsage(message: string): string {
   if (message.length > MAX_MESSAGE_LENGTH) {
     return message.substring(0, MAX_MESSAGE_LENGTH) + 
@@ -104,6 +135,18 @@ function optimizeTokenUsage(message: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  // Get the client IP
+  const ip = request.ip || 'unknown';
+  
+  // Check rate limit
+  if (!checkRateLimit(ip)) {
+    console.log('Rate limit exceeded for IP:', ip);
+    return NextResponse.json(
+      { error: 'Too many requests, please try again later.' },
+      { status: 429 }
+    );
+  }
+  
   try {
     const { message, history } = await request.json() as ChatRequest;
 

@@ -140,11 +140,18 @@ const ChatWidget: React.FC = () => {
         })
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to get response')
-      }
-
       const data = await response.json()
+
+      if (!response.ok) {
+        // Handle different error types based on status code
+        if (response.status === 429) {
+          // Rate limit error
+          throw new Error(data.error || 'Too many requests, please try again later.');
+        } else {
+          // Other errors
+          throw new Error(data.error || 'Failed to get response');
+        }
+      }
       
       // Add assistant response to chat
       const assistantMessage: Message = {
@@ -157,10 +164,15 @@ const ChatWidget: React.FC = () => {
     } catch (error) {
       console.error('Error sending message:', error)
       
-      // Add error message to chat
+      // Determine if this is a rate limit error
+      const isRateLimitError = error instanceof Error && 
+        error.message.includes('Too many requests');
+      
+      // Add error message to chat with appropriate content
       const errorMessage: Message = {
         role: 'assistant',
-        content: 'Sorry, I encountered an error processing your request. Please try again.',
+        content: error instanceof Error ? error.message : 
+          'Sorry, I encountered an error processing your request. Please try again.',
         timestamp: new Date()
       }
       
