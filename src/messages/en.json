@@ -284,30 +284,45 @@
     "tipMentors": "Connect with mentors who can provide guidance through the process"
   },
   "community": {
+    "communityConnections": "Community Connections",
+    "viewStories": "View Stories",
+    "shareYourStory": "Share Your Story",
+    "storiesDescription": "Read about the experiences of other families on their journey to better opportunities.",
+    "shareDescription": "Share your own story to inspire and help other families.",
+    "shareYourJourney": "Share Your Journey",
+    "shareYourJourneyDescription": "Your story can inspire and guide other families on their path to better opportunities. Share your experience below:",
+    "yourName": "Your Name",
+    "yourLocation": "Your Location",
+    "rateExperience": "Rate Your Experience",
+    "yourStory": "Your Story",
+    "storyPlaceholder": "Share your journey, challenges, successes, and how this resource helped you...",
+    "submittingStory": "Submitting your story...",
+    "storySubmitted": "Your story has been submitted successfully! Thank you for sharing.",
+    "errorSubmitting": "An error occurred while submitting your story. Please try again.",
+    "submitting": "Submitting...",
+    "submitStory": "Submit Your Story",
+    "whyShare": "Why Share Your Story?",
+    "inspireOthers": "Inspire Others",
+    "inspireOthersDescription": "Your journey can provide hope and motivation to families facing similar challenges.",
+    "buildCommunity": "Build Community",
+    "buildCommunityDescription": "Connect with others who have shared experiences and build a supportive network.",
+    "shareKnowledge": "Share Knowledge",
+    "shareKnowledgeDescription": "Your insights and lessons learned can help other families navigate their own paths.",
+    "createChange": "Create Change",
+    "createChangeDescription": "Personal stories are powerful tools for advocacy and creating systemic change.",
+    "noStories": "No stories have been shared yet. Be the first to share your journey!",
+    "testimonial1": "Moving to a higher opportunity neighborhood completely changed our lives. My children now attend excellent schools, and we've connected with supportive community programs. This website guided us through the entire process!",
+    "testimonial2": "As a single father, I was overwhelmed by the prospect of moving to provide better opportunities for my kids. The resources and step-by-step guidance here made it manageable. We've been in our new community for 6 months, and my children are thriving.",
+    "testimonial3": "Instead of moving, we decided to stay and advocate for better resources in our community. The action plan helped us connect with local organizations and other parents. We've already seen improvements in our neighborhood schools!",
+    "testimonial4": "The opportunity map was eye-opening. We had no idea how much variation existed between neighborhoods so close to each other. We made an informed decision to move, and now my daughter has access to amazing STEM programs she loves.",
+    "march2": "March 2, 2025",
+    "february15": "February 15, 2025",
+    "january28": "January 28, 2025",
+    "january10": "January 10, 2025",
+    "formattedDate": "{month} {day}, {year}",
     "title": "Community Connections",
     "subtitle": "Connect with others on their journey to better opportunities",
-    "testimonials": "Testimonials",
-    "communityDirectory": "Community Directory",
-    "shareYourStory": "Share Your Story",
-    "testimonialSubmitMessage": "Thank you for sharing your story! Your testimonial will be reviewed and published soon.",
-    "join": "Join our community",
-    "share": "Share your experiences",
-    "learn": "Learn from others",
-    "testimonialsContent": {
-      "marcus": "Moving to a higher opportunity neighborhood completely changed our lives. My children now attend excellent schools, and we've connected with supportive community programs. This website guided us through the entire process!",
-      "marcusDate": "March 2, 2025",
-      "marcusName": "Marcus Williams",
-      "marcusLocation": "Cambridge, MA",
-      "elena": "As a single father, I was overwhelmed by the prospect of moving to provide better opportunities for my kids. The resources and step-by-step guidance here made it manageable. We've been in our new community for 6 months, and my children are thriving.",
-      "elenaDate": "February 15, 2025",
-      "elenaName": "Elena Rodriguez",
-      "elenaLocation": "Somerville, MA",
-      "david": "Instead of moving, we decided to stay and advocate for better resources in our community. The action plan helped us connect with local organizations and other parents. We've already seen improvements in our neighborhood schools!",
-      "davidDate": "January 28, 2025",
-      "davidName": "David Chen",
-      "davidLocation": "Newton, MA",
-      "jane": "The opportunity map was eye-opening. We had no idea how much variation existed between neighborhoods so close to each other. We made an informed decision to move, and now my daughter has access to amazing STEM programs she loves."
-    }
+    "testimonials": "Testimonials"
   },
   "neighborhoodAnalysis": {
     "title": "Neighborhood Analysis",
@@ -348,7 +363,6 @@
     "spanish": "Spanish",
     "chinese": "Chinese"
   },
-
   "contact": {
     "title": "Contact Us",
     "subtitle": "Have questions or feedback? We'd love to hear from you.",
@@ -373,7 +387,6 @@
     "closePopup": "Close popup",
     "errorMessage": "Sorry, I encountered an error processing your request. Please try again."
   },
-
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",

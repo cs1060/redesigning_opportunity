@@ -14,6 +14,8 @@ interface Testimonial {
   text: string;
   date: string;
   avatar?: string;
+  translationKey?: string; // For sample testimonials
+  dateKey?: string; // For sample testimonial dates
 }
 
 const CommunityConnections: React.FC = () => {
@@ -61,36 +63,44 @@ const CommunityConnections: React.FC = () => {
             name: 'Sarah Johnson',
             location: 'Brookline, MA',
             rating: 5,
-            text: 'Moving to a higher opportunity neighborhood completely changed our lives. My children now attend excellent schools, and we\'ve connected with supportive community programs. This website guided us through the entire process!',
-            date: 'March 2, 2025',
-            avatar: '/avatars/sarah.svg'
+            text: '',
+            date: '',
+            avatar: '/avatars/sarah.svg',
+            translationKey: 'testimonial1',
+            dateKey: 'march2'
           },
           {
             id: '2',
             name: 'Marcus Williams',
             location: 'Cambridge, MA',
             rating: 4,
-            text: 'As a single father, I was overwhelmed by the prospect of moving to provide better opportunities for my kids. The resources and step-by-step guidance here made it manageable. We\'ve been in our new community for 6 months, and my children are thriving.',
-            date: 'February 15, 2025',
-            avatar: '/avatars/marcus.svg'
+            text: '',
+            date: '',
+            avatar: '/avatars/marcus.svg',
+            translationKey: 'testimonial2',
+            dateKey: 'february15'
           },
           {
             id: '3',
             name: 'Elena Rodriguez',
             location: 'Somerville, MA',
             rating: 5,
-            text: 'Instead of moving, we decided to stay and advocate for better resources in our community. The action plan helped us connect with local organizations and other parents. We\'ve already seen improvements in our neighborhood schools!',
-            date: 'January 28, 2025',
-            avatar: '/avatars/elena.svg'
+            text: '',
+            date: '',
+            avatar: '/avatars/elena.svg',
+            translationKey: 'testimonial3',
+            dateKey: 'january28'
           },
           {
             id: '4',
             name: 'David Chen',
             location: 'Newton, MA',
             rating: 5,
-            text: 'The opportunity map was eye-opening. We had no idea how much variation existed between neighborhoods so close to each other. We made an informed decision to move, and now my daughter has access to amazing STEM programs she loves.',
-            date: 'January 10, 2025',
-            avatar: '/avatars/david.svg'
+            text: '',
+            date: '',
+            avatar: '/avatars/david.svg',
+            translationKey: 'testimonial4',
+            dateKey: 'january10'
           },
         ]
         
@@ -110,36 +120,44 @@ const CommunityConnections: React.FC = () => {
             name: 'Sarah Johnson',
             location: 'Brookline, MA',
             rating: 5,
-            text: 'Moving to a higher opportunity neighborhood completely changed our lives. My children now attend excellent schools, and we\'ve connected with supportive community programs. This website guided us through the entire process!',
-            date: 'March 2, 2025',
-            avatar: '/avatars/sarah.svg'
+            text: '',
+            date: '',
+            avatar: '/avatars/sarah.svg',
+            translationKey: 'testimonial1',
+            dateKey: 'march2'
           },
           {
             id: '2',
             name: 'Marcus Williams',
             location: 'Cambridge, MA',
             rating: 4,
-            text: 'As a single father, I was overwhelmed by the prospect of moving to provide better opportunities for my kids. The resources and step-by-step guidance here made it manageable. We\'ve been in our new community for 6 months, and my children are thriving.',
-            date: 'February 15, 2025',
-            avatar: '/avatars/marcus.svg'
+            text: '',
+            date: '',
+            avatar: '/avatars/marcus.svg',
+            translationKey: 'testimonial2',
+            dateKey: 'february15'
           },
           {
             id: '3',
             name: 'Elena Rodriguez',
             location: 'Somerville, MA',
             rating: 5,
-            text: 'Instead of moving, we decided to stay and advocate for better resources in our community. The action plan helped us connect with local organizations and other parents. We\'ve already seen improvements in our neighborhood schools!',
-            date: 'January 28, 2025',
-            avatar: '/avatars/elena.svg'
+            text: '',
+            date: '',
+            avatar: '/avatars/elena.svg',
+            translationKey: 'testimonial3',
+            dateKey: 'january28'
           },
           {
             id: '4',
             name: 'David Chen',
             location: 'Newton, MA',
             rating: 5,
-            text: 'The opportunity map was eye-opening. We had no idea how much variation existed between neighborhoods so close to each other. We made an informed decision to move, and now my daughter has access to amazing STEM programs she loves.',
-            date: 'January 10, 2025',
-            avatar: '/avatars/david.svg'
+            text: '',
+            date: '',
+            avatar: '/avatars/david.svg',
+            translationKey: 'testimonial4',
+            dateKey: 'january10'
           },
         ]
         setTestimonials(sampleTestimonials)
@@ -149,10 +167,9 @@ const CommunityConnections: React.FC = () => {
     }
     
     fetchTestimonials()
-  }, [])
+  }, []) // Remove 't' from the dependency array
   
-
-  
+  // Rest of the code remains the same
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setNewTestimonialForm({
@@ -172,11 +189,15 @@ const CommunityConnections: React.FC = () => {
     e.preventDefault()
     
     try {
-      setSubmitStatus({ message: 'Submitting your story...' })
+      setSubmitStatus({ message: t('submittingStory') })
       
       // Format the current date
       const currentDate = new Date()
-      const formattedDate = `${currentDate.toLocaleString('default', { month: 'long' })} ${currentDate.getDate()}, ${currentDate.getFullYear()}`
+      const formattedDate = t('formattedDate', {
+        month: currentDate.toLocaleString('default', { month: 'long' }),
+        day: currentDate.getDate(),
+        year: currentDate.getFullYear()
+      })
       
       // Add the testimonial to Firestore
       const testimonialsCollection = collection(db, 'testimonials')
@@ -210,7 +231,7 @@ const CommunityConnections: React.FC = () => {
       })
       
       // Show success message
-      setSubmitStatus({ success: true, message: t('testimonialSubmitMessage') })
+      setSubmitStatus({ success: true, message: t('storySubmitted') })
       
       // Clear the success message after 5 seconds
       setTimeout(() => {
@@ -218,7 +239,7 @@ const CommunityConnections: React.FC = () => {
       }, 5000)
     } catch (error) {
       console.error('Error adding testimonial:', error)
-      setSubmitStatus({ success: false, message: 'An error occurred while submitting your story. Please try again.' })
+      setSubmitStatus({ success: false, message: t('errorSubmitting') })
     }
   }
   
@@ -302,13 +323,13 @@ const CommunityConnections: React.FC = () => {
             </div>
           ) : testimonials.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600">No stories have been shared yet. Be the first to share your journey!</p>
+              <p className="text-gray-600">{t('noStories')}</p>
               <button
                 onClick={() => setActiveTab('share')}
                 className="mt-4 px-5 py-2 bg-primary text-white font-medium rounded-lg hover:bg-opacity-90"
                 data-cy="share-your-story"
               >
-                Share Your Story
+                {t('shareYourStory')}
               </button>
             </div>
           ) : (
@@ -332,11 +353,11 @@ const CommunityConnections: React.FC = () => {
                   </div>
                   <div className="mb-3 text-gray-700">
                     <FaQuoteLeft className="inline text-primary opacity-50 mr-2" size={12} />
-                    {testimonial.text}
+                    {testimonial.translationKey ? t(testimonial.translationKey) : testimonial.text}
                     <FaQuoteRight className="inline text-primary opacity-50 ml-2" size={12} />
                   </div>
                   <div className="text-sm text-gray-500 text-right">
-                    {testimonial.date}
+                    {testimonial.dateKey ? t(testimonial.dateKey) : testimonial.date}
                   </div>
                 </div>
               ))}
@@ -350,14 +371,14 @@ const CommunityConnections: React.FC = () => {
       {/* Share Your Story Tab */}
       {activeTab === 'share' && (
         <div className="bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-2xl font-semibold mb-6">Share Your Journey</h2>
-          <p className="mb-6">Your story can inspire and guide other families on their path to better opportunities. Share your experience below:</p>
+          <h2 className="text-2xl font-semibold mb-6">{t('shareYourJourney')}</h2>
+          <p className="mb-6">{t('shareYourJourneyDescription')}</p>
           
           <form onSubmit={handleSubmitTestimonial}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-700">
-                  Your Name
+                  {t('yourName')}
                 </label>
                 <input
                   type="text"
@@ -371,7 +392,7 @@ const CommunityConnections: React.FC = () => {
               </div>
               <div>
                 <label htmlFor="location" className="block mb-2 text-sm font-medium text-gray-700">
-                  Your Location
+                  {t('yourLocation')}
                 </label>
                 <input
                   type="text"
@@ -387,7 +408,7 @@ const CommunityConnections: React.FC = () => {
             
             <div className="mb-6">
               <label htmlFor="rating" className="block mb-2 text-sm font-medium text-gray-700">
-                Rate Your Experience
+                {t('rateExperience')}
               </label>
               <div className="flex space-x-2">
                 {Array(5).fill(0).map((_, i) => (
@@ -403,7 +424,7 @@ const CommunityConnections: React.FC = () => {
             
             <div className="mb-6">
               <label htmlFor="text" className="block mb-2 text-sm font-medium text-gray-700">
-                Your Story
+                {t('yourStory')}
               </label>
               <textarea
                 id="text"
@@ -413,7 +434,7 @@ const CommunityConnections: React.FC = () => {
                 rows={5}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
                 required
-                placeholder="Share your journey, challenges, successes, and how this resource helped you..."
+                placeholder={t('storyPlaceholder')}
               />
             </div>
             
@@ -440,12 +461,12 @@ const CommunityConnections: React.FC = () => {
                 {submitStatus && submitStatus.success === undefined ? (
                   <>
                     <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
-                    Submitting...
+                    {t('submitting')}
                   </>
                 ) : (
                   <>
                     <FaComment className="mr-2" />
-                    Submit Your Story
+                    {t('submitStory')}
                   </>
                 )}
               </button>
@@ -453,23 +474,23 @@ const CommunityConnections: React.FC = () => {
           </form>
           
           <div className="mt-10 pt-6 border-t border-gray-200">
-            <h3 className="text-xl font-semibold mb-4">Why Share Your Story?</h3>
+            <h3 className="text-xl font-semibold mb-4">{t('whyShare')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Inspire Others</h4>
-                <p className="text-gray-700">Your journey can provide hope and motivation to families facing similar challenges.</p>
+                <h4 className="font-medium mb-2">{t('inspireOthers')}</h4>
+                <p className="text-gray-700">{t('inspireOthersDescription')}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Build Community</h4>
-                <p className="text-gray-700">Connect with others who have shared experiences and build a supportive network.</p>
+                <h4 className="font-medium mb-2">{t('buildCommunity')}</h4>
+                <p className="text-gray-700">{t('buildCommunityDescription')}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Share Knowledge</h4>
-                <p className="text-gray-700">Your insights and lessons learned can help other families navigate their own paths.</p>
+                <h4 className="font-medium mb-2">{t('shareKnowledge')}</h4>
+                <p className="text-gray-700">{t('shareKnowledgeDescription')}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Create Change</h4>
-                <p className="text-gray-700">Personal stories are powerful tools for advocacy and creating systemic change.</p>
+                <h4 className="font-medium mb-2">{t('createChange')}</h4>
+                <p className="text-gray-700">{t('createChangeDescription')}</p>
               </div>
             </div>
           </div>
