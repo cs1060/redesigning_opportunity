@@ -203,6 +203,7 @@ const ChatWidget: React.FC = () => {
           onClick={toggleChat}
           className="bg-primary hover:bg-primary-dark text-white p-4 rounded-full shadow-lg flex items-center justify-center"
           aria-label={isOpen ? "Close chat" : "Open chat"}
+          data-cy="chat-button"
         >
           {isOpen ? <FaTimes size={20} /> : <FaComments size={20} />}
         </button>
@@ -234,29 +235,30 @@ const ChatWidget: React.FC = () => {
 
           {/* Messages */}
           <div className="flex-1 p-4 overflow-y-auto">
-            {messages.map((message, index) => (
+          {messages.map((message, index) => (
+            <div 
+              key={index} 
+              className={`mb-4 ${message.role === 'assistant' ? 'pr-12' : 'pl-12'}`}
+              data-cy={message.role === 'assistant' ? 'chat-response' : undefined}
+            >
               <div 
-                key={index} 
-                className={`mb-4 ${message.role === 'assistant' ? 'pr-12' : 'pl-12'}`}
+                className={`p-3 rounded-lg ${
+                  message.role === 'assistant' 
+                    ? 'bg-gray-100 rounded-bl-none' 
+                    : 'bg-primary text-white rounded-br-none ml-auto'
+                }`}
               >
-                <div 
-                  className={`p-3 rounded-lg ${
-                    message.role === 'assistant' 
-                      ? 'bg-gray-100 rounded-bl-none' 
-                      : 'bg-primary text-white rounded-br-none ml-auto'
-                  }`}
-                >
-                  {message.content}
-                </div>
-                <div 
-                  className={`text-xs text-gray-500 mt-1 ${
-                    message.role === 'assistant' ? '' : 'text-right'
-                  }`}
-                >
-                  {formatTime(message.timestamp)}
-                </div>
+                {message.content}
               </div>
-            ))}
+              <div 
+                className={`text-xs text-gray-500 mt-1 ${
+                  message.role === 'assistant' ? '' : 'text-right'
+                }`}
+              >
+                {formatTime(message.timestamp)}
+              </div>
+            </div>
+          ))}
             {isLoading && (
               <div className="mb-4 pr-12">
                 <div className="p-3 bg-gray-100 rounded-lg rounded-bl-none inline-block">
@@ -273,16 +275,17 @@ const ChatWidget: React.FC = () => {
 
           {/* Input Area */}
           <div className="border-t border-gray-200 p-3 flex items-end">
-            <textarea
-              ref={inputRef}
-              value={inputMessage}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your question..."
-              className="flex-1 resize-none border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              rows={2}
-              disabled={isLoading}
-            />
+          <textarea
+            ref={inputRef}
+            value={inputMessage}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Type your question..."
+            className="flex-1 resize-none border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            rows={2}
+            disabled={isLoading}
+            data-cy="chat-input"
+          />
             <button
               onClick={handleSubmit}
               disabled={!inputMessage.trim() || isLoading}
