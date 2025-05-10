@@ -306,39 +306,40 @@ const CommunityConnections: React.FC = () => {
               <button
                 onClick={() => setActiveTab('share')}
                 className="mt-4 px-5 py-2 bg-primary text-white font-medium rounded-lg hover:bg-opacity-90"
+                data-cy="share-your-story"
               >
                 Share Your Story
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6" data-cy="comments">
               {testimonials.map((testimonial) => (
-            <div key={testimonial.id} className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-start mb-4">
-                <div className="flex-shrink-0 mr-4">
-                  {renderAvatar(testimonial)}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">{testimonial.name}</h3>
-                  <div className="flex items-center text-sm text-gray-600 mb-1">
-                    <FaMapMarkerAlt className="mr-1" />
-                    <span>{testimonial.location}</span>
+                <div key={testimonial.id} className="bg-white rounded-xl shadow-lg p-6">
+                  <div className="flex items-start mb-4">
+                    <div className="flex-shrink-0 mr-4">
+                      {renderAvatar(testimonial)}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">{testimonial.name}</h3>
+                      <div className="flex items-center text-sm text-gray-600 mb-1">
+                        <FaMapMarkerAlt className="mr-1" />
+                        <span>{testimonial.location}</span>
+                      </div>
+                      <div className="flex">
+                        {renderStars(testimonial.rating)}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex">
-                    {renderStars(testimonial.rating)}
+                  <div className="mb-3 text-gray-700">
+                    <FaQuoteLeft className="inline text-primary opacity-50 mr-2" size={12} />
+                    {testimonial.text}
+                    <FaQuoteRight className="inline text-primary opacity-50 ml-2" size={12} />
+                  </div>
+                  <div className="text-sm text-gray-500 text-right">
+                    {testimonial.date}
                   </div>
                 </div>
-              </div>
-              <div className="mb-3 text-gray-700">
-                <FaQuoteLeft className="inline text-primary opacity-50 mr-2" size={12} />
-                {testimonial.text}
-                <FaQuoteRight className="inline text-primary opacity-50 ml-2" size={12} />
-              </div>
-              <div className="text-sm text-gray-500 text-right">
-                {testimonial.date}
-              </div>
-            </div>
-          ))}
+              ))}
             </div>
           )}
         </>

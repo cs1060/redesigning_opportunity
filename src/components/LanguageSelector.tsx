@@ -31,6 +31,7 @@ export default function LanguageSelector() {
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-label={t('language')}
+        data-cy="language-selector"
       >
         <FaGlobe className="mr-1" />
         <span>{t('language')}</span>

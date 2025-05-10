@@ -15,7 +15,7 @@ export default function Navbar({ progressBarRef }: NavbarProps) {
 
   return (
     <header className="fixed top-0 left-0 w-full bg-white z-50">
-      <nav className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="w-full mx-auto px-4 sm:px-6 lg:px-8" data-cy="nav-bar">
         <div className="flex justify-between items-center h-16">
           <div className="text-primary text-3xl font-bold pl-4 md:pl-10">{t('title')}</div>
           {/* Mobile language selector - only visible on mobile */}
